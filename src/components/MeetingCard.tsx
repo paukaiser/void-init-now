@@ -11,6 +11,7 @@ export interface Meeting {
   startTime: string;
   endTime: string;
   date: string;
+  type?: 'sales meeting' | 'sales followup';
   status?: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
 }
 
@@ -33,12 +34,12 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     const startDate = new Date(meeting.startTime);
     const endDate = new Date(meeting.endTime);
     
-    const startHourMinutes = startDate.getHours() * 60 + startDate.getMinutes();
-    const endHourMinutes = endDate.getHours() * 60 + endDate.getMinutes();
+    const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
+    const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
     
     const totalMinutes = (endHour - startHour) * 60;
-    const startPercentage = ((startHourMinutes - startHour * 60) / totalMinutes) * 100;
-    const durationPercentage = ((endHourMinutes - startHourMinutes) / totalMinutes) * 100;
+    const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
+    const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
     return (
       <div 
@@ -52,14 +53,16 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         onClick={handleClick}
       >
         <div className="p-2 flex flex-col h-full overflow-hidden">
-          <div className="text-xs font-semibold truncate">{meeting.title}</div>
-          <div className="text-xs text-allo-muted flex items-center gap-1 truncate">
-            <User size={10} />
-            <span className="truncate">{meeting.contactName}</span>
-          </div>
-          <div className="text-xs text-allo-muted flex items-center gap-1 truncate">
-            <Building2 size={10} />
-            <span className="truncate">{meeting.companyName}</span>
+          <div className="text-xs font-semibold truncate mb-1">{meeting.title}</div>
+          <div className="flex text-xs text-allo-muted space-x-2">
+            <div className="flex items-center gap-1 truncate">
+              <Building2 size={10} />
+              <span className="truncate">{meeting.companyName}</span>
+            </div>
+            <div className="flex items-center gap-1 truncate">
+              <User size={10} />
+              <span className="truncate">{meeting.contactName}</span>
+            </div>
           </div>
         </div>
       </div>

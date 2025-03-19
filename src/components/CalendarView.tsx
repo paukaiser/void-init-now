@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { format, addDays, startOfWeek, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, isSameDay, parseISO } from 'date-fns';
 import { ChevronDown, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -25,8 +25,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  const START_HOUR = 8; // 8 AM
-  const END_HOUR = 22; // 10 PM
+  const START_HOUR = 0; // 00:00
+  const END_HOUR = 24; // 24:00
   
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -43,7 +43,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             companyName: 'Acme Inc',
             startTime: '2023-06-15T10:00:00',
             endTime: '2023-06-15T11:00:00',
-            date: 'Jun 15, 2023'
+            date: 'Jun 15, 2023',
+            type: 'sales meeting'
           },
           {
             id: '2',
@@ -52,7 +53,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             companyName: 'Global Tech',
             startTime: '2023-06-15T14:30:00',
             endTime: '2023-06-15T15:30:00',
-            date: 'Jun 15, 2023'
+            date: 'Jun 15, 2023',
+            type: 'sales followup'
           },
           {
             id: '3',
@@ -61,16 +63,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             companyName: 'Innovate Solutions',
             startTime: '2023-06-16T09:15:00',
             endTime: '2023-06-16T10:15:00',
-            date: 'Jun 16, 2023'
+            date: 'Jun 16, 2023',
+            type: 'sales meeting'
           }
         ];
         
         // Update dates to be relative to today
         const today = new Date();
-        const formattedToday = format(today, 'yyyy-MM-dd');
         
         const updatedMeetings = mockMeetings.map(meeting => {
-          const meetingDate = parseISO(meeting.startTime);
           const daysToAdd = Math.floor(Math.random() * 3); // Random 0-2 days from today
           
           const newDate = addDays(today, daysToAdd);
@@ -83,7 +84,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             ...meeting,
             startTime: `${formattedDate}T${startTime}`,
             endTime: `${formattedDate}T${endTime}`,
-            date: format(newDate, 'MMM d, yyyy')
+            date: format(newDate, 'dd.MM.yyyy') // German date format
           };
         });
         
@@ -107,7 +108,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   
   const getColumnDateLabel = (dayOffset: number) => {
     const date = addDays(currentDate, dayOffset);
-    return format(date, 'EEE, MMM d');
+    return format(date, 'EEE, dd.MM.'); // German short date format
   };
   
   const generateTimeSlots = () => {
@@ -115,7 +116,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     for (let hour = START_HOUR; hour < END_HOUR; hour++) {
       slots.push(
         <div key={`time-${hour}`} className="time-slot flex items-start justify-end pr-2 text-xs text-allo-muted">
-          <span className="mt-[-10px] mr-1">{hour === 12 ? '12pm' : hour > 12 ? `${hour-12}pm` : `${hour}am`}</span>
+          <span className="mt-[-10px] mr-1">{`${hour.toString().padStart(2, '0')}:00`}</span>
         </div>
       );
     }
@@ -162,7 +163,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       }
       
       days.push(
-        <div key={`day-column-${dayOffset}`} className="flex flex-col">
+        <div key={`day-column-${dayOffset}`} className="flex flex-col flex-1">
           {headerCell}
           {dayCells}
         </div>
@@ -194,7 +195,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       </div>
       
       <div className={`calendar-grid ${viewMode} rounded-lg border border-gray-200 bg-white/90 overflow-auto`}>
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-[60px]">
           <div className="h-10 border-b border-gray-100"></div>
           {generateTimeSlots()}
         </div>
