@@ -142,18 +142,6 @@
   overflow-y: auto;
 }
 
-.calendar-grid.three-days {
-  grid-template-columns: 60px repeat(3, 1fr);
-}
-
-.calendar-grid.week {
-  grid-template-columns: 60px repeat(7, 1fr);
-}
-
-.calendar-grid.week-no-weekend {
-  grid-template-columns: 60px repeat(5, 1fr);
-}
-
 .time-slot {
   height: 60px;
   border-bottom: 1px solid rgba(229, 231, 235, 0.5);
@@ -166,6 +154,27 @@
   border-radius: 8px;
   z-index: 10;
   left: 4px;
+}
+
+/* Current time indicator */
+.current-time-indicator {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #ea384c;
+  z-index: 15;
+}
+
+.current-time-indicator::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 10px;
+  height: 10px;
+  background-color: #ea384c;
+  border-radius: 50%;
 }
 
 /* Status badge styles */
@@ -196,6 +205,11 @@
 .status-badge-rescheduled {
   background-color: rgba(249, 115, 22, 0.1);
   color: rgb(154, 52, 18);
+}
+
+/* Empty slot hover style */
+.empty-slot:hover {
+  background-color: rgba(59, 130, 246, 0.1);
 }
 
 /* Polished scrollbar */

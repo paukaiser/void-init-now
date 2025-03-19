@@ -1,28 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
-import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, addWeeks } from 'date-fns';
-import { ChevronDown, Plus } from 'lucide-react';
+import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, subDays } from 'date-fns';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
 import MeetingCard, { Meeting } from './MeetingCard';
 import { useNavigate } from 'react-router-dom';
-
-type ViewMode = 'day' | 'three-days' | 'week' | 'week-no-weekend';
 
 interface CalendarViewProps {
   userId: string;
 }
 
 const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('day');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const navigate = useNavigate();
   
   const START_HOUR = 8; // 08:00
@@ -32,22 +24,47 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     return getWeek(date);
   };
   
+  // Update current time every minute
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
+  
   useEffect(() => {
     const fetchMeetings = async () => {
       setLoading(true);
       
       // In a real app, you would fetch meetings from Hubspot API
-      // For now, we'll use mock data
+      // For now, we'll use mock data with the specific meeting times requested
       setTimeout(() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        // Set specific times as requested
+        const meetingTime1 = new Date(today);
+        meetingTime1.setHours(9, 0, 0);
+        
+        const meetingTime2 = new Date(today);
+        meetingTime2.setHours(11, 30, 0);
+        
+        const meetingTime3 = new Date(today);
+        meetingTime3.setHours(13, 45, 0);
+        
+        const meetingTime4 = new Date(today);
+        meetingTime4.setHours(16, 0, 0);
+        
         const mockMeetings: Meeting[] = [
           {
             id: '1',
             title: 'Product Demo',
             contactName: 'Sarah Chen',
             companyName: 'Acme Inc',
-            startTime: '2023-06-15T10:00:00',
-            endTime: '2023-06-15T11:00:00',
-            date: 'Jun 15, 2023',
+            startTime: meetingTime1.toISOString(),
+            endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(), // 1 hour
+            date: format(today, 'dd.MM.yyyy'),
             type: 'sales meeting',
             status: 'scheduled'
           },
@@ -56,9 +73,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             title: 'Contract Discussion',
             contactName: 'Michael Rodriguez',
             companyName: 'Global Tech',
-            startTime: '2023-06-15T14:30:00',
-            endTime: '2023-06-15T15:30:00',
-            date: 'Jun 15, 2023',
+            startTime: meetingTime2.toISOString(),
+            endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(), // 40 minutes
+            date: format(today, 'dd.MM.yyyy'),
             type: 'sales followup',
             status: 'completed'
           },
@@ -67,62 +84,58 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             title: 'Initial Consultation',
             contactName: 'David Park',
             companyName: 'Innovate Solutions',
-            startTime: '2023-06-16T09:15:00',
-            endTime: '2023-06-16T10:15:00',
-            date: 'Jun 16, 2023',
+            startTime: meetingTime3.toISOString(),
+            endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
+            date: format(today, 'dd.MM.yyyy'),
             type: 'sales meeting',
             status: 'scheduled'
+          },
+          {
+            id: '4',
+            title: 'Product Roadmap',
+            contactName: 'Emma Watson',
+            companyName: 'Tech Forward',
+            startTime: meetingTime4.toISOString(),
+            endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(), // 75 minutes
+            date: format(today, 'dd.MM.yyyy'),
+            type: 'sales followup',
+            status: 'rescheduled'
           }
         ];
         
-        // Update dates to be relative to today
-        const today = new Date();
-        
-        const updatedMeetings = mockMeetings.map(meeting => {
-          const daysToAdd = Math.floor(Math.random() * 3); // Random 0-2 days from today
-          
-          const newDate = addDays(today, daysToAdd);
-          const formattedDate = format(newDate, 'yyyy-MM-dd');
-          
-          const startTime = meeting.startTime.split('T')[1];
-          const endTime = meeting.endTime.split('T')[1];
-          
-          return {
-            ...meeting,
-            startTime: `${formattedDate}T${startTime}`,
-            endTime: `${formattedDate}T${endTime}`,
-            date: format(newDate, 'dd.MM.yyyy') // German date format
-          };
-        });
-        
-        setMeetings(updatedMeetings);
+        setMeetings(mockMeetings);
         setLoading(false);
       }, 1000);
     };
     
     fetchMeetings();
-  }, [userId]);
+  }, [userId, currentDate]);
   
-  const getViewText = () => {
-    switch(viewMode) {
-      case 'day': return 'Today';
-      case 'three-days': return '3 Days';
-      case 'week': return 'Week';
-      case 'week-no-weekend': return 'Work Week';
-      default: return 'Today';
-    }
+  const handlePreviousDay = () => {
+    setCurrentDate(prevDate => subDays(prevDate, 1));
   };
   
-  const getColumnDateLabel = (dayOffset: number) => {
-    const date = addDays(currentDate, dayOffset);
-    return format(date, 'EEE, dd.MM.'); // German short date format
+  const handleNextDay = () => {
+    setCurrentDate(prevDate => addDays(prevDate, 1));
+  };
+  
+  const handleAddMeeting = (hour?: number, minute?: number) => {
+    if (hour !== undefined && minute !== undefined) {
+      // If time is selected, pre-fill the time in the add meeting page
+      // This would be implemented in a real app
+      console.log(`Add meeting at ${hour}:${minute}`);
+    }
+    navigate('/add-meeting');
   };
   
   const generateTimeSlots = () => {
     const slots = [];
     for (let hour = START_HOUR; hour < END_HOUR; hour++) {
       slots.push(
-        <div key={`time-${hour}`} className="time-slot flex items-start justify-end pr-2 text-xs text-allo-muted">
+        <div 
+          key={`time-${hour}`} 
+          className="time-slot flex items-start justify-end pr-2 text-xs text-allo-muted"
+        >
           <span className="mt-[-10px] mr-1">{`${hour.toString().padStart(2, '0')}:00`}</span>
         </div>
       );
@@ -130,85 +143,78 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     return slots;
   };
   
+  const calculateCurrentTimePosition = () => {
+    const now = new Date();
+    const hours = now.getHours();
+    const minutes = now.getMinutes();
+    
+    if (hours < START_HOUR || hours >= END_HOUR) {
+      return null; // Outside visible hours
+    }
+    
+    const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
+    const minutesSinceStart = (hours - START_HOUR) * 60 + minutes;
+    
+    return (minutesSinceStart / totalMinutesInView) * 100;
+  };
+  
   const generateCalendarGrid = () => {
-    let numDays = 1;
-    const today = new Date();
-    const weekStart = startOfWeek(today);
+    const dayCells = [];
+    const currentTimePosition = calculateCurrentTimePosition();
     
-    switch(viewMode) {
-      case 'day':
-        numDays = 1;
-        break;
-      case 'three-days':
-        numDays = 3;
-        break;
-      case 'week':
-        numDays = 7;
-        break;
-      case 'week-no-weekend':
-        numDays = 5;
-        break;
-    }
-    
-    const weekNumber = getWeekNumber(today);
-    const days = [];
-    
-    // Add week number for weekly views
-    const showWeekNumber = viewMode === 'week' || viewMode === 'week-no-weekend';
-    
-    if (showWeekNumber) {
-      days.push(
-        <div key="week-number" className="col-span-full text-center mb-2 font-medium bg-gray-100 py-1 rounded-md">
-          KW {weekNumber}
-        </div>
-      );
-    }
-    
-    for (let dayOffset = 0; dayOffset < numDays; dayOffset++) {
-      const dateForColumn = viewMode === 'day' ? today :
-                          viewMode === 'three-days' ? addDays(today, dayOffset) :
-                          addDays(weekStart, dayOffset);
-      
-      const headerCell = (
-        <div key={`header-${dayOffset}`} className="text-center text-sm font-medium py-2 border-b border-gray-100">
-          {getColumnDateLabel(viewMode === 'day' ? 0 : 
-                             viewMode === 'three-days' ? dayOffset : 
-                             dayOffset)}
-        </div>
-      );
-      
-      const dayCells = [];
-      for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+    // Create clickable empty slots
+    for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+      for (let minute = 0; minute < 60; minute += 15) {
+        const slotTime = new Date(currentDate);
+        slotTime.setHours(hour, minute, 0, 0);
+        
+        const isPast = slotTime < new Date();
+        
         dayCells.push(
-          <div key={`day-${dayOffset}-hour-${hour}`} className="time-slot relative">
-            {/* Render meetings that fall within this time slot */}
-            {meetings.filter(meeting => {
-              const meetingDate = new Date(meeting.startTime);
-              return isSameDay(meetingDate, dateForColumn) && 
-                     meetingDate.getHours() >= START_HOUR && 
-                     meetingDate.getHours() < END_HOUR;
-            }).map(meeting => (
-              <MeetingCard 
-                key={meeting.id} 
-                meeting={meeting} 
-                isCalendarView={true}
-                startHour={START_HOUR}
-                endHour={END_HOUR}
-              />
-            ))}
-          </div>
+          <div 
+            key={`slot-${hour}-${minute}`} 
+            className={`empty-slot absolute hover:bg-blue-50 cursor-pointer transition-colors`}
+            style={{
+              top: `${((hour - START_HOUR) * 60 + minute) / ((END_HOUR - START_HOUR) * 60) * 100}%`,
+              height: '15px',
+              width: '100%',
+              zIndex: 1
+            }}
+            onClick={() => handleAddMeeting(hour, minute)}
+            title={`Add meeting at ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`}
+          />
         );
       }
-      
-      days.push(
-        <div key={`day-column-${dayOffset}`} className="flex flex-col flex-1">
-          {headerCell}
-          {dayCells}
-        </div>
+    }
+    
+    // Add current time indicator if it's today and within visible hours
+    if (isSameDay(currentDate, new Date()) && currentTimePosition !== null) {
+      dayCells.push(
+        <div 
+          key="current-time-indicator" 
+          className="current-time-indicator"
+          style={{ top: `${currentTimePosition}%` }}
+        />
       );
     }
     
-    return days;
+    // Add meetings
+    meetings.filter(meeting => {
+      const meetingDate = new Date(meeting.startTime);
+      return isSameDay(meetingDate, currentDate);
+    }).forEach(meeting => {
+      dayCells.push(
+        <MeetingCard 
+          key={meeting.id} 
+          meeting={meeting} 
+          isCalendarView={true}
+          startHour={START_HOUR}
+          endHour={END_HOUR}
+        />
+      );
+    });
+    
+    return dayCells;
   };
   
   return (
@@ -216,33 +222,46 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">My Meetings</h2>
         <div className="flex items-center space-x-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center">
-                {getViewText()} <ChevronDown size={16} className="ml-1" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setViewMode('day')}>Today</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewMode('three-days')}>3 Days</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewMode('week-no-weekend')}>Work Week</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setViewMode('week')}>Full Week</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Button variant="outline" onClick={handlePreviousDay}>
+            <ChevronLeft size={16} />
+          </Button>
+          <Button variant="outline" onClick={handleNextDay}>
+            <ChevronRight size={16} />
+          </Button>
         </div>
       </div>
       
-      <div className={`calendar-grid ${viewMode} rounded-lg border border-gray-200 bg-white/90 overflow-auto`}>
+      <div className="calendar-header bg-white/90 rounded-t-lg border border-gray-200 p-4 mb-0 border-b-0">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <span className="text-sm font-medium bg-gray-100 py-1 px-2 rounded">
+              KW {getWeekNumber(currentDate)}
+            </span>
+            <span className="text-lg font-medium">
+              {format(currentDate, 'EEEE, dd.MM.yyyy')}
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <div className="calendar-grid daily-view rounded-b-lg border border-gray-200 bg-white/90 overflow-auto relative">
         <div className="flex flex-col min-w-[60px]">
           <div className="h-10 border-b border-gray-100"></div>
           {generateTimeSlots()}
         </div>
-        {generateCalendarGrid()}
+        <div className="flex flex-col flex-1 relative">
+          <div className="text-center text-sm font-medium py-2 border-b border-gray-100 invisible">
+            Spacer
+          </div>
+          <div className="flex-1 relative">
+            {generateCalendarGrid()}
+          </div>
+        </div>
       </div>
       
       <Button 
         className="allo-button mt-4 self-center"
-        onClick={() => navigate('/add-meeting')}
+        onClick={() => handleAddMeeting()}
       >
         <Plus size={16} className="mr-1" />
         Add New Meeting

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Building2, CheckCircle, XCircle, Clock as ClockIcon, RotateCw } from 'lucide-react';
+import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw } from 'lucide-react';
 
 export interface Meeting {
   id: string;
@@ -35,22 +35,22 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
 
     switch(status) {
       case 'completed':
-        icon = <CheckCircle size={isCalendarView ? 10 : 14} />;
+        icon = <CheckCircle size={isCalendarView ? 12 : 14} />;
         bgColor = 'bg-green-100';
         textColor = 'text-green-800';
         break;
       case 'canceled':
-        icon = <XCircle size={isCalendarView ? 10 : 14} />;
+        icon = <XCircle size={isCalendarView ? 12 : 14} />;
         bgColor = 'bg-red-100';
         textColor = 'text-red-800';
         break;
       case 'rescheduled':
-        icon = <RotateCw size={isCalendarView ? 10 : 14} />;
+        icon = <RotateCw size={isCalendarView ? 12 : 14} />;
         bgColor = 'bg-orange-100';
         textColor = 'text-orange-800';
         break;
       default: // scheduled
-        icon = <ClockIcon size={isCalendarView ? 10 : 14} />;
+        icon = <ClockIcon size={isCalendarView ? 12 : 14} />;
         bgColor = 'bg-blue-100';
         textColor = 'text-blue-800';
     }
@@ -58,7 +58,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     return (
       <div className={`flex items-center gap-1 text-xs rounded-full px-2 py-0.5 ${bgColor} ${textColor} whitespace-nowrap`}>
         {icon}
-        <span className={isCalendarView ? "hidden" : "inline-block"}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+        <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
       </div>
     );
   };
@@ -91,7 +91,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
             <div className="text-xs font-bold truncate">{meeting.title}</div>
             {renderStatusBadge()}
           </div>
-          <div className="flex text-xs text-allo-muted space-x-2">
+          <div className="mt-auto flex text-xs text-allo-muted justify-between items-end">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
               <span className="truncate">{meeting.companyName}</span>
