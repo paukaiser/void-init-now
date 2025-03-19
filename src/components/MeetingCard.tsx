@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Building2 } from 'lucide-react';
+import { Calendar, Clock, User, Building2, CheckCircle, XCircle, Clock as ClockIcon, RotateCw } from 'lucide-react';
 
 export interface Meeting {
   id: string;
@@ -28,6 +28,40 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   const handleClick = () => {
     navigate(`/meeting/${meeting.id}`);
   };
+
+  const renderStatusBadge = () => {
+    const status = meeting.status || 'scheduled';
+    let icon, bgColor, textColor;
+
+    switch(status) {
+      case 'completed':
+        icon = <CheckCircle size={isCalendarView ? 10 : 14} />;
+        bgColor = 'bg-green-100';
+        textColor = 'text-green-800';
+        break;
+      case 'canceled':
+        icon = <XCircle size={isCalendarView ? 10 : 14} />;
+        bgColor = 'bg-red-100';
+        textColor = 'text-red-800';
+        break;
+      case 'rescheduled':
+        icon = <RotateCw size={isCalendarView ? 10 : 14} />;
+        bgColor = 'bg-orange-100';
+        textColor = 'text-orange-800';
+        break;
+      default: // scheduled
+        icon = <ClockIcon size={isCalendarView ? 10 : 14} />;
+        bgColor = 'bg-blue-100';
+        textColor = 'text-blue-800';
+    }
+
+    return (
+      <div className={`flex items-center gap-1 text-xs rounded-full px-2 py-0.5 ${bgColor} ${textColor} whitespace-nowrap`}>
+        {icon}
+        <span className={isCalendarView ? "hidden" : "inline-block"}>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+      </div>
+    );
+  };
   
   if (isCalendarView && startHour !== undefined && endHour !== undefined) {
     // Calculate position and size for calendar view
@@ -53,7 +87,10 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         onClick={handleClick}
       >
         <div className="p-2 flex flex-col h-full overflow-hidden">
-          <div className="text-xs font-semibold truncate mb-1">{meeting.title}</div>
+          <div className="flex justify-between items-start mb-1">
+            <div className="text-xs font-bold truncate">{meeting.title}</div>
+            {renderStatusBadge()}
+          </div>
           <div className="flex text-xs text-allo-muted space-x-2">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
@@ -76,7 +113,10 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
       onClick={handleClick}
     >
       <div className="flex flex-col space-y-2">
-        <h3 className="font-medium">{meeting.title}</h3>
+        <div className="flex justify-between items-start">
+          <h3 className="font-medium">{meeting.title}</h3>
+          {renderStatusBadge()}
+        </div>
         <div className="flex justify-between text-sm text-allo-muted">
           <div className="flex items-center gap-1.5">
             <User size={14} />

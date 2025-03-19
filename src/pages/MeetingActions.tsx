@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, X, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Meeting } from '@/components/MeetingCard';
+import { format } from 'date-fns';
 
 const MeetingActions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,14 +19,15 @@ const MeetingActions: React.FC = () => {
       
       // Simulate API call
       setTimeout(() => {
+        const now = new Date();
         setMeeting({
           id: id || '1',
           title: 'Product Demo',
           contactName: 'Sarah Chen',
           companyName: 'Acme Inc',
-          startTime: new Date().toISOString(),
-          endTime: new Date(new Date().getTime() + 3600000).toISOString(),
-          date: new Date().toLocaleDateString(),
+          startTime: now.toISOString(),
+          endTime: new Date(now.getTime() + 3600000).toISOString(),
+          date: format(now, 'dd.MM.yyyy'), // German date format
           status: 'scheduled'
         });
         setLoading(false);
@@ -39,11 +41,11 @@ const MeetingActions: React.FC = () => {
     if (action === 'completed') {
       navigate(`/meeting/${id}/outcome`);
     } else if (action === 'canceled') {
-      // In a real app, you would update the meeting status
-      navigate('/meetings');
+      // Go to canceled confirmation page
+      navigate('/meeting-canceled');
     } else if (action === 'rescheduled') {
-      // In a real app, you would navigate to a reschedule screen
-      navigate('/meetings');
+      // Go to meeting scheduler
+      navigate('/add-meeting');
     }
   };
   

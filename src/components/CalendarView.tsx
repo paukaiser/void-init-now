@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { format, addDays, isSameDay, parseISO } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, addWeeks } from 'date-fns';
 import { ChevronDown, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -25,8 +25,12 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   
-  const START_HOUR = 0; // 00:00
-  const END_HOUR = 24; // 24:00
+  const START_HOUR = 8; // 08:00
+  const END_HOUR = 22; // 22:00
+  
+  const getWeekNumber = (date: Date) => {
+    return getWeek(date);
+  };
   
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -44,7 +48,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             startTime: '2023-06-15T10:00:00',
             endTime: '2023-06-15T11:00:00',
             date: 'Jun 15, 2023',
-            type: 'sales meeting'
+            type: 'sales meeting',
+            status: 'scheduled'
           },
           {
             id: '2',
@@ -54,7 +59,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             startTime: '2023-06-15T14:30:00',
             endTime: '2023-06-15T15:30:00',
             date: 'Jun 15, 2023',
-            type: 'sales followup'
+            type: 'sales followup',
+            status: 'completed'
           },
           {
             id: '3',
@@ -64,7 +70,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
             startTime: '2023-06-16T09:15:00',
             endTime: '2023-06-16T10:15:00',
             date: 'Jun 16, 2023',
-            type: 'sales meeting'
+            type: 'sales meeting',
+            status: 'scheduled'
           }
         ];
         
@@ -124,18 +131,49 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   };
   
   const generateCalendarGrid = () => {
-    const numDays = viewMode === 'day' ? 1 : 
-                    viewMode === 'three-days' ? 3 :
-                    viewMode === 'week' ? 7 : 5;
-                    
+    let numDays = 1;
+    const today = new Date();
+    const weekStart = startOfWeek(today);
+    
+    switch(viewMode) {
+      case 'day':
+        numDays = 1;
+        break;
+      case 'three-days':
+        numDays = 3;
+        break;
+      case 'week':
+        numDays = 7;
+        break;
+      case 'week-no-weekend':
+        numDays = 5;
+        break;
+    }
+    
+    const weekNumber = getWeekNumber(today);
     const days = [];
     
+    // Add week number for weekly views
+    const showWeekNumber = viewMode === 'week' || viewMode === 'week-no-weekend';
+    
+    if (showWeekNumber) {
+      days.push(
+        <div key="week-number" className="col-span-full text-center mb-2 font-medium bg-gray-100 py-1 rounded-md">
+          KW {weekNumber}
+        </div>
+      );
+    }
+    
     for (let dayOffset = 0; dayOffset < numDays; dayOffset++) {
-      const dateForColumn = addDays(currentDate, dayOffset);
+      const dateForColumn = viewMode === 'day' ? today :
+                          viewMode === 'three-days' ? addDays(today, dayOffset) :
+                          addDays(weekStart, dayOffset);
       
       const headerCell = (
         <div key={`header-${dayOffset}`} className="text-center text-sm font-medium py-2 border-b border-gray-100">
-          {getColumnDateLabel(dayOffset)}
+          {getColumnDateLabel(viewMode === 'day' ? 0 : 
+                             viewMode === 'three-days' ? dayOffset : 
+                             dayOffset)}
         </div>
       );
       
