@@ -41,11 +41,24 @@ const MeetingActions: React.FC = () => {
     if (action === 'completed') {
       navigate(`/meeting/${id}/outcome`);
     } else if (action === 'canceled') {
-      // Go to canceled confirmation page
-      navigate('/meeting-canceled');
+      // Go to canceled confirmation page with meeting data
+      navigate('/meeting-canceled', { 
+        state: { 
+          companyName: meeting?.companyName,
+          contactName: meeting?.contactName
+        } 
+      });
     } else if (action === 'rescheduled') {
-      // Go to meeting scheduler
-      navigate('/add-meeting');
+      // Go to meeting scheduler with prefilled data
+      navigate('/add-meeting', { 
+        state: { 
+          isRescheduling: true,
+          companyName: meeting?.companyName,
+          contactName: meeting?.contactName,
+          title: meeting?.title,
+          meetingType: meeting?.type
+        } 
+      });
     }
   };
   

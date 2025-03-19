@@ -156,6 +156,26 @@
   left: 4px;
 }
 
+/* Hour grid lines */
+.hour-grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(229, 231, 235, 0.8);
+  pointer-events: none;
+}
+
+/* 5-minute grid lines */
+.minute-grid-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: rgba(229, 231, 235, 0.3);
+  pointer-events: none;
+}
+
 /* Current time indicator */
 .current-time-indicator {
   position: absolute;
@@ -205,6 +225,17 @@
 .status-badge-rescheduled {
   background-color: rgba(249, 115, 22, 0.1);
   color: rgb(154, 52, 18);
+}
+
+/* Meeting selection styles */
+.meeting-selection {
+  position: absolute;
+  background-color: rgba(59, 130, 246, 0.3);
+  border: 2px solid rgb(59, 130, 246);
+  border-radius: 8px;
+  z-index: 5;
+  width: calc(100% - 8px);
+  left: 4px;
 }
 
 /* Empty slot hover style */

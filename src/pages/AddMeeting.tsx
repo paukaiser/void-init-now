@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,25 +14,64 @@ import { toast } from "sonner";
 
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
-  const [date, setDate] = useState<Date>();
+  const location = useLocation();
+  
+  // Check if we're rescheduling
+  const isRescheduling = location.pathname.includes('reschedule') || 
+                        (location.state && location.state.isRescheduling);
+  
+  // Get prefilled data if any
+  const prefilledData = location.state || {};
+  
+  const [date, setDate] = useState<Date | undefined>(
+    prefilledData.preselectedDate 
+      ? new Date(prefilledData.preselectedDate) 
+      : undefined
+  );
+  
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [contactName, setContactName] = useState("");
-  const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">("sales meeting");
-  const [title, setTitle] = useState("");
+  const [companyName, setCompanyName] = useState(prefilledData.companyName || "");
+  const [contactName, setContactName] = useState(prefilledData.contactName || "");
+  const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
+    prefilledData.meetingType || "sales meeting"
+  );
+  const [title, setTitle] = useState(prefilledData.title || "");
+  
+  // Process preselected times if provided
+  useEffect(() => {
+    if (prefilledData.preselectedStartTime) {
+      const startDate = new Date(prefilledData.preselectedStartTime);
+      setStartTime(`${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`);
+    }
+    
+    if (prefilledData.preselectedEndTime) {
+      const endDate = new Date(prefilledData.preselectedEndTime);
+      setEndTime(`${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`);
+    }
+  }, [prefilledData]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!date || !startTime || !endTime || !companyName || !contactName || !title) {
-      toast.error("Please fill in all fields");
+    // Validate form based on whether we're rescheduling or not
+    if (!date || !startTime || !endTime) {
+      toast.error("Please select date and time");
+      return;
+    }
+    
+    if (!isRescheduling && (!companyName || !contactName || !title)) {
+      toast.error("Please fill in all required fields");
       return;
     }
     
     // In a real app, you would save the meeting to your API
-    toast.success("Meeting scheduled successfully");
+    if (isRescheduling) {
+      toast.success("Meeting rescheduled successfully");
+    } else {
+      toast.success("Meeting scheduled successfully");
+    }
+    
     navigate('/meetings');
   };
   
@@ -40,7 +79,7 @@ const AddMeeting: React.FC = () => {
     const options = [];
     
     for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 30) {
+      for (let minute = 0; minute < 60; minute += 15) {
         const formattedHour = hour.toString().padStart(2, '0');
         const formattedMinute = minute.toString().padStart(2, '0');
         const timeValue = `${formattedHour}:${formattedMinute}`;
@@ -69,55 +108,61 @@ const AddMeeting: React.FC = () => {
         </Button>
         
         <div className="allo-card w-full">
-          <h2 className="text-xl font-semibold mb-6">Schedule New Meeting</h2>
+          <h2 className="text-xl font-semibold mb-6">
+            {isRescheduling ? "Reschedule Meeting" : "Schedule New Meeting"}
+          </h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Meeting Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="Enter meeting title" 
-                  value={title} 
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="meeting-type">Meeting Type</Label>
-                <Select 
-                  value={meetingType} 
-                  onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
-                >
-                  <SelectTrigger id="meeting-type">
-                    <SelectValue placeholder="Select meeting type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sales meeting">Sales Meeting</SelectItem>
-                    <SelectItem value="sales followup">Sales Follow-up</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="company">Company Name</Label>
-                <Input 
-                  id="company" 
-                  placeholder="Enter company name" 
-                  value={companyName} 
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="contact">Contact Name</Label>
-                <Input 
-                  id="contact" 
-                  placeholder="Enter contact name" 
-                  value={contactName} 
-                  onChange={(e) => setContactName(e.target.value)}
-                />
-              </div>
+              {!isRescheduling && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Meeting Title</Label>
+                    <Input 
+                      id="title" 
+                      placeholder="Enter meeting title" 
+                      value={title} 
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="meeting-type">Meeting Type</Label>
+                    <Select 
+                      value={meetingType} 
+                      onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
+                    >
+                      <SelectTrigger id="meeting-type">
+                        <SelectValue placeholder="Select meeting type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sales meeting">Sales Meeting</SelectItem>
+                        <SelectItem value="sales followup">Sales Follow-up</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company Name</Label>
+                    <Input 
+                      id="company" 
+                      placeholder="Enter company name" 
+                      value={companyName} 
+                      onChange={(e) => setCompanyName(e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contact">Contact Name</Label>
+                    <Input 
+                      id="contact" 
+                      placeholder="Enter contact name" 
+                      value={contactName} 
+                      onChange={(e) => setContactName(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
               
               <div className="space-y-2">
                 <Label>Date</Label>
@@ -177,7 +222,7 @@ const AddMeeting: React.FC = () => {
             
             <div className="flex justify-end pt-4">
               <Button type="submit" className="allo-button">
-                Schedule Meeting
+                {isRescheduling ? "Reschedule Meeting" : "Schedule Meeting"}
               </Button>
             </div>
           </form>

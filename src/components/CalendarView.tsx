@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, subDays } from 'date-fns';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,11 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isSelecting, setIsSelecting] = useState(false);
+  const [selectionStart, setSelectionStart] = useState<{ time: Date, y: number } | null>(null);
+  const [selectionEnd, setSelectionEnd] = useState<{ time: Date, y: number } | null>(null);
+  
+  const calendarRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
   const START_HOUR = 8; // 08:00
@@ -119,13 +124,100 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     setCurrentDate(prevDate => addDays(prevDate, 1));
   };
   
-  const handleAddMeeting = (hour?: number, minute?: number) => {
-    if (hour !== undefined && minute !== undefined) {
+  const handleAddMeeting = (startTime?: Date, endTime?: Date) => {
+    if (startTime && endTime) {
       // If time is selected, pre-fill the time in the add meeting page
-      // This would be implemented in a real app
-      console.log(`Add meeting at ${hour}:${minute}`);
+      navigate('/add-meeting', { 
+        state: { 
+          preselectedStartTime: startTime.toISOString(),
+          preselectedEndTime: endTime.toISOString(),
+          preselectedDate: format(startTime, 'yyyy-MM-dd')
+        } 
+      });
+    } else {
+      navigate('/add-meeting');
     }
-    navigate('/add-meeting');
+  };
+  
+  const timeToY = (time: Date): number => {
+    const hours = time.getHours();
+    const minutes = time.getMinutes();
+    
+    if (hours < START_HOUR || hours >= END_HOUR) {
+      return -1; // Outside visible hours
+    }
+    
+    const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
+    const minutesSinceStart = (hours - START_HOUR) * 60 + minutes;
+    
+    return (minutesSinceStart / totalMinutesInView) * 100;
+  };
+  
+  const yToTime = (y: number): Date => {
+    const calendarHeight = calendarRef.current?.clientHeight || 1;
+    const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
+    
+    // Calculate minutes from y percentage
+    const minutesSinceStart = (y / 100) * totalMinutesInView;
+    
+    // Round to nearest 5 minutes
+    const roundedMinutes = Math.round(minutesSinceStart / 5) * 5;
+    
+    const hours = START_HOUR + Math.floor(roundedMinutes / 60);
+    const minutes = roundedMinutes % 60;
+    
+    const time = new Date(currentDate);
+    time.setHours(hours, minutes, 0, 0);
+    
+    return time;
+  };
+  
+  const handleCalendarMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (calendarRef.current) {
+      const rect = calendarRef.current.getBoundingClientRect();
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      const startTime = yToTime(y);
+      setSelectionStart({ time: startTime, y });
+      setSelectionEnd(null);
+      setIsSelecting(true);
+    }
+  };
+  
+  const handleCalendarMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (isSelecting && selectionStart && calendarRef.current) {
+      const rect = calendarRef.current.getBoundingClientRect();
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      
+      // Ensure y stays within calendar bounds
+      const boundedY = Math.max(0, Math.min(100, y));
+      
+      const endTime = yToTime(boundedY);
+      setSelectionEnd({ time: endTime, y: boundedY });
+    }
+  };
+  
+  const handleCalendarMouseUp = () => {
+    if (isSelecting && selectionStart && selectionEnd) {
+      // Ensure start time is before end time
+      let finalStartTime = selectionStart.time;
+      let finalEndTime = selectionEnd.time;
+      
+      if (finalStartTime > finalEndTime) {
+        [finalStartTime, finalEndTime] = [finalEndTime, finalStartTime];
+      }
+      
+      // Ensure minimum meeting duration (15 minutes)
+      if ((finalEndTime.getTime() - finalStartTime.getTime()) < 15 * 60 * 1000) {
+        finalEndTime = new Date(finalStartTime.getTime() + 15 * 60 * 1000);
+      }
+      
+      handleAddMeeting(finalStartTime, finalEndTime);
+    }
+    
+    setIsSelecting(false);
+    setSelectionStart(null);
+    setSelectionEnd(null);
   };
   
   const generateTimeSlots = () => {
@@ -144,51 +236,41 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   };
   
   const calculateCurrentTimePosition = () => {
-    const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes();
-    
-    if (hours < START_HOUR || hours >= END_HOUR) {
-      return null; // Outside visible hours
-    }
-    
-    const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
-    const minutesSinceStart = (hours - START_HOUR) * 60 + minutes;
-    
-    return (minutesSinceStart / totalMinutesInView) * 100;
+    return timeToY(new Date());
   };
   
   const generateCalendarGrid = () => {
     const dayCells = [];
     const currentTimePosition = calculateCurrentTimePosition();
     
-    // Create clickable empty slots
-    for (let hour = START_HOUR; hour < END_HOUR; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
-        const slotTime = new Date(currentDate);
-        slotTime.setHours(hour, minute, 0, 0);
-        
-        const isPast = slotTime < new Date();
-        
+    // Add hour grid lines
+    for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
+      dayCells.push(
+        <div 
+          key={`hour-line-${hour}`} 
+          className="hour-grid-line"
+          style={{
+            top: `${((hour - START_HOUR) * 60) / ((END_HOUR - START_HOUR) * 60) * 100}%`
+          }}
+        />
+      );
+      
+      // Add 30-minute grid lines
+      if (hour < END_HOUR) {
         dayCells.push(
           <div 
-            key={`slot-${hour}-${minute}`} 
-            className={`empty-slot absolute hover:bg-blue-50 cursor-pointer transition-colors`}
+            key={`half-hour-line-${hour}`} 
+            className="minute-grid-line"
             style={{
-              top: `${((hour - START_HOUR) * 60 + minute) / ((END_HOUR - START_HOUR) * 60) * 100}%`,
-              height: '15px',
-              width: '100%',
-              zIndex: 1
+              top: `${((hour - START_HOUR) * 60 + 30) / ((END_HOUR - START_HOUR) * 60) * 100}%`
             }}
-            onClick={() => handleAddMeeting(hour, minute)}
-            title={`Add meeting at ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`}
           />
         );
       }
     }
     
     // Add current time indicator if it's today and within visible hours
-    if (isSameDay(currentDate, new Date()) && currentTimePosition !== null) {
+    if (isSameDay(currentDate, new Date()) && currentTimePosition > 0 && currentTimePosition < 100) {
       dayCells.push(
         <div 
           key="current-time-indicator" 
@@ -213,6 +295,23 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
         />
       );
     });
+    
+    // Add selection overlay if selecting
+    if (isSelecting && selectionStart && selectionEnd) {
+      const topPosition = Math.min(selectionStart.y, selectionEnd.y);
+      const height = Math.abs(selectionEnd.y - selectionStart.y);
+      
+      dayCells.push(
+        <div 
+          key="meeting-selection" 
+          className="meeting-selection"
+          style={{
+            top: `${topPosition}%`,
+            height: `${height}%`,
+          }}
+        />
+      );
+    }
     
     return dayCells;
   };
@@ -253,7 +352,14 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
           <div className="text-center text-sm font-medium py-2 border-b border-gray-100 invisible">
             Spacer
           </div>
-          <div className="flex-1 relative">
+          <div 
+            className="flex-1 relative"
+            ref={calendarRef}
+            onMouseDown={handleCalendarMouseDown}
+            onMouseMove={handleCalendarMouseMove}
+            onMouseUp={handleCalendarMouseUp}
+            onMouseLeave={handleCalendarMouseUp}
+          >
             {generateCalendarGrid()}
           </div>
         </div>
