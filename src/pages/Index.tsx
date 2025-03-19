@@ -1,11 +1,41 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { CalendarDays, FileText } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import UserProfile from '@/components/UserProfile';
+
+const Index: React.FC = () => {
+  const navigate = useNavigate();
+  
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="allo-page">
+      <div className="allo-container transition-slide-up">
+        <div className="flex items-center justify-center w-full mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">allO Field Sales App</h1>
+        </div>
+        
+        <div className="w-full max-w-md mx-auto">
+          <UserProfile />
+          
+          <div className="mt-12 grid grid-cols-1 gap-6">
+            <Button 
+              className="allo-button flex items-center justify-center h-16 text-base"
+              onClick={() => navigate('/meetings')}
+            >
+              <CalendarDays size={20} className="mr-2" />
+              My Meetings
+            </Button>
+            
+            <Button 
+              className="allo-button-secondary flex items-center justify-center h-16 text-base"
+              onClick={() => navigate('/create-contract')}
+            >
+              <FileText size={20} className="mr-2" />
+              Create a Contract
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );

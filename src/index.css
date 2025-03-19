@@ -1,10 +1,11 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 38% 99%;
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83% 53.3%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -33,22 +34,6 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -61,7 +46,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -79,14 +64,6 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -96,6 +73,182 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-allo-bg text-allo-text font-sans antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  .glassmorphism {
+    @apply bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50;
+  }
+
+  .card-shadow {
+    @apply shadow-card hover:shadow-elevation-2 transition-all duration-300;
+  }
+  
+  .button-effect {
+    @apply transition-all duration-200 active:scale-95;
+  }
+  
+  .hover-lift {
+    @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-elevation-2;
+  }
+}
+
+@layer components {
+  .allo-page {
+    @apply min-h-screen w-full p-6 flex flex-col items-center justify-start bg-gradient-to-b from-allo-bg to-allo-bg/95;
+  }
+  
+  .allo-container {
+    @apply w-full max-w-2xl mx-auto p-6 flex flex-col items-center;
+  }
+  
+  .allo-button {
+    @apply button-effect inline-flex items-center justify-center rounded-lg text-sm font-medium px-6 py-3 text-white bg-allo-primary shadow-button hover:bg-allo-primary/90;
+  }
+  
+  .allo-button-secondary {
+    @apply button-effect inline-flex items-center justify-center rounded-lg text-sm font-medium px-6 py-3 text-allo-text bg-allo-secondary shadow-button hover:bg-allo-secondary/90;
+  }
+  
+  .allo-card {
+    @apply glassmorphism card-shadow rounded-xl p-4 w-full;
+  }
+  
+  .allo-input {
+    @apply rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm outline-none focus:border-allo-primary focus:ring-2 focus:ring-allo-primary/20 transition-all duration-200;
+  }
+  
+  .page-transition {
+    @apply animate-fade-in;
+  }
+  
+  .transition-slide-up {
+    @apply animate-slide-up;
+  }
+  
+  .transition-scale-in {
+    @apply animate-scale-in;
+  }
+}
+
+/* Calendar specific styles */
+.calendar-grid {
+  display: grid;
+  grid-template-rows: auto;
+  grid-template-columns: 60px repeat(1, 1fr);
+  height: calc(100vh - 240px);
+  overflow-y: auto;
+}
+
+.calendar-grid.three-day {
+  grid-template-columns: 60px repeat(3, 1fr);
+}
+
+.calendar-grid.week {
+  grid-template-columns: 60px repeat(7, 1fr);
+}
+
+.calendar-grid.week-no-weekend {
+  grid-template-columns: 60px repeat(5, 1fr);
+}
+
+.time-slot {
+  height: 60px;
+  border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+  position: relative;
+}
+
+.meeting-card {
+  position: absolute;
+  width: calc(100% - 8px);
+  border-radius: 8px;
+  z-index: 10;
+  left: 4px;
+}
+
+/* Polished scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.5);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+/* Audio recorder styles */
+.audio-visualizer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+}
+
+.audio-bar {
+  width: 4px;
+  background-color: rgba(37, 99, 235, 0.7);
+  margin: 0 2px;
+  border-radius: 2px;
+  transition: height 0.1s ease;
+}
+
+/* Pulsing animation for recording */
+.recording-pulse {
+  position: relative;
+}
+
+.recording-pulse::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background-color: currentColor;
+  opacity: 0.2;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.4;
+  }
+}
+
+/* Page transitions */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 300ms, transform 300ms;
 }
