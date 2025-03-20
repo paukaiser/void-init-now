@@ -62,13 +62,91 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
         ...prev,
         companyId: selectedCompany.id
       }));
+      
+      // Load contacts for the selected company
+      loadContactsForCompany(selectedCompany.id);
     }
   }, [selectedCompany]);
   
+  const loadContactsForCompany = async (companyId: string) => {
+    if (!companyId) return;
+    
+    setLoading(true);
+    setShowResults(true);
+    
+    try {
+      // In a real app, this would be an API call to Hubspot
+      // For now, we'll simulate a response
+      setTimeout(() => {
+        // These would be contacts associated with the selected company
+        const mockContacts: { [key: string]: Contact[] } = {
+          '1': [ // Acme Inc.
+            { 
+              id: '1',
+              fullName: 'Sarah Chen',
+              firstName: 'Sarah',
+              lastName: 'Chen',
+              email: 'sarah.chen@acmeinc.com',
+              phone: '(555) 123-4567',
+              mobilePhone: '(555) 987-6543',
+              companyId: '1'
+            },
+            { 
+              id: '2',
+              fullName: 'John Smith',
+              firstName: 'John',
+              lastName: 'Smith',
+              email: 'john.smith@acmeinc.com',
+              phone: '(555) 234-5678',
+              mobilePhone: '(555) 876-5432',
+              companyId: '1'
+            }
+          ],
+          '2': [ // Global Tech
+            { 
+              id: '3',
+              fullName: 'Michael Rodriguez',
+              firstName: 'Michael',
+              lastName: 'Rodriguez',
+              email: 'mrodriguez@globaltech.com',
+              phone: '(555) 345-6789',
+              mobilePhone: '(555) 765-4321',
+              companyId: '2'
+            }
+          ],
+          '3': [ // Innovate Solutions
+            { 
+              id: '4',
+              fullName: 'David Park',
+              firstName: 'David',
+              lastName: 'Park',
+              email: 'david.park@innovate.solutions',
+              phone: '(555) 456-7890',
+              mobilePhone: '(555) 654-3210',
+              companyId: '3'
+            }
+          ]
+        };
+        
+        const companyContacts = mockContacts[companyId] || [];
+        setSearchResults(companyContacts);
+        
+        // If there's only one contact, automatically select it
+        if (companyContacts.length === 1) {
+          handleSelectContact(companyContacts[0]);
+        }
+        
+        setLoading(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error loading contacts:", error);
+      toast.error("Failed to load contacts");
+      setLoading(false);
+    }
+  };
+  
   const searchContacts = async (term: string) => {
     if (!selectedCompany || !term || term.length < 2) {
-      setSearchResults([]);
-      setShowResults(false);
       return;
     }
     
@@ -230,8 +308,11 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
           className="pl-9"
           disabled={disabled || !selectedCompany}
           onFocus={() => {
-            if (selectedCompany && searchTerm && searchTerm.length >= 2) {
+            if (selectedCompany) {
               setShowResults(true);
+              if (!searchResults.length) {
+                loadContactsForCompany(selectedCompany.id);
+              }
             }
           }}
           onBlur={() => {
@@ -255,10 +336,10 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
                   onClick={() => handleSelectContact(contact)}
                 >
                   <div className="font-medium">{contact.fullName}</div>
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-500">
-                    {contact.email && <div>{contact.email}</div>}
-                    {contact.phone && <div>{contact.phone}</div>}
-                    {contact.mobilePhone && <div>{contact.mobilePhone}</div>}
+                  <div className="space-y-1 text-sm text-gray-500">
+                    {contact.email && <div><span className="font-medium">Email:</span> {contact.email}</div>}
+                    {contact.phone && <div><span className="font-medium">Phone:</span> {contact.phone}</div>}
+                    {contact.mobilePhone && <div><span className="font-medium">Mobile Phone:</span> {contact.mobilePhone}</div>}
                   </div>
                 </div>
               ))}

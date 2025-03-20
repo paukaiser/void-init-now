@@ -13,6 +13,7 @@ import PositiveOutcome from "./pages/PositiveOutcome";
 import NegativeOutcome from "./pages/NegativeOutcome";
 import FollowUpOutcome from "./pages/FollowUpOutcome";
 import MeetingCanceled from "./pages/MeetingCanceled";
+import CreateContract from "./pages/CreateContract";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/meeting/:id/negative" element={<NegativeOutcome />} />
           <Route path="/meeting/:id/follow-up" element={<FollowUpOutcome />} />
           <Route path="/meeting-canceled" element={<MeetingCanceled />} />
+          <Route path="/create-contract" element={<CreateContract />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

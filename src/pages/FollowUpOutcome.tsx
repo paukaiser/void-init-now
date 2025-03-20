@@ -1,67 +1,46 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Mic, Check } from 'lucide-react';
+import { ChevronLeft, Home, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import AudioRecorder from '@/components/AudioRecorder';
 import { toast } from "sonner";
+import AudioRecorder from '@/components/AudioRecorder';
 
 const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [recordingComplete, setRecordingComplete] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   
-  const handleAudioSend = (audioBlob: Blob) => {
+  const handleAudioSend = (blob: Blob) => {
+    setAudioBlob(blob);
+    
     // In a real app, this would send the recording to Zapier via webhook
-    console.log('Audio blob for follow-up:', audioBlob);
-    setRecordingComplete(true);
+    console.log('Sending voice note to Zapier webhook');
+    
+    toast.success("Voice note recorded successfully");
   };
   
   const handleScheduleFollowUp = () => {
-    // Navigate to add meeting page with meeting details for follow-up
-    navigate('/add-meeting', {
-      state: {
+    // Navigate to add meeting page with follow-up data
+    navigate('/add-meeting', { 
+      state: { 
         isFollowUp: true,
         meetingId: id,
-        // We'll add logic in AddMeeting to fetch meeting details if needed
-      }
+        meetingType: "sales followup"
+      } 
     });
   };
   
   const handleComplete = () => {
     // In a real app, this would call the Hubspot API to mark the meeting as completed
-    console.log(`Marking meeting ${id} as completed with follow-up`);
+    console.log(`Marking meeting ${id} as completed with follow-up outcome`);
     
-    // Show confirmation screen
-    setShowConfirmation(true);
+    // Simulate API call success
+    toast.success("Meeting marked as follow-up needed");
+    
+    // Navigate to home page
+    navigate('/');
   };
-  
-  if (showConfirmation) {
-    return (
-      <div className="allo-page">
-        <div className="allo-container">
-          <div className="w-full max-w-md mx-auto text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="rounded-full bg-green-100 p-4">
-                <Check size={32} className="text-green-600" />
-              </div>
-            </div>
-            
-            <h2 className="text-2xl font-semibold mb-4">Meeting Completed</h2>
-            <p className="mb-8">The meeting has been marked as completed successfully.</p>
-            
-            <Button 
-              className="allo-button w-full"
-              onClick={() => navigate('/')}
-            >
-              Return to Homepage
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <div className="allo-page">
@@ -76,26 +55,28 @@ const FollowUpOutcome: React.FC = () => {
         </Button>
         
         <div className="w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold mb-6 text-center">Follow-up</h2>
+          <h2 className="text-xl font-semibold mb-8 text-center">Follow-Up Saved</h2>
           
-          <div className="space-y-6">
+          <div className="allo-card mb-6">
             <AudioRecorder onSend={handleAudioSend} />
+          </div>
+          
+          <div className="flex flex-col space-y-4">
+            <Button 
+              className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
+              onClick={handleScheduleFollowUp}
+            >
+              <Clock size={18} className="mr-2" />
+              Schedule Follow-up Meeting
+            </Button>
             
-            <div className="flex flex-col gap-4 mt-8">
-              <Button 
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={handleScheduleFollowUp}
-              >
-                Schedule a Follow-up Meeting
-              </Button>
-              
-              <Button 
-                className="allo-button"
-                onClick={handleComplete}
-              >
-                Complete
-              </Button>
-            </div>
+            <Button 
+              className="flex items-center justify-center"
+              onClick={handleComplete}
+            >
+              <Home size={18} className="mr-2" />
+              Return to Homepage
+            </Button>
           </div>
         </div>
       </div>

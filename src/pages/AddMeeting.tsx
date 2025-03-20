@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Calendar as CalendarIcon, Mic } from 'lucide-react';
+import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +42,6 @@ const AddMeeting: React.FC = () => {
   );
   const [title, setTitle] = useState(prefilledData.title || "");
   const [notes, setNotes] = useState(prefilledData.notes || "");
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingComplete, setRecordingComplete] = useState(false);
   
   // For follow-up, we could fetch meeting details using the meetingId
   useEffect(() => {
@@ -139,14 +137,8 @@ const AddMeeting: React.FC = () => {
         console.log("Rescheduling meeting in Hubspot");
         toast.success("Meeting rescheduled successfully");
       } else if (isFollowUp) {
-        // In a real app, this would send the recording to Zapier via webhook
-        if (recordingComplete) {
-          console.log("Scheduling follow-up meeting with voice note");
-          toast.success("Follow-up meeting scheduled with voice note");
-        } else {
-          console.log("Scheduling follow-up meeting");
-          toast.success("Follow-up meeting scheduled");
-        }
+        console.log("Scheduling follow-up meeting");
+        toast.success("Follow-up meeting scheduled");
       } else {
         console.log("Scheduling new meeting in Hubspot");
         toast.success("Meeting scheduled successfully");
@@ -154,20 +146,6 @@ const AddMeeting: React.FC = () => {
     }
     
     navigate('/meetings');
-  };
-  
-  const handleStartRecording = () => {
-    // In a real app, this would start recording audio
-    setIsRecording(true);
-    
-    // Simulate recording completion after 3 seconds
-    setTimeout(() => {
-      setIsRecording(false);
-      setRecordingComplete(true);
-      toast.success("Voice note recorded successfully");
-      
-      // In a real app, this would send the recording to Zapier via webhook
-    }, 3000);
   };
   
   const generateTimeOptions = (isStartTime = true) => {
@@ -266,6 +244,7 @@ const AddMeeting: React.FC = () => {
                   <CompanySearch 
                     onSelect={setSelectedCompany}
                     value={selectedCompany}
+                    required={true}
                   />
                 </div>
               )}
@@ -349,30 +328,6 @@ const AddMeeting: React.FC = () => {
                 />
               </div>
             </div>
-            
-            {isFollowUp && (
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="text-lg font-medium mb-4">Voice Note</h3>
-                <div className="flex items-center space-x-4">
-                  <Button
-                    type="button"
-                    onClick={handleStartRecording}
-                    disabled={isRecording || recordingComplete}
-                    className={cn(
-                      "allo-button-secondary",
-                      isRecording && "bg-red-500 hover:bg-red-600 text-white"
-                    )}
-                  >
-                    <Mic size={16} className="mr-2" />
-                    {isRecording ? "Recording..." : recordingComplete ? "Recording Complete" : "Record Voice Note"}
-                  </Button>
-                  
-                  {recordingComplete && (
-                    <span className="text-green-600 text-sm">Voice note recorded and ready to send</span>
-                  )}
-                </div>
-              </div>
-            )}
             
             <div className="flex justify-end pt-4">
               <Button type="submit" className="allo-button">

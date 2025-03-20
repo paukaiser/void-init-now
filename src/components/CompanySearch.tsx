@@ -23,9 +23,10 @@ export interface Company {
 interface CompanySearchProps {
   onSelect: (company: Company) => void;
   value?: Company | null;
+  required?: boolean;
 }
 
-const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value }) => {
+const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -189,7 +190,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value }) => {
   
   return (
     <div className="space-y-2 relative">
-      <Label htmlFor="company">Company Name</Label>
+      <Label htmlFor="company">Company Name {required && <span className="text-red-500">*</span>}</Label>
       <div className="relative">
         <Input 
           id="company" 
@@ -202,6 +203,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value }) => {
             // Delay hiding results to allow for selection
             setTimeout(() => setShowResults(false), 200);
           }}
+          required={required}
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
       </div>

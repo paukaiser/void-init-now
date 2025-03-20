@@ -1,59 +1,24 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Check } from 'lucide-react';
+import { ChevronLeft, Home } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import AudioRecorder from '@/components/AudioRecorder';
 import { toast } from "sonner";
 
 const NegativeOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  
-  const handleAudioSend = (audioBlob: Blob) => {
-    // In a real app, you would upload the audio to your server
-    console.log('Audio blob:', audioBlob);
-  };
   
   const handleComplete = () => {
     // In a real app, this would call the Hubspot API to mark the meeting as completed
     console.log(`Marking meeting ${id} as completed with negative outcome`);
     
-    toast({
-      title: 'Meeting Updated',
-      description: 'The meeting has been marked as completed with a negative outcome.',
-    });
+    // Simulate API call success
+    toast.success("Meeting marked as negative outcome");
     
-    // Show confirmation screen
-    setShowConfirmation(true);
+    // Navigate to home page
+    navigate('/');
   };
-  
-  if (showConfirmation) {
-    return (
-      <div className="allo-page">
-        <div className="allo-container">
-          <div className="w-full max-w-md mx-auto text-center">
-            <div className="mb-6 flex justify-center">
-              <div className="rounded-full bg-green-100 p-4">
-                <Check size={32} className="text-green-600" />
-              </div>
-            </div>
-            
-            <h2 className="text-2xl font-semibold mb-4">Meeting Completed</h2>
-            <p className="mb-8">The meeting has been marked as completed successfully.</p>
-            
-            <Button 
-              className="allo-button w-full"
-              onClick={() => navigate('/')}
-            >
-              Return to Homepage
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
   
   return (
     <div className="allo-page">
@@ -68,16 +33,20 @@ const NegativeOutcome: React.FC = () => {
         </Button>
         
         <div className="w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold mb-6 text-center">Negative Outcome</h2>
+          <h2 className="text-xl font-semibold mb-8 text-center">Negative Outcome Saved</h2>
           
-          <div className="space-y-6">
-            <AudioRecorder onSend={handleAudioSend} />
-            
+          <div className="allo-card mb-6 p-6 text-center">
+            <p className="text-red-500 mb-4">The meeting outcome has been recorded as negative.</p>
+            <p className="text-gray-600">Would you like to add any additional notes or return home?</p>
+          </div>
+          
+          <div className="flex justify-center">
             <Button 
-              className="allo-button w-full mt-6"
+              className="flex items-center justify-center"
               onClick={handleComplete}
             >
-              Complete
+              <Home size={18} className="mr-2" />
+              Return to Homepage
             </Button>
           </div>
         </div>
