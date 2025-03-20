@@ -1,13 +1,24 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Home } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import AudioRecorder from '@/components/AudioRecorder';
 
 const NegativeOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  
+  const handleAudioSend = (blob: Blob) => {
+    setAudioBlob(blob);
+    
+    // In a real app, this would send the recording to Zapier via webhook
+    console.log('Sending voice note to Zapier webhook');
+    
+    toast.success("Voice note recorded successfully");
+  };
   
   const handleComplete = () => {
     // In a real app, this would call the Hubspot API to mark the meeting as completed
@@ -34,6 +45,10 @@ const NegativeOutcome: React.FC = () => {
         
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-8 text-center">Negative Outcome Saved</h2>
+          
+          <div className="allo-card mb-6">
+            <AudioRecorder onSend={handleAudioSend} />
+          </div>
           
           <div className="allo-card mb-6 p-6 text-center">
             <p className="text-red-500 mb-4">The meeting outcome has been recorded as negative.</p>
