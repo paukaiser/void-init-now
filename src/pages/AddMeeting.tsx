@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Calendar as CalendarIcon, Mic } from 'lucide-react';
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import CompanySearch, { Company } from '@/components/CompanySearch';
+import ContactSearch, { Contact } from '@/components/ContactSearch';
 
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
@@ -32,8 +34,8 @@ const AddMeeting: React.FC = () => {
   
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [companyName, setCompanyName] = useState(prefilledData.companyName || "");
-  const [contactName, setContactName] = useState(prefilledData.contactName || "");
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
     isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
   );
@@ -48,12 +50,46 @@ const AddMeeting: React.FC = () => {
       // For now, simulate fetching data
       setTimeout(() => {
         // This would be data returned from the API
-        setCompanyName('Sample Company');
-        setContactName('John Doe');
+        const mockCompany: Company = {
+          id: '1',
+          name: prefilledData.companyName || 'Sample Company',
+          address: '123 Main St, San Francisco, CA 94105'
+        };
+        
+        const mockContact: Contact = {
+          id: '1',
+          fullName: prefilledData.contactName || 'John Doe',
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john.doe@sample.com',
+          companyId: '1'
+        };
+        
+        setSelectedCompany(mockCompany);
+        setSelectedContact(mockContact);
         // Meeting type is already set to "sales followup" in the initial state
       }, 300);
+    } else if (prefilledData.companyName) {
+      // This is for the case when a meeting was canceled and we're creating a new one
+      const mockCompany: Company = {
+        id: prefilledData.companyId || 'temp-id',
+        name: prefilledData.companyName,
+        address: prefilledData.companyAddress || 'Unknown Address'
+      };
+      
+      setSelectedCompany(mockCompany);
+      
+      if (prefilledData.contactName) {
+        const mockContact: Contact = {
+          id: prefilledData.contactId || 'temp-id',
+          fullName: prefilledData.contactName,
+          companyId: mockCompany.id
+        };
+        
+        setSelectedContact(mockContact);
+      }
     }
-  }, [isFollowUp, prefilledData.meetingId]);
+  }, [isFollowUp, prefilledData]);
   
   // Process preselected times if provided
   useEffect(() => {
@@ -77,7 +113,7 @@ const AddMeeting: React.FC = () => {
       return;
     }
     
-    if (!isRescheduling && !isFollowUp && (!companyName || !contactName || !title)) {
+    if (!selectedCompany || !title) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -156,92 +192,73 @@ const AddMeeting: React.FC = () => {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {!isRescheduling && !isFollowUp && (
+              {!isRescheduling && (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="title">Meeting Title</Label>
+                    <Label htmlFor="title">Meeting Title <span className="text-red-500">*</span></Label>
                     <Input 
                       id="title" 
                       placeholder="Enter meeting title" 
                       value={title} 
                       onChange={(e) => setTitle(e.target.value)}
+                      required
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="meeting-type">Meeting Type</Label>
-                    <Select 
-                      value={meetingType} 
-                      onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
-                    >
-                      <SelectTrigger id="meeting-type">
-                        <SelectValue placeholder="Select meeting type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sales meeting">Sales Meeting</SelectItem>
-                        <SelectItem value="sales followup">Sales Follow-up</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {!isFollowUp && (
+                    <div className="space-y-2">
+                      <Label htmlFor="meeting-type">Meeting Type <span className="text-red-500">*</span></Label>
+                      <Select 
+                        value={meetingType} 
+                        onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
+                      >
+                        <SelectTrigger id="meeting-type">
+                          <SelectValue placeholder="Select meeting type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sales meeting">Sales Meeting</SelectItem>
+                          <SelectItem value="sales followup">Sales Follow-up</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company Name</Label>
-                    <Input 
-                      id="company" 
-                      placeholder="Enter company name" 
-                      value={companyName} 
-                      onChange={(e) => setCompanyName(e.target.value)}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="contact">Contact Name</Label>
-                    <Input 
-                      id="contact" 
-                      placeholder="Enter contact name" 
-                      value={contactName} 
-                      onChange={(e) => setContactName(e.target.value)}
-                    />
-                  </div>
+                  {isFollowUp && (
+                    <div className="space-y-2">
+                      <Label htmlFor="meeting-type">Meeting Type</Label>
+                      <Input 
+                        id="meeting-type" 
+                        value="Sales Follow-up" 
+                        readOnly
+                        className="bg-gray-50"
+                      />
+                    </div>
+                  )}
                 </>
               )}
               
-              {isFollowUp && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company Name</Label>
-                    <Input 
-                      id="company" 
-                      value={companyName} 
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="contact">Contact Name</Label>
-                    <Input 
-                      id="contact" 
-                      value={contactName} 
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="meeting-type">Meeting Type</Label>
-                    <Input 
-                      id="meeting-type" 
-                      value="Sales Follow-up" 
-                      readOnly
-                      className="bg-gray-50"
-                    />
-                  </div>
-                </>
+              {!isRescheduling && (
+                <div className="md:col-span-2">
+                  <CompanySearch 
+                    onSelect={setSelectedCompany}
+                    value={selectedCompany}
+                  />
+                </div>
+              )}
+              
+              {!isRescheduling && (
+                <div className="md:col-span-2">
+                  <ContactSearch 
+                    onSelect={setSelectedContact}
+                    value={selectedContact}
+                    selectedCompany={selectedCompany}
+                    disabled={!selectedCompany}
+                  />
+                </div>
               )}
               
               <div className="space-y-2">
-                <Label>Date</Label>
+                <Label>Date <span className="text-red-500">*</span></Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -269,12 +286,13 @@ const AddMeeting: React.FC = () => {
               
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="start-time">Start Time</Label>
+                  <Label htmlFor="start-time">Start Time <span className="text-red-500">*</span></Label>
                   <select
                     id="start-time"
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
+                    required
                   >
                     <option value="" disabled>Select time</option>
                     {generateTimeOptions()}
@@ -282,12 +300,13 @@ const AddMeeting: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="end-time">End Time</Label>
+                  <Label htmlFor="end-time">End Time <span className="text-red-500">*</span></Label>
                   <select
                     id="end-time"
                     className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                     value={endTime}
                     onChange={(e) => setEndTime(e.target.value)}
+                    required
                   >
                     <option value="" disabled>Select time</option>
                     {generateTimeOptions()}

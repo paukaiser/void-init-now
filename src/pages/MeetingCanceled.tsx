@@ -1,52 +1,66 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { CheckCircle, Home, Calendar } from 'lucide-react';
+import { Check, Home, Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 const MeetingCanceled: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { companyName, contactName } = location.state || {};
+  const [meetingDetails, setMeetingDetails] = useState<any>(null);
   
-  const handleScheduleNew = () => {
-    // Navigate to add meeting with prefilled company and contact
-    navigate('/add-meeting', {
-      state: {
-        companyName,
-        contactName
-      }
-    });
+  useEffect(() => {
+    // In a real app, this would fetch the meeting details from the state or API
+    if (location.state && location.state.meetingDetails) {
+      setMeetingDetails(location.state.meetingDetails);
+    }
+  }, [location]);
+  
+  const handleScheduleNewMeeting = () => {
+    if (meetingDetails) {
+      // Navigate to add meeting page with company and contact details pre-filled
+      navigate('/add-meeting', {
+        state: {
+          companyId: meetingDetails.companyId,
+          companyName: meetingDetails.companyName,
+          companyAddress: meetingDetails.companyAddress,
+          contactId: meetingDetails.contactId,
+          contactName: meetingDetails.contactName
+        }
+      });
+    } else {
+      navigate('/add-meeting');
+    }
   };
   
   return (
     <div className="allo-page">
       <div className="allo-container">
         <div className="w-full max-w-md mx-auto text-center">
-          <div className="flex justify-center mb-4">
-            <CheckCircle className="text-green-600" size={64} />
+          <div className="mb-6 flex justify-center">
+            <div className="rounded-full bg-green-100 p-4">
+              <Check size={32} className="text-green-600" />
+            </div>
           </div>
           
-          <h2 className="text-xl font-semibold mb-6">Meeting Canceled Successfully</h2>
-          <p className="text-allo-muted mb-8">The meeting has been removed from your calendar.</p>
+          <h2 className="text-2xl font-semibold mb-4">Meeting Canceled</h2>
+          <p className="mb-8">The meeting has been canceled successfully.</p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {(companyName || contactName) && (
-              <Button 
-                className="allo-button-secondary"
-                onClick={handleScheduleNew}
-              >
-                <Calendar size={16} className="mr-1" />
-                Schedule New Meeting
-              </Button>
-            )}
-            
+          <div className="grid grid-cols-1 gap-4">
             <Button 
               className="allo-button"
+              onClick={handleScheduleNewMeeting}
+            >
+              <Calendar size={16} className="mr-2" />
+              Schedule New Meeting
+            </Button>
+            
+            <Button 
+              variant="outline"
               onClick={() => navigate('/')}
             >
-              <Home size={16} className="mr-1" />
-              Return to Homepage
+              <Home size={16} className="mr-2" />
+              Go to Homepage
             </Button>
           </div>
         </div>

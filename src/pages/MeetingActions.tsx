@@ -1,75 +1,112 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Check, X, Clock } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { Calendar, Clock, Building, User, CheckCircle, XCircle, MoreHorizontal } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Meeting } from '@/components/MeetingCard';
-import { format } from 'date-fns';
+import { Skeleton } from "@/components/ui/skeleton";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { toast } from "sonner";
+
+interface Meeting {
+  id: string;
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  companyId: string;
+  companyName: string;
+  companyAddress: string;
+  contactId: string;
+  contactName: string;
+  status: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
+  type: 'sales meeting' | 'sales followup';
+}
 
 const MeetingActions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  
   const [meeting, setMeeting] = useState<Meeting | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
   
   useEffect(() => {
-    // In a real app, you would fetch the meeting from your API
     const fetchMeeting = async () => {
       setLoading(true);
       
-      // In the future, this would be an API call to Hubspot
+      // In a real app, this would fetch the meeting from Hubspot API
+      // For now, we'll simulate a response
       setTimeout(() => {
-        const now = new Date();
-        setMeeting({
+        const mockMeeting: Meeting = {
           id: id || '1',
           title: 'Product Demo',
-          contactName: 'Sarah Chen',
+          date: '15.05.2023',
+          startTime: '09:00',
+          endTime: '10:00',
+          companyId: '1',
           companyName: 'Acme Inc',
-          startTime: now.toISOString(),
-          endTime: new Date(now.getTime() + 3600000).toISOString(),
-          date: format(now, 'dd.MM.yyyy'), // German date format
-          status: 'scheduled'
-        });
+          companyAddress: '123 Main St, San Francisco, CA 94105',
+          contactId: '1',
+          contactName: 'Sarah Chen',
+          status: 'scheduled',
+          type: 'sales meeting'
+        };
+        
+        setMeeting(mockMeeting);
         setLoading(false);
-      }, 800);
+      }, 500);
     };
     
     fetchMeeting();
   }, [id]);
   
-  const handleAction = (action: 'completed' | 'canceled' | 'rescheduled') => {
-    // In a real app, you would call the Hubspot API to update the meeting status
-    
-    if (action === 'completed') {
-      navigate(`/meeting/${id}/outcome`);
-    } else if (action === 'canceled') {
-      // Go to canceled confirmation page with meeting data
-      navigate('/meeting-canceled', { 
-        state: { 
-          companyName: meeting?.companyName,
-          contactName: meeting?.contactName
-        } 
-      });
-    } else if (action === 'rescheduled') {
-      // Go to meeting scheduler with prefilled data, but only date/time fields are editable
-      navigate('/add-meeting', { 
-        state: { 
+  const handleMarkComplete = () => {
+    navigate(`/meeting/${id}/outcome`);
+  };
+  
+  const handleReschedule = () => {
+    if (meeting) {
+      navigate('/add-meeting', {
+        state: {
           isRescheduling: true,
-          companyName: meeting?.companyName,
-          contactName: meeting?.contactName,
-          title: meeting?.title,
-          meetingType: meeting?.type
-        } 
+          meetingId: meeting.id,
+          title: meeting.title,
+          meetingType: meeting.type,
+          companyName: meeting.companyName,
+          contactName: meeting.contactName,
+        }
       });
     }
+  };
+  
+  const handleCancelConfirm = () => {
+    // In a real app, this would call the Hubspot API to update the meeting status
+    
+    toast.success("Meeting canceled successfully");
+    setShowCancelDialog(false);
+    
+    // Navigate to the canceled confirmation page with meeting details
+    navigate('/meeting-canceled', {
+      state: {
+        meetingDetails: meeting
+      }
+    });
   };
   
   if (loading) {
     return (
       <div className="allo-page">
         <div className="allo-container">
-          <div className="w-full h-40 flex items-center justify-center">
-            <div className="animate-pulse-soft">Loading meeting information...</div>
+          <Skeleton className="h-8 w-40 mb-6" />
+          <div className="allo-card animate-pulse">
+            <Skeleton className="h-8 w-3/4 mb-6" />
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+            </div>
           </div>
         </div>
       </div>
@@ -80,15 +117,9 @@ const MeetingActions: React.FC = () => {
     return (
       <div className="allo-page">
         <div className="allo-container">
-          <div className="text-center">
-            <h2 className="text-xl font-semibold mb-2">Meeting Not Found</h2>
-            <p className="text-allo-muted mb-6">The meeting you're looking for doesn't exist.</p>
-            <Button
-              onClick={() => navigate('/meetings')}
-              variant="outline"
-            >
-              Back to Meetings
-            </Button>
+          <div className="allo-card">
+            <h2 className="text-xl font-semibold mb-4">Meeting not found</h2>
+            <Button onClick={() => navigate('/meetings')}>Back to Meetings</Button>
           </div>
         </div>
       </div>
@@ -100,56 +131,116 @@ const MeetingActions: React.FC = () => {
       <div className="allo-container">
         <Button 
           variant="outline" 
-          className="self-start mb-6"
+          className="mb-6"
           onClick={() => navigate('/meetings')}
         >
-          <ChevronLeft size={16} className="mr-1" />
           Back to Meetings
         </Button>
         
-        <div className="w-full max-w-md mx-auto">
-          <div className="allo-card mb-8">
-            <h2 className="text-xl font-semibold">{meeting.title}</h2>
-            <div className="mt-2 space-y-2 text-allo-muted">
-              <p><span className="font-medium">Contact:</span> {meeting.contactName}</p>
-              <p><span className="font-medium">Company:</span> {meeting.companyName}</p>
-              <p><span className="font-medium">Date:</span> {meeting.date}</p>
-              <p>
-                <span className="font-medium">Time:</span> {' '}
-                {new Date(meeting.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-                {new Date(meeting.endTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-              </p>
+        <div className="allo-card relative">
+          <div className="absolute right-4 top-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreHorizontal size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleReschedule}>
+                  Reschedule
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowCancelDialog(true)} className="text-red-600">
+                  Cancel Meeting
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          
+          <h2 className="text-xl font-semibold mb-6 pr-10">{meeting.title}</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div className="flex items-start">
+              <Calendar size={20} className="mt-0.5 mr-3 text-gray-500" />
+              <div>
+                <p className="font-medium">Date</p>
+                <p className="text-gray-600">{meeting.date}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start">
+              <Clock size={20} className="mt-0.5 mr-3 text-gray-500" />
+              <div>
+                <p className="font-medium">Time</p>
+                <p className="text-gray-600">{meeting.startTime} - {meeting.endTime}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start">
+              <Building size={20} className="mt-0.5 mr-3 text-gray-500" />
+              <div>
+                <p className="font-medium">Company</p>
+                <p className="text-gray-600">{meeting.companyName}</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start">
+              <User size={20} className="mt-0.5 mr-3 text-gray-500" />
+              <div>
+                <p className="font-medium">Contact</p>
+                <p className="text-gray-600">{meeting.contactName}</p>
+              </div>
             </div>
           </div>
           
-          <h3 className="text-lg font-medium mb-4 text-center">Update Meeting Status</h3>
-          
-          <div className="grid grid-cols-1 gap-4">
-            <Button 
-              className="flex items-center justify-center py-6 bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => handleAction('completed')}
-            >
-              <Check size={18} className="mr-2" />
-              Completed
-            </Button>
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4 border-t border-gray-200">
+            <div>
+              <p className="font-medium">Status</p>
+              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 bg-blue-100 text-blue-800">
+                {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
+              </div>
+            </div>
             
-            <Button 
-              className="flex items-center justify-center py-6 bg-red-600 hover:bg-red-700 text-white"
-              onClick={() => handleAction('canceled')}
-            >
-              <X size={18} className="mr-2" />
-              Canceled
-            </Button>
-            
-            <Button 
-              className="flex items-center justify-center py-6 bg-orange-500 hover:bg-orange-600 text-white"
-              onClick={() => handleAction('rescheduled')}
-            >
-              <Clock size={18} className="mr-2" />
-              Rescheduled
-            </Button>
+            <div className="flex space-x-3">
+              <Button 
+                variant="outline" 
+                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                <XCircle size={16} className="mr-1" />
+                Cancel
+              </Button>
+              
+              <Button 
+                className="bg-green-600 hover:bg-green-700 text-white"
+                onClick={handleMarkComplete}
+              >
+                <CheckCircle size={16} className="mr-1" />
+                Complete
+              </Button>
+            </div>
           </div>
         </div>
+        
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Cancel Meeting</DialogTitle>
+            </DialogHeader>
+            
+            <p className="py-4">
+              Are you sure you want to cancel this meeting? This action cannot be undone.
+            </p>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+                No, Keep It
+              </Button>
+              <Button variant="destructive" onClick={handleCancelConfirm}>
+                Yes, Cancel Meeting
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
