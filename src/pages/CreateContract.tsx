@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save, Download, Printer, Check } from 'lucide-react';
+import { ChevronLeft, Save, Download, Printer, Check, Home } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,9 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
-import { CompanySearch, Company } from '@/components/CompanySearch';
+import CompanySearch, { Company } from '@/components/CompanySearch';
 
-// Define the package options
 interface PackageOption {
   name: string;
   originalPrice: string;
@@ -22,13 +20,11 @@ interface PackageOption {
   isTopSeller?: boolean;
 }
 
-// Define the extras options
 interface ExtraOption {
   id: string;
   name: string;
 }
 
-// Define the payment options
 interface PaymentOption {
   id: string;
   name: string;
@@ -47,7 +43,6 @@ const CreateContract: React.FC = () => {
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string>("");
   
-  // Company and contact information
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [restaurantData, setRestaurantData] = useState({
     address: "",
@@ -57,7 +52,6 @@ const CreateContract: React.FC = () => {
   });
   const [alloBeratername, setAlloBeratername] = useState("");
   
-  // Package options
   const packages: PackageOption[] = [
     {
       name: "S",
@@ -80,7 +74,6 @@ const CreateContract: React.FC = () => {
     }
   ];
   
-  // Extras options
   const extras: ExtraOption[] = [
     { id: "reservierung", name: "Reservierung" },
     { id: "webshop", name: "Webshop" },
@@ -92,7 +85,6 @@ const CreateContract: React.FC = () => {
     { id: "uber", name: "Uber Integration" }
   ];
   
-  // Payment options
   const paymentOptions: PaymentOption[] = [
     { 
       id: "option1", 
@@ -114,14 +106,12 @@ const CreateContract: React.FC = () => {
     }
   ];
   
-  // Hardware options
   const [hardwareOptions, setHardwareOptions] = useState({
     bonDrucker: false,
     alloGo: false,
     iPad: false
   });
   
-  // Services options
   const [servicesOptions, setServicesOptions] = useState({
     support: true,
     steuerberater: true,
@@ -129,27 +119,23 @@ const CreateContract: React.FC = () => {
     fotoshooting: false
   });
   
-  // Self-order options
   const [selfOrderOptions, setSelOrderOptions] = useState({
     kiosk: false,
     tablet: false,
     bierhahnkamera: false
   });
   
-  // Update state when company is selected
   const handleCompanySelect = (company: Company) => {
     setSelectedCompany(company);
     
-    // Update restaurant data based on company
     setRestaurantData({
       address: company.address || "",
-      contactPerson: "", // This would be filled from a contact if selected
+      contactPerson: "",
       email: "",
       mobile: ""
     });
   };
   
-  // Handle extras selection
   const handleExtraToggle = (extraId: string) => {
     setSelectedExtras(prev => 
       prev.includes(extraId)
@@ -158,7 +144,6 @@ const CreateContract: React.FC = () => {
     );
   };
   
-  // Handle hardware options
   const handleHardwareToggle = (option: keyof typeof hardwareOptions) => {
     setHardwareOptions(prev => ({
       ...prev,
@@ -166,7 +151,6 @@ const CreateContract: React.FC = () => {
     }));
   };
   
-  // Handle services options
   const handleServicesToggle = (option: keyof typeof servicesOptions) => {
     setServicesOptions(prev => ({
       ...prev,
@@ -174,7 +158,6 @@ const CreateContract: React.FC = () => {
     }));
   };
   
-  // Handle self-order options
   const handleSelfOrderToggle = (option: keyof typeof selfOrderOptions) => {
     setSelOrderOptions(prev => ({
       ...prev,
@@ -182,7 +165,6 @@ const CreateContract: React.FC = () => {
     }));
   };
   
-  // Generate PDF from the contract
   const generatePDF = () => {
     if (!contractRef.current) return;
     
@@ -200,7 +182,6 @@ const CreateContract: React.FC = () => {
     toast.success("Contract PDF generated successfully");
   };
   
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -219,14 +200,11 @@ const CreateContract: React.FC = () => {
       return;
     }
     
-    // In a real app, this would send data to HubSpot
     console.log("Submitting contract to HubSpot...");
     
-    // Show success dialog
     setShowSuccessDialog(true);
   };
   
-  // Find the selected package
   const currentPackage = packages.find(p => p.name === selectedPackage);
   
   return (
@@ -245,7 +223,6 @@ const CreateContract: React.FC = () => {
           <h2 className="text-xl font-semibold mb-6">Create New Contract</h2>
           
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Restaurant Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Restaurant Information</h3>
               
@@ -316,7 +293,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Package Selection */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Wähle Dein Paket</h3>
@@ -368,7 +344,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Free Extras */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Wähle Deine kostenlosen Extras</h3>
@@ -394,7 +369,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Payment Options */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Wähle Deinen unglaublich günstigen Zahlungstarif</h3>
@@ -426,7 +400,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Self Order Options */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Mache Umsatz wie McDonald's</h3>
@@ -462,7 +435,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Hardware Package */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Kostenloses Hardware Paket</h3>
@@ -498,7 +470,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Services */}
             <div className="space-y-4">
               <div className="bg-gray-200 py-2 px-4 rounded-md">
                 <h3 className="text-center font-medium">Leistungen</h3>
@@ -569,10 +540,8 @@ const CreateContract: React.FC = () => {
           </form>
         </div>
         
-        {/* Hidden contract for PDF generation */}
         <div className="hidden">
           <div ref={contractRef} className="bg-white p-8 max-w-[210mm]" style={{ fontFamily: 'Arial, sans-serif' }}>
-            {/* Contract Header */}
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#e19277' }}>allO</h1>
@@ -585,7 +554,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Restaurant Information */}
             <div className="mb-6 space-y-1">
               <p><strong>Restaurant:</strong> {selectedCompany?.name}</p>
               <p><strong>Adresse:</strong> {restaurantData.address}</p>
@@ -594,12 +562,10 @@ const CreateContract: React.FC = () => {
               <p><strong>Mobile:</strong> {restaurantData.mobile}</p>
             </div>
             
-            {/* Consultant Information */}
             <div className="border p-3 mb-6">
               <p><strong>Dein allO Berater:</strong> {alloBeratername}</p>
             </div>
             
-            {/* Package Selection */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Wähle Dein Paket</h3>
             </div>
@@ -639,7 +605,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Free Extras */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Wähle Deine kostenlosen Extras</h3>
             </div>
@@ -657,7 +622,6 @@ const CreateContract: React.FC = () => {
               ))}
             </div>
             
-            {/* Payment Options */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Wähle Deinen unglaublich günstigen Zahlungstarif</h3>
             </div>
@@ -681,7 +645,6 @@ const CreateContract: React.FC = () => {
               <div className="text-xs">*die Gebühren werden auf den Endkunden umgelegt*</div>
             </div>
             
-            {/* Self Order Options */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Mache Umsatz wie McDonald's</h3>
             </div>
@@ -713,7 +676,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Hardware Package */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Kostenloses Hardware Paket</h3>
             </div>
@@ -745,7 +707,6 @@ const CreateContract: React.FC = () => {
               </div>
             </div>
             
-            {/* Services */}
             <div className="bg-gray-200 py-1 px-2 mb-4 text-center">
               <h3>Leistungen</h3>
             </div>
@@ -797,7 +758,6 @@ const CreateContract: React.FC = () => {
         </div>
       </div>
       
-      {/* Success Dialog */}
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent>
           <DialogHeader>
