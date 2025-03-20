@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw } from 'lucide-react';
+import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle } from 'lucide-react';
 
 export interface Meeting {
   id: string;
@@ -25,7 +25,11 @@ interface MeetingCardProps {
 const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = false, startHour, endHour }) => {
   const navigate = useNavigate();
   
+  const isCompleted = meeting.status === 'completed';
+  const isPastScheduled = meeting.status === 'scheduled' && new Date(meeting.startTime) < new Date();
+  
   const handleClick = () => {
+    if (isCompleted) return; // Prevent clicking on completed meetings
     navigate(`/meeting/${meeting.id}`);
   };
 
@@ -50,15 +54,18 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         textColor = 'text-orange-800';
         break;
       default: // scheduled
-        icon = <ClockIcon size={isCalendarView ? 12 : 14} />;
-        bgColor = 'bg-blue-100';
-        textColor = 'text-blue-800';
+        icon = isPastScheduled ? 
+          <AlertTriangle size={isCalendarView ? 12 : 14} /> : 
+          <ClockIcon size={isCalendarView ? 12 : 14} />;
+        bgColor = isPastScheduled ? 'bg-yellow-100' : 'bg-blue-100';
+        textColor = isPastScheduled ? 'text-yellow-800' : 'text-blue-800';
     }
 
     return (
       <div className={`flex items-center gap-1 text-xs rounded-full px-2 py-0.5 ${bgColor} ${textColor} whitespace-nowrap`}>
         {icon}
         <span>{status.charAt(0).toUpperCase() + status.slice(1)}</span>
+        {isPastScheduled && <span className="ml-1">(Past Due)</span>}
       </div>
     );
   };
@@ -75,9 +82,12 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
+    const cardOpacity = isCompleted ? 'opacity-50' : 'opacity-100';
+    const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
+    
     return (
       <div 
-        className="meeting-card glassmorphism bg-blue-100/80 hover:bg-blue-100 cursor-pointer text-left transition-all duration-200"
+        className={`meeting-card glassmorphism bg-blue-100/80 hover:bg-blue-100 transition-all duration-200 ${cardOpacity} ${cardCursor}`}
         style={{ 
           top: `${startPercentage}%`, 
           height: `${durationPercentage}%`,
@@ -91,6 +101,11 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
             <div className="text-xs font-bold truncate">{meeting.title}</div>
             {renderStatusBadge()}
           </div>
+          {isPastScheduled && !isCalendarView && (
+            <div className="bg-yellow-100 text-yellow-800 text-xs p-1 rounded my-1">
+              This meeting is in the past and needs attention
+            </div>
+          )}
           <div className="mt-auto flex text-xs text-allo-muted justify-between items-end">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
@@ -109,7 +124,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   // Regular card view
   return (
     <div 
-      className="allo-card hover-lift cursor-pointer" 
+      className={`allo-card hover-lift ${isCompleted ? 'opacity-50 cursor-default' : 'cursor-pointer'}`} 
       onClick={handleClick}
     >
       <div className="flex flex-col space-y-2">
@@ -117,6 +132,11 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
           <h3 className="font-medium">{meeting.title}</h3>
           {renderStatusBadge()}
         </div>
+        {isPastScheduled && (
+          <div className="bg-yellow-100 text-yellow-800 text-xs p-2 rounded">
+            This meeting is in the past and needs attention
+          </div>
+        )}
         <div className="flex justify-between text-sm text-allo-muted">
           <div className="flex items-center gap-1.5">
             <User size={14} />

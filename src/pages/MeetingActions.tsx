@@ -67,6 +67,7 @@ const MeetingActions: React.FC = () => {
   
   const handleReschedule = () => {
     if (meeting) {
+      // When rescheduling, we only need date and time, not the other details
       navigate('/add-meeting', {
         state: {
           isRescheduling: true,
@@ -74,7 +75,10 @@ const MeetingActions: React.FC = () => {
           title: meeting.title,
           meetingType: meeting.type,
           companyName: meeting.companyName,
+          companyId: meeting.companyId,
+          companyAddress: meeting.companyAddress,
           contactName: meeting.contactName,
+          contactId: meeting.contactId
         }
       });
     }
@@ -93,6 +97,15 @@ const MeetingActions: React.FC = () => {
       }
     });
   };
+  
+  // Check if meeting is in the past
+  const isPastMeeting = meeting && new Date(`${meeting.date} ${meeting.startTime}`) < new Date();
+  // Check if meeting is completed
+  const isCompletedMeeting = meeting && meeting.status === 'completed';
+  // Meeting needs attention if it's in the past but not completed
+  const needsAttention = isPastMeeting && !isCompletedMeeting;
+  // Determine if actions should be disabled
+  const disableActions = isCompletedMeeting;
   
   if (loading) {
     return (
@@ -138,25 +151,33 @@ const MeetingActions: React.FC = () => {
         </Button>
         
         <div className="allo-card relative">
-          <div className="absolute right-4 top-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreHorizontal size={20} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleReschedule}>
-                  Reschedule
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setShowCancelDialog(true)} className="text-red-600">
-                  Cancel Meeting
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          {!disableActions && (
+            <div className="absolute right-4 top-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreHorizontal size={20} />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleReschedule}>
+                    Reschedule
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowCancelDialog(true)} className="text-red-600">
+                    Cancel Meeting
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           
           <h2 className="text-xl font-semibold mb-6 pr-10">{meeting.title}</h2>
+          
+          {needsAttention && (
+            <div className="mb-4 p-3 bg-yellow-100 text-yellow-800 rounded-md">
+              This meeting is in the past and needs to be updated. Please mark it as completed or reschedule.
+            </div>
+          )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div className="flex items-start">
@@ -195,29 +216,36 @@ const MeetingActions: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4 border-t border-gray-200">
             <div>
               <p className="font-medium">Status</p>
-              <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 bg-blue-100 text-blue-800">
+              <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-1 ${
+                meeting.status === 'completed' ? 'bg-green-100 text-green-800' :
+                meeting.status === 'canceled' ? 'bg-red-100 text-red-800' :
+                meeting.status === 'rescheduled' ? 'bg-orange-100 text-orange-800' :
+                'bg-blue-100 text-blue-800'
+              }`}>
                 {meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1)}
               </div>
             </div>
             
-            <div className="flex space-x-3">
-              <Button 
-                variant="outline" 
-                className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
-                onClick={() => setShowCancelDialog(true)}
-              >
-                <XCircle size={16} className="mr-1" />
-                Cancel
-              </Button>
-              
-              <Button 
-                className="bg-green-600 hover:bg-green-700 text-white"
-                onClick={handleMarkComplete}
-              >
-                <CheckCircle size={16} className="mr-1" />
-                Complete
-              </Button>
-            </div>
+            {!disableActions && (
+              <div className="flex space-x-3">
+                <Button 
+                  variant="outline" 
+                  className="bg-red-50 text-red-600 border-red-200 hover:bg-red-100"
+                  onClick={() => setShowCancelDialog(true)}
+                >
+                  <XCircle size={16} className="mr-1" />
+                  Cancel
+                </Button>
+                
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={handleMarkComplete}
+                >
+                  <CheckCircle size={16} className="mr-1" />
+                  Complete
+                </Button>
+              </div>
+            )}
           </div>
         </div>
         

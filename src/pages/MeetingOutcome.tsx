@@ -12,19 +12,14 @@ const MeetingOutcome: React.FC = () => {
     // In a real app, this would call the Hubspot API to update the meeting outcome
     
     if (outcome === 'positive') {
+      // Navigate to positive outcome page
       navigate(`/meeting/${id}/positive`);
     } else if (outcome === 'negative') {
+      // Navigate to negative outcome page
       navigate(`/meeting/${id}/negative`);
     } else if (outcome === 'follow-up') {
-      // This would be where we'd send the API update to Hubspot
-      // For follow-up, we navigate to the add meeting page with prefilled data
-      navigate('/add-meeting', {
-        state: {
-          isFollowUp: true,
-          meetingId: id,
-          // We'll add logic in AddMeeting to fetch meeting details if needed
-        }
-      });
+      // Navigate to follow-up page
+      navigate(`/meeting/${id}/follow-up`);
     }
   };
   

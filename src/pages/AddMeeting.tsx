@@ -5,6 +5,7 @@ import { ChevronLeft, Calendar as CalendarIcon, Mic } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -40,6 +41,7 @@ const AddMeeting: React.FC = () => {
     isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
   );
   const [title, setTitle] = useState(prefilledData.title || "");
+  const [notes, setNotes] = useState(prefilledData.notes || "");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingComplete, setRecordingComplete] = useState(false);
   
@@ -118,18 +120,37 @@ const AddMeeting: React.FC = () => {
       return;
     }
     
+    // Check if meeting is in the past
+    const meetingDate = new Date(date);
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    meetingDate.setHours(startHour, startMinute, 0, 0);
+    
+    const isInPast = meetingDate < new Date();
+    
     // In a real app, this would send data to Hubspot API
-    if (isRescheduling) {
-      toast.success("Meeting rescheduled successfully");
-    } else if (isFollowUp) {
-      // In a real app, this would send the recording to Zapier via webhook
-      if (recordingComplete) {
-        toast.success("Follow-up meeting scheduled with voice note");
-      } else {
-        toast.success("Follow-up meeting scheduled");
-      }
+    // The API call would differ based on whether the meeting is in the past or future
+    if (isInPast) {
+      // For past meetings, log as completed
+      console.log("Logging completed meeting to Hubspot");
+      toast.success("Past meeting logged as completed");
     } else {
-      toast.success("Meeting scheduled successfully");
+      // For future meetings, schedule as normal
+      if (isRescheduling) {
+        console.log("Rescheduling meeting in Hubspot");
+        toast.success("Meeting rescheduled successfully");
+      } else if (isFollowUp) {
+        // In a real app, this would send the recording to Zapier via webhook
+        if (recordingComplete) {
+          console.log("Scheduling follow-up meeting with voice note");
+          toast.success("Follow-up meeting scheduled with voice note");
+        } else {
+          console.log("Scheduling follow-up meeting");
+          toast.success("Follow-up meeting scheduled");
+        }
+      } else {
+        console.log("Scheduling new meeting in Hubspot");
+        toast.success("Meeting scheduled successfully");
+      }
     }
     
     navigate('/meetings');
@@ -149,11 +170,14 @@ const AddMeeting: React.FC = () => {
     }, 3000);
   };
   
-  const generateTimeOptions = () => {
+  const generateTimeOptions = (isStartTime = true) => {
     const options = [];
+    const startHour = 7; // 7 AM
+    const endHour = isStartTime ? 21 : 24; // 9 PM for start times, midnight for end times
     
-    for (let hour = 0; hour < 24; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+    for (let hour = startHour; hour < endHour; hour++) {
+      // For half-hour increments (0 and 30 minutes)
+      for (let minute of [0, 30]) {
         const formattedHour = hour.toString().padStart(2, '0');
         const formattedMinute = minute.toString().padStart(2, '0');
         const timeValue = `${formattedHour}:${formattedMinute}`;
@@ -295,7 +319,7 @@ const AddMeeting: React.FC = () => {
                     required
                   >
                     <option value="" disabled>Select time</option>
-                    {generateTimeOptions()}
+                    {generateTimeOptions(true)}
                   </select>
                 </div>
                 
@@ -309,9 +333,20 @@ const AddMeeting: React.FC = () => {
                     required
                   >
                     <option value="" disabled>Select time</option>
-                    {generateTimeOptions()}
+                    {generateTimeOptions(false)}
                   </select>
                 </div>
+              </div>
+              
+              <div className="md:col-span-2 space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea 
+                  id="notes" 
+                  placeholder="Add any internal notes about this meeting" 
+                  value={notes} 
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="min-h-[100px]"
+                />
               </div>
             </div>
             

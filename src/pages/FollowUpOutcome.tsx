@@ -1,29 +1,37 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Check } from 'lucide-react';
+import { ChevronLeft, Mic, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AudioRecorder from '@/components/AudioRecorder';
 import { toast } from "sonner";
 
-const NegativeOutcome: React.FC = () => {
+const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [recordingComplete, setRecordingComplete] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   
   const handleAudioSend = (audioBlob: Blob) => {
-    // In a real app, you would upload the audio to your server
-    console.log('Audio blob:', audioBlob);
+    // In a real app, this would send the recording to Zapier via webhook
+    console.log('Audio blob for follow-up:', audioBlob);
+    setRecordingComplete(true);
+  };
+  
+  const handleScheduleFollowUp = () => {
+    // Navigate to add meeting page with meeting details for follow-up
+    navigate('/add-meeting', {
+      state: {
+        isFollowUp: true,
+        meetingId: id,
+        // We'll add logic in AddMeeting to fetch meeting details if needed
+      }
+    });
   };
   
   const handleComplete = () => {
     // In a real app, this would call the Hubspot API to mark the meeting as completed
-    console.log(`Marking meeting ${id} as completed with negative outcome`);
-    
-    toast({
-      title: 'Meeting Updated',
-      description: 'The meeting has been marked as completed with a negative outcome.',
-    });
+    console.log(`Marking meeting ${id} as completed with follow-up`);
     
     // Show confirmation screen
     setShowConfirmation(true);
@@ -68,17 +76,26 @@ const NegativeOutcome: React.FC = () => {
         </Button>
         
         <div className="w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold mb-6 text-center">Negative Outcome</h2>
+          <h2 className="text-xl font-semibold mb-6 text-center">Follow-up</h2>
           
           <div className="space-y-6">
             <AudioRecorder onSend={handleAudioSend} />
             
-            <Button 
-              className="allo-button w-full mt-6"
-              onClick={handleComplete}
-            >
-              Complete
-            </Button>
+            <div className="flex flex-col gap-4 mt-8">
+              <Button 
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+                onClick={handleScheduleFollowUp}
+              >
+                Schedule a Follow-up Meeting
+              </Button>
+              
+              <Button 
+                className="allo-button"
+                onClick={handleComplete}
+              >
+                Complete
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -86,4 +103,4 @@ const NegativeOutcome: React.FC = () => {
   );
 };
 
-export default NegativeOutcome;
+export default FollowUpOutcome;
