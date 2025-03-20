@@ -154,7 +154,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   };
   
   const yToTime = (y: number): Date => {
-    const calendarHeight = calendarRef.current?.clientHeight || 1;
     const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
     
     // Calculate minutes from y percentage
@@ -177,9 +176,10 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       const rect = calendarRef.current.getBoundingClientRect();
       const y = ((e.clientY - rect.top) / rect.height) * 100;
       
+      // Fix: Set start time based on where user first clicks
       const startTime = yToTime(y);
       setSelectionStart({ time: startTime, y });
-      setSelectionEnd(null);
+      setSelectionEnd({ time: startTime, y }); // Initialize end to match start
       setIsSelecting(true);
     }
   };

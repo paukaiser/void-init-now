@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, Calendar as CalendarIcon, Mic } from 'lucide-react';
 import { format, parse } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +16,10 @@ const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Check if we're rescheduling
+  // Check if we're rescheduling or following up
   const isRescheduling = location.pathname.includes('reschedule') || 
                         (location.state && location.state.isRescheduling);
+  const isFollowUp = location.state && location.state.isFollowUp;
   
   // Get prefilled data if any
   const prefilledData = location.state || {};
@@ -34,9 +35,25 @@ const AddMeeting: React.FC = () => {
   const [companyName, setCompanyName] = useState(prefilledData.companyName || "");
   const [contactName, setContactName] = useState(prefilledData.contactName || "");
   const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
-    prefilledData.meetingType || "sales meeting"
+    isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
   );
   const [title, setTitle] = useState(prefilledData.title || "");
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingComplete, setRecordingComplete] = useState(false);
+  
+  // For follow-up, we could fetch meeting details using the meetingId
+  useEffect(() => {
+    if (isFollowUp && prefilledData.meetingId) {
+      // In a real app, you would fetch meeting details from Hubspot API using the meetingId
+      // For now, simulate fetching data
+      setTimeout(() => {
+        // This would be data returned from the API
+        setCompanyName('Sample Company');
+        setContactName('John Doe');
+        // Meeting type is already set to "sales followup" in the initial state
+      }, 300);
+    }
+  }, [isFollowUp, prefilledData.meetingId]);
   
   // Process preselected times if provided
   useEffect(() => {
@@ -54,25 +71,46 @@ const AddMeeting: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form based on whether we're rescheduling or not
+    // Validate form
     if (!date || !startTime || !endTime) {
       toast.error("Please select date and time");
       return;
     }
     
-    if (!isRescheduling && (!companyName || !contactName || !title)) {
+    if (!isRescheduling && !isFollowUp && (!companyName || !contactName || !title)) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    // In a real app, you would save the meeting to your API
+    // In a real app, this would send data to Hubspot API
     if (isRescheduling) {
       toast.success("Meeting rescheduled successfully");
+    } else if (isFollowUp) {
+      // In a real app, this would send the recording to Zapier via webhook
+      if (recordingComplete) {
+        toast.success("Follow-up meeting scheduled with voice note");
+      } else {
+        toast.success("Follow-up meeting scheduled");
+      }
     } else {
       toast.success("Meeting scheduled successfully");
     }
     
     navigate('/meetings');
+  };
+  
+  const handleStartRecording = () => {
+    // In a real app, this would start recording audio
+    setIsRecording(true);
+    
+    // Simulate recording completion after 3 seconds
+    setTimeout(() => {
+      setIsRecording(false);
+      setRecordingComplete(true);
+      toast.success("Voice note recorded successfully");
+      
+      // In a real app, this would send the recording to Zapier via webhook
+    }, 3000);
   };
   
   const generateTimeOptions = () => {
@@ -109,12 +147,16 @@ const AddMeeting: React.FC = () => {
         
         <div className="allo-card w-full">
           <h2 className="text-xl font-semibold mb-6">
-            {isRescheduling ? "Reschedule Meeting" : "Schedule New Meeting"}
+            {isRescheduling 
+              ? "Reschedule Meeting" 
+              : isFollowUp 
+                ? "Schedule Follow-up Meeting"
+                : "Schedule New Meeting"}
           </h2>
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {!isRescheduling && (
+              {!isRescheduling && !isFollowUp && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="title">Meeting Title</Label>
@@ -159,6 +201,40 @@ const AddMeeting: React.FC = () => {
                       placeholder="Enter contact name" 
                       value={contactName} 
                       onChange={(e) => setContactName(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+              
+              {isFollowUp && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company Name</Label>
+                    <Input 
+                      id="company" 
+                      value={companyName} 
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="contact">Contact Name</Label>
+                    <Input 
+                      id="contact" 
+                      value={contactName} 
+                      readOnly
+                      className="bg-gray-50"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="meeting-type">Meeting Type</Label>
+                    <Input 
+                      id="meeting-type" 
+                      value="Sales Follow-up" 
+                      readOnly
+                      className="bg-gray-50"
                     />
                   </div>
                 </>
@@ -220,9 +296,33 @@ const AddMeeting: React.FC = () => {
               </div>
             </div>
             
+            {isFollowUp && (
+              <div className="pt-4 border-t border-gray-200">
+                <h3 className="text-lg font-medium mb-4">Voice Note</h3>
+                <div className="flex items-center space-x-4">
+                  <Button
+                    type="button"
+                    onClick={handleStartRecording}
+                    disabled={isRecording || recordingComplete}
+                    className={cn(
+                      "allo-button-secondary",
+                      isRecording && "bg-red-500 hover:bg-red-600 text-white"
+                    )}
+                  >
+                    <Mic size={16} className="mr-2" />
+                    {isRecording ? "Recording..." : recordingComplete ? "Recording Complete" : "Record Voice Note"}
+                  </Button>
+                  
+                  {recordingComplete && (
+                    <span className="text-green-600 text-sm">Voice note recorded and ready to send</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
             <div className="flex justify-end pt-4">
               <Button type="submit" className="allo-button">
-                {isRescheduling ? "Reschedule Meeting" : "Schedule Meeting"}
+                {isRescheduling ? "Reschedule Meeting" : isFollowUp ? "Schedule Follow-up" : "Schedule Meeting"}
               </Button>
             </div>
           </form>

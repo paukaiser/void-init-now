@@ -17,7 +17,7 @@ const MeetingActions: React.FC = () => {
     const fetchMeeting = async () => {
       setLoading(true);
       
-      // Simulate API call
+      // In the future, this would be an API call to Hubspot
       setTimeout(() => {
         const now = new Date();
         setMeeting({
@@ -38,6 +38,8 @@ const MeetingActions: React.FC = () => {
   }, [id]);
   
   const handleAction = (action: 'completed' | 'canceled' | 'rescheduled') => {
+    // In a real app, you would call the Hubspot API to update the meeting status
+    
     if (action === 'completed') {
       navigate(`/meeting/${id}/outcome`);
     } else if (action === 'canceled') {
@@ -49,7 +51,7 @@ const MeetingActions: React.FC = () => {
         } 
       });
     } else if (action === 'rescheduled') {
-      // Go to meeting scheduler with prefilled data
+      // Go to meeting scheduler with prefilled data, but only date/time fields are editable
       navigate('/add-meeting', { 
         state: { 
           isRescheduling: true,
