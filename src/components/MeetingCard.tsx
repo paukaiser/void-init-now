@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle } from 'lucide-react';
@@ -58,40 +59,38 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         textColor = 'text-orange-800';
         break;
       default: // scheduled
-        icon = isPastScheduled ? 
-          <div className="flex items-center">
-            <span className="mr-1">Scheduled</span>
-            {isMobile ? (
-              <Popover>
-                <PopoverTrigger>
-                  <AlertTriangle size={isCalendarView ? 12 : 14} className="text-yellow-500" />
-                </PopoverTrigger>
-                <PopoverContent className="w-72 p-3">
-                  <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
-                </PopoverContent>
-              </Popover>
-            ) : (
-              <HoverCard>
-                <HoverCardTrigger>
-                  <AlertTriangle size={isCalendarView ? 12 : 14} className="text-yellow-500" />
-                </HoverCardTrigger>
-                <HoverCardContent className="w-72 p-3">
-                  <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
-                </HoverCardContent>
-              </HoverCard>
-            )}
-          </div> : 
-          <ClockIcon size={isCalendarView ? 12 : 14} />;
-        bgColor = isPastScheduled ? 'bg-yellow-100' : 'bg-blue-100';
-        textColor = isPastScheduled ? 'text-yellow-800' : 'text-blue-800';
-        
-        // If isPastScheduled, the icon is already included in the div above
         if (isPastScheduled) {
+          bgColor = 'bg-yellow-100';
+          textColor = 'text-yellow-800';
+          
           return (
             <div className={`flex items-center gap-1 text-xs rounded-full px-2 py-0.5 ${bgColor} ${textColor} whitespace-nowrap`}>
-              {icon}
+              {isMobile ? (
+                <Popover>
+                  <PopoverTrigger>
+                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#F97316] mr-1" />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-72 p-3">
+                    <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
+                  </PopoverContent>
+                </Popover>
+              ) : (
+                <HoverCard>
+                  <HoverCardTrigger>
+                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#F97316] mr-1" />
+                  </HoverCardTrigger>
+                  <HoverCardContent className="w-72 p-3">
+                    <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
+                  </HoverCardContent>
+                </HoverCard>
+              )}
+              <span>Scheduled</span>
             </div>
           );
+        } else {
+          icon = <ClockIcon size={isCalendarView ? 12 : 14} />;
+          bgColor = 'bg-blue-100';
+          textColor = 'text-blue-800';
         }
     }
 
@@ -135,7 +134,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
             <div className="text-xs font-bold truncate">{meeting.title}</div>
             {renderStatusBadge()}
           </div>
-          <div className="mt-auto flex text-xs text-allo-muted justify-between items-end">
+          <div className="mt-auto text-xs text-allo-muted flex flex-wrap gap-2">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
               <span className="truncate">{meeting.companyName}</span>
@@ -167,7 +166,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         {isPastScheduled && (
           <div className="bg-yellow-100 text-yellow-800 text-xs p-2 rounded">
             <div className="flex items-center gap-1">
-              <AlertTriangle size={14} />
+              <AlertTriangle size={14} className="text-[#F97316]" />
               <span>This meeting is in the past and needs attention</span>
             </div>
           </div>

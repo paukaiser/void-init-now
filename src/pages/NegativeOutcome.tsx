@@ -44,15 +44,10 @@ const NegativeOutcome: React.FC = () => {
         </Button>
         
         <div className="w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold mb-8 text-center">Negative Outcome Saved</h2>
+          <h2 className="text-xl font-semibold mb-8 text-center">Negative Outcome</h2>
           
           <div className="allo-card mb-6">
             <AudioRecorder onSend={handleAudioSend} />
-          </div>
-          
-          <div className="allo-card mb-6 p-6 text-center">
-            <p className="text-red-500 mb-4">The meeting outcome has been recorded as negative.</p>
-            <p className="text-gray-600">Would you like to add any additional notes or return home?</p>
           </div>
           
           <div className="flex justify-center">

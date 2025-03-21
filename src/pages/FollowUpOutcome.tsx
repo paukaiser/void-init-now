@@ -55,7 +55,7 @@ const FollowUpOutcome: React.FC = () => {
         </Button>
         
         <div className="w-full max-w-md mx-auto">
-          <h2 className="text-xl font-semibold mb-8 text-center">Follow-Up Saved</h2>
+          <h2 className="text-xl font-semibold mb-8 text-center">Follow-Up</h2>
           
           <div className="allo-card mb-6">
             <AudioRecorder onSend={handleAudioSend} />

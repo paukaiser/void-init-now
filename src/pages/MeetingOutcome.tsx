@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const MeetingOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [showHotDealDialog, setShowHotDealDialog] = useState(false);
   
   const handleOutcome = (outcome: 'positive' | 'negative' | 'follow-up') => {
     // In a real app, this would call the Hubspot API to update the meeting outcome
@@ -18,9 +20,19 @@ const MeetingOutcome: React.FC = () => {
       // Navigate to negative outcome page
       navigate(`/meeting/${id}/negative`);
     } else if (outcome === 'follow-up') {
-      // Navigate to follow-up page
-      navigate(`/meeting/${id}/follow-up`);
+      // Show "hot deal" dialog for follow-up
+      setShowHotDealDialog(true);
     }
+  };
+  
+  const handleHotDealResponse = (isHotDeal: boolean) => {
+    // Close the dialog
+    setShowHotDealDialog(false);
+    
+    // Navigate to follow-up page, potentially passing the hot deal status
+    navigate(`/meeting/${id}/follow-up`, {
+      state: { isHotDeal }
+    });
   };
   
   return (
@@ -65,6 +77,31 @@ const MeetingOutcome: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Dialog open={showHotDealDialog} onOpenChange={setShowHotDealDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Is this a hot deal?</DialogTitle>
+          </DialogHeader>
+          
+          <DialogFooter className="mt-6 flex space-x-2 justify-center sm:justify-between">
+            <Button 
+              variant="outline" 
+              onClick={() => handleHotDealResponse(false)}
+              className="flex-1"
+            >
+              No
+            </Button>
+            <Button 
+              variant="default"
+              onClick={() => handleHotDealResponse(true)}
+              className="flex-1 bg-[#2E1813] hover:bg-[#2E1813]/90"
+            >
+              Yes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
