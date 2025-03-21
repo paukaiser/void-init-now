@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Save, Download, Printer, Check, Home } from 'lucide-react';
@@ -867,7 +868,6 @@ const CreateContract: React.FC = () => {
         
         <div className="hidden">
           <div ref={contractRef} className="bg-white p-8 max-w-[210mm]" style={{ fontFamily: 'Arial, sans-serif' }}>
-            
             <div className="flex justify-between items-start mb-6">
               <div>
                 <h1 className="text-3xl font-bold" style={{ color: '#e19277' }}>allO</h1>
@@ -887,6 +887,11 @@ const CreateContract: React.FC = () => {
               <p><strong>Email:</strong> {form.getValues().email}</p>
               <p><strong>Mobile:</strong> {countryCode} {form.getValues().mobile}</p>
             </div>
-            
-            <div className="border p-3 mb-6">
-              <p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateContract;
