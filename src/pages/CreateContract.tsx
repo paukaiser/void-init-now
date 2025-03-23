@@ -1,13 +1,14 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save, Download, Printer, Check, Home } from 'lucide-react';
+import { ChevronLeft, Save, Download, Printer, Check, Home, Mail } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
@@ -23,6 +24,7 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from 'react-signature-canvas';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface PackageOption {
   name: string;
@@ -73,12 +75,16 @@ const CreateContract: React.FC = () => {
   const contractRef = useRef<HTMLDivElement>(null);
   const signatureRef = useRef<SignatureCanvas>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [selectedExtras, setSelectedExtras] = useState<string[]>([]);
   const [selectedPayment, setSelectedPayment] = useState<string>("");
   const [countryCode, setCountryCode] = useState("+49");
   const [onboardingType, setOnboardingType] = useState<string>("");
-
+  const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
+  const [promotionMonths, setPromotionMonths] = useState(3);
+  const [editingPrices, setEditingPrices] = useState(false);
+  
   // Create form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,9 +104,10 @@ const CreateContract: React.FC = () => {
       signerName: "",
       signatureDate: format(new Date(), 'yyyy-MM-dd'),
     },
+    mode: "onChange", // This enables real-time validation
   });
   
-  const packages: PackageOption[] = [
+  const [packages, setPackages] = useState<PackageOption[]>([
     {
       name: "S",
       originalPrice: "129€",
@@ -120,7 +127,16 @@ const CreateContract: React.FC = () => {
       discountedPrice: "159€",
       features: ["TSE Kasse", "unbegrenzte Lizenzen", "5 kostenlose Extras"]
     }
-  ];
+  ]);
+  
+  const editPackagePrice = (packageIndex: number, priceType: 'originalPrice' | 'discountedPrice', newPrice: string) => {
+    const updatedPackages = [...packages];
+    updatedPackages[packageIndex] = {
+      ...updatedPackages[packageIndex],
+      [priceType]: newPrice
+    };
+    setPackages(updatedPackages);
+  };
   
   const extras: ExtraOption[] = [
     { id: "reservierung", name: "Reservierung" },
@@ -156,6 +172,17 @@ const CreateContract: React.FC = () => {
     fotoshooting: false
   });
   
+  const [amexCheckbox, setAmexCheckbox] = useState(false);
+  
+  // Make support options not adjustable
+  useEffect(() => {
+    setServicesOptions(prev => ({
+      ...prev,
+      support: true,
+      steuerberater: true
+    }));
+  }, []);
+  
   const handleExtraToggle = (extraId: string) => {
     setSelectedExtras(prev => 
       prev.includes(extraId)
@@ -172,10 +199,13 @@ const CreateContract: React.FC = () => {
   };
   
   const handleServicesToggle = (option: keyof typeof servicesOptions) => {
-    setServicesOptions(prev => ({
-      ...prev,
-      [option]: !prev[option]
-    }));
+    // Only allow toggling website and fotoshooting
+    if (option === 'website' || option === 'fotoshooting') {
+      setServicesOptions(prev => ({
+        ...prev,
+        [option]: !prev[option]
+      }));
+    }
   };
   
   const handleSelfOrderToggle = (option: keyof typeof selfOrderOptions) => {
@@ -208,9 +238,34 @@ const CreateContract: React.FC = () => {
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
     
-    html2pdf().set(opt).from(element).save();
-    
-    toast.success("Contract PDF generated successfully");
+    // Instead of saving directly, get the output as blob
+    html2pdf().set(opt).from(element).toPdf().output('datauristring').then((dataUrl: string) => {
+      setPdfDataUrl(dataUrl);
+      setShowPreviewDialog(true);
+    });
+  };
+  
+  const printPDF = () => {
+    if (pdfDataUrl) {
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = pdfDataUrl;
+      document.body.appendChild(iframe);
+      
+      iframe.onload = () => {
+        iframe.contentWindow?.print();
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      };
+    }
+  };
+  
+  const sendPdfViaEmail = () => {
+    // In a real app, this would send the PDF via email
+    toast.success("Contract PDF sent via email");
+    setShowPreviewDialog(false);
+    setShowSuccessDialog(true);
   };
   
   const clearSignature = () => {
@@ -248,7 +303,7 @@ const CreateContract: React.FC = () => {
     console.log("Services options:", servicesOptions);
     console.log("Onboarding type:", onboardingType);
     
-    setShowSuccessDialog(true);
+    generatePDF();
   };
   
   const currentPackage = packages.find(p => p.name === selectedPackage);
@@ -325,7 +380,11 @@ const CreateContract: React.FC = () => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input type="email" placeholder="Email Adresse" {...field} />
+                              <Input 
+                                type="email" 
+                                placeholder="Email Adresse" 
+                                {...field} 
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -340,9 +399,57 @@ const CreateContract: React.FC = () => {
                             <FormLabel>Mobile</FormLabel>
                             <FormControl>
                               <div className="flex">
-                                <span className="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-input rounded-l-md">
-                                  {countryCode}
-                                </span>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <span className="inline-flex items-center px-3 bg-gray-100 border border-r-0 border-input rounded-l-md cursor-pointer hover:bg-gray-200">
+                                      {countryCode}
+                                    </span>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-48 p-0">
+                                    <div className="grid grid-cols-1 gap-1 p-2">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setCountryCode("+49")}
+                                        className="justify-start"
+                                      >
+                                        +49 (Germany)
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setCountryCode("+43")}
+                                        className="justify-start"
+                                      >
+                                        +43 (Austria)
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setCountryCode("+41")}
+                                        className="justify-start"
+                                      >
+                                        +41 (Switzerland)
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setCountryCode("+33")}
+                                        className="justify-start"
+                                      >
+                                        +33 (France)
+                                      </Button>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => setCountryCode("+31")}
+                                        className="justify-start"
+                                      >
+                                        +31 (Netherlands)
+                                      </Button>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                                 <Input 
                                   className="rounded-l-none"
                                   placeholder="Mobilnummer" 
@@ -379,11 +486,34 @@ const CreateContract: React.FC = () => {
                 </div>
                 
                 <div className="bg-black text-amber-400 py-3 px-4 rounded-md text-center font-medium mb-4">
-                  Wichtig: nur 9,9€/Monat in den ersten 3 Monaten!
+                  Wichtig: nur 9,9€/Monat in den ersten{" "}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <span className="underline cursor-pointer">{promotionMonths}</span>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-40 p-2">
+                      <div className="flex flex-col space-y-1">
+                        <span className="text-sm font-medium mb-1">Anzahl der Monate:</span>
+                        <div className="flex justify-around">
+                          {[3, 6, 9, 12].map(month => (
+                            <Button 
+                              key={month}
+                              variant={promotionMonths === month ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setPromotionMonths(month)}
+                            >
+                              {month}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  {" "}Monaten!
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {packages.map((pkg) => (
+                  {packages.map((pkg, idx) => (
                     <div 
                       key={pkg.name}
                       className={`relative border rounded-md p-4 text-center ${selectedPackage === pkg.name ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
@@ -411,8 +541,52 @@ const CreateContract: React.FC = () => {
                       </div>
                       
                       <div className="flex items-baseline justify-center space-x-2">
-                        <span className="line-through text-gray-500">{pkg.originalPrice}</span>
-                        <span className="font-bold">{pkg.discountedPrice}</span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <span className="line-through text-gray-500 cursor-pointer">{pkg.originalPrice}</span>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`original-price-${idx}`}>Original Preis</Label>
+                              <Input 
+                                id={`original-price-${idx}`}
+                                value={pkg.originalPrice.replace('€', '')} 
+                                onChange={(e) => editPackagePrice(idx, 'originalPrice', `${e.target.value}€`)}
+                                className="mb-2"
+                              />
+                              <Button 
+                                size="sm" 
+                                onClick={() => setEditingPrices(false)}
+                                className="w-full"
+                              >
+                                Speichern
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <span className="font-bold cursor-pointer">{pkg.discountedPrice}</span>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-48 p-2">
+                            <div className="space-y-2">
+                              <Label htmlFor={`discounted-price-${idx}`}>Rabattierter Preis</Label>
+                              <Input 
+                                id={`discounted-price-${idx}`}
+                                value={pkg.discountedPrice.replace('€', '')} 
+                                onChange={(e) => editPackagePrice(idx, 'discountedPrice', `${e.target.value}€`)}
+                                className="mb-2"
+                              />
+                              <Button 
+                                size="sm" 
+                                onClick={() => setEditingPrices(false)}
+                                className="w-full"
+                              >
+                                Speichern
+                              </Button>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <span className="text-sm text-gray-600">/Monat</span>
                       </div>
                       
@@ -447,16 +621,20 @@ const CreateContract: React.FC = () => {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-100 p-4 rounded-md">
-                  <div className="border rounded-md p-3 flex items-center space-x-3 bg-white">
-                    <Checkbox 
-                      id="payment-option1"
-                      checked={selectedPayment === "option1"}
-                      onCheckedChange={() => setSelectedPayment(selectedPayment === "option1" ? "" : "option1")}
-                    />
-                    <Label htmlFor="payment-option1">0.79% + 0.08€</Label>
+                  <div className="border rounded-md p-3 flex flex-col bg-white">
+                    <div className="font-medium text-sm text-gray-600 mb-2 text-center">Einheitstarif</div>
+                    <div className="flex items-center space-x-3">
+                      <Checkbox 
+                        id="payment-option1"
+                        checked={selectedPayment === "option1"}
+                        onCheckedChange={() => setSelectedPayment(selectedPayment === "option1" ? "" : "option1")}
+                      />
+                      <Label htmlFor="payment-option1">0.79% + 0.08€</Label>
+                    </div>
                   </div>
                   
                   <div className="border rounded-md p-3 bg-white">
+                    <div className="font-medium text-sm text-gray-600 mb-2 text-center">Differenzierter Tarif</div>
                     <div className="flex items-center space-x-3 mb-1">
                       <Checkbox 
                         id="payment-option2"
@@ -469,11 +647,15 @@ const CreateContract: React.FC = () => {
                     <div className="pl-6 text-sm">Kredit: 0.99% + 0.08€</div>
                   </div>
                   
-                  <div className="md:col-span-2 flex justify-center items-center space-x-2 mt-2">
-                    <Checkbox id="cardTypes" checked={true} disabled />
+                  <div className="md:col-span-2 flex justify-center items-center space-x-2 mt-1">
+                    <Checkbox 
+                      id="cardTypes" 
+                      checked={amexCheckbox} 
+                      onCheckedChange={() => setAmexCheckbox(!amexCheckbox)}
+                    />
                     <Label htmlFor="cardTypes" className="text-sm">Gültig auch für Amex, Firmenkarten & internationale Karten</Label>
                   </div>
-                  <div className="md:col-span-2 text-xs text-gray-500 text-center">
+                  <div className="md:col-span-2 text-xs text-gray-500 text-center -mt-1">
                     *die Gebühren werden auf den Endkunden umgelegt*
                   </div>
                 </div>
@@ -616,7 +798,7 @@ const CreateContract: React.FC = () => {
                     <Checkbox 
                       id="support"
                       checked={servicesOptions.support}
-                      onCheckedChange={() => handleServicesToggle("support")}
+                      disabled={true}
                     />
                     <Label htmlFor="support">Kostenloser Support (11Uhr - min.23Uhr)</Label>
                   </div>
@@ -634,7 +816,7 @@ const CreateContract: React.FC = () => {
                     <Checkbox 
                       id="steuerberater"
                       checked={servicesOptions.steuerberater}
-                      onCheckedChange={() => handleServicesToggle("steuerberater")}
+                      disabled={true}
                     />
                     <Label htmlFor="steuerberater">Kostenlose Steuerberater-Support</Label>
                   </div>
@@ -844,17 +1026,7 @@ const CreateContract: React.FC = () => {
                 </div>
               </div>
               
-              <div className="flex justify-between pt-6">
-                <Button 
-                  type="button" 
-                  variant="outline"
-                  className="flex items-center" 
-                  onClick={generatePDF}
-                >
-                  <Download size={16} className="mr-2" />
-                  Download PDF
-                </Button>
-                
+              <div className="flex justify-end pt-6">
                 <Button 
                   type="submit"
                   className="allo-button"
@@ -890,6 +1062,60 @@ const CreateContract: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Contract Preview</DialogTitle>
+            <DialogDescription>
+              Your contract has been successfully created. You can now print it or send it via email.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pdfDataUrl && (
+            <div className="max-h-[60vh] overflow-auto my-4 border border-gray-200 rounded">
+              <iframe src={pdfDataUrl} className="w-full h-[500px]" />
+            </div>
+          )}
+          
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
+            <Button variant="outline" onClick={printPDF} className="flex items-center gap-2">
+              <Printer className="h-4 w-4" />
+              Print PDF
+            </Button>
+            <Button onClick={sendPdfViaEmail} className="flex items-center gap-2">
+              <Mail className="h-4 w-4" />
+              Send PDF via Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Contract Created</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center py-4">
+            <div className="mb-4 bg-green-100 p-3 rounded-full">
+              <Check className="h-6 w-6 text-green-600" />
+            </div>
+            <p className="text-center mb-4">
+              The contract has been successfully created and sent.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => navigate('/')}
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Return to Home
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
