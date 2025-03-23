@@ -23,7 +23,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const END_HOUR = 22; // 22:00
   
   const getWeekNumber = (date: Date) => {
-    return getWeek(date);
+    // Use Monday as first day of week (1) instead of Sunday (0)
+    const mondayStartWeek = startOfWeek(date, { weekStartsOn: 1 });
+    return getWeek(date, { weekStartsOn: 1 });
   };
   
   // Update current time every minute

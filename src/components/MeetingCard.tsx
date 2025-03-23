@@ -68,7 +68,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
               {isMobile ? (
                 <Popover>
                   <PopoverTrigger>
-                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#F97316] mr-1" />
+                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#FF6B00] mr-1" />
                   </PopoverTrigger>
                   <PopoverContent className="w-72 p-3">
                     <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
@@ -77,7 +77,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
               ) : (
                 <HoverCard>
                   <HoverCardTrigger>
-                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#F97316] mr-1" />
+                    <AlertTriangle size={isCalendarView ? 12 : 14} className="text-[#FF6B00] mr-1" />
                   </HoverCardTrigger>
                   <HoverCardContent className="w-72 p-3">
                     <p className="text-sm">This meeting is scheduled but has already passed. Please update the meeting outcome.</p>
@@ -114,7 +114,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
-    const cardOpacity = isCompleted ? 'opacity-50' : (isPastScheduled ? 'opacity-60' : 'opacity-100');
+    const cardOpacity = isCompleted ? 'opacity-25' : (isPastScheduled ? 'opacity-25' : 'opacity-100');
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
     const meetingBgColor = isPastScheduled ? 'bg-[#FF8769]/60' : 'bg-[#FF8769]/100';
     
@@ -132,7 +132,9 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         <div className="p-2 flex flex-col h-full overflow-hidden">
           <div className="flex justify-between items-start mb-1">
             <div className="text-xs font-bold truncate">{meeting.title}</div>
-            {renderStatusBadge()}
+            <div className="opacity-100">
+              {renderStatusBadge()}
+            </div>
           </div>
           <div className="mt-auto text-xs text-allo-muted flex flex-wrap gap-2">
             <div className="flex items-center gap-1 truncate">
@@ -154,7 +156,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     <div 
       className={cn(
         "allo-card hover-lift",
-        isCompleted ? "opacity-50 cursor-default" : "cursor-pointer"
+        isCompleted ? "opacity-25 cursor-default" : "cursor-pointer"
       )} 
       onClick={handleClick}
     >
@@ -166,7 +168,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         {isPastScheduled && (
           <div className="bg-yellow-100 text-yellow-800 text-xs p-2 rounded">
             <div className="flex items-center gap-1">
-              <AlertTriangle size={14} className="text-[#F97316]" />
+              <AlertTriangle size={14} className="text-[#FF6B00]" />
               <span>This meeting is in the past and needs attention</span>
             </div>
           </div>

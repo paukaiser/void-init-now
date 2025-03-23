@@ -4,11 +4,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const MeetingOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showHotDealDialog, setShowHotDealDialog] = useState(false);
+  const isMobile = useIsMobile();
   
   const handleOutcome = (outcome: 'positive' | 'negative' | 'follow-up') => {
     // In a real app, this would call the Hubspot API to update the meeting outcome
