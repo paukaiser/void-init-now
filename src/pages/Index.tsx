@@ -1,12 +1,15 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, FileText } from 'lucide-react';
+import { CalendarDays, FileText, Inbox } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import UserProfile from '@/components/UserProfile';
+import NotificationBadge from '@/components/NotificationBadge';
+import { useTasks } from '@/hooks/useTasks';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
+  const { unreadCount } = useTasks();
   
   return (
     <div className="allo-page">
@@ -25,6 +28,15 @@ const Index: React.FC = () => {
             >
               <CalendarDays size={20} className="mr-2" />
               My Meetings
+            </Button>
+            
+            <Button 
+              className="allo-button flex items-center justify-center h-16 text-base relative"
+              onClick={() => navigate('/inbox')}
+            >
+              <Inbox size={20} className="mr-2" />
+              My Inbox
+              <NotificationBadge count={unreadCount} />
             </Button>
             
             <Button 
