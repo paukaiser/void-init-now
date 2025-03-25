@@ -5,8 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Building } from 'lucide-react';
 import { toast } from "sonner";
+import { SalesRegion, Cuisine } from "@/types";
 
 export interface Company {
   id: string;
@@ -16,8 +18,8 @@ export interface Company {
   city?: string;
   state?: string;
   postalCode?: string;
-  salesRegion?: string;
-  cuisine?: string;
+  salesRegion?: SalesRegion | string;
+  cuisine?: Cuisine | string;
 }
 
 interface CompanySearchProps {
@@ -25,6 +27,65 @@ interface CompanySearchProps {
   value?: Company | null;
   required?: boolean;
 }
+
+const SALES_REGIONS: SalesRegion[] = [
+  "Augsburg",
+  "Berlin",
+  "Bielefeld",
+  "Bonn",
+  "Dortmund",
+  "Dresden",
+  "Duisburg",
+  "Düsseldorf",
+  "Frankfurt",
+  "Hamburg",
+  "Hannover",
+  "Köln",
+  "Landshut",
+  "Leipzig",
+  "Mannheim",
+  "München",
+  "München Area",
+  "Nürnberg",
+  "Other",
+  "Regensburg",
+  "Stuttgart"
+];
+
+const CUISINES: Cuisine[] = [
+  "African",
+  "Burger",
+  "Cafe",
+  "Chinese",
+  "Chinese - All you can eat",
+  "Chinese - Hotpot",
+  "Chinese - Malatang",
+  "Döner",
+  "Fine Dining",
+  "French",
+  "German",
+  "German - Wirtshaus",
+  "Greek",
+  "Healthy/Salad/Bowl",
+  "Indian",
+  "Italian",
+  "Japanese",
+  "Japanese - BBQ",
+  "Japanese - Buffet",
+  "Japanese - Sushi",
+  "Korean",
+  "Korean - BBQ",
+  "Mediterranean",
+  "Mexican",
+  "Middle-Eastern",
+  "Other",
+  "Russian",
+  "Steakhouse",
+  "Tapas",
+  "Thai",
+  "Turkish",
+  "Vietnamese"
+];
 
 const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -131,6 +192,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   
   const handleNewCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    setNewCompany(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  const handleSelectChange = (name: keyof Omit<Company, 'id' | 'address'>, value: string) => {
     setNewCompany(prev => ({
       ...prev,
       [name]: value
@@ -316,22 +384,40 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="new-company-region">Sales Region</Label>
-                  <Input 
-                    id="new-company-region"
-                    name="salesRegion"
-                    value={newCompany.salesRegion}
-                    onChange={handleNewCompanyChange}
-                  />
+                  <Select 
+                    value={newCompany.salesRegion?.toString() || ""} 
+                    onValueChange={(value) => handleSelectChange('salesRegion', value)}
+                  >
+                    <SelectTrigger id="new-company-region" className="w-full">
+                      <SelectValue placeholder="Select a region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SALES_REGIONS.map((region) => (
+                        <SelectItem key={region} value={region}>
+                          {region}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="new-company-cuisine">Cuisine</Label>
-                  <Input 
-                    id="new-company-cuisine"
-                    name="cuisine"
-                    value={newCompany.cuisine}
-                    onChange={handleNewCompanyChange}
-                  />
+                  <Select
+                    value={newCompany.cuisine?.toString() || ""}
+                    onValueChange={(value) => handleSelectChange('cuisine', value)}
+                  >
+                    <SelectTrigger id="new-company-cuisine" className="w-full">
+                      <SelectValue placeholder="Select a cuisine" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CUISINES.map((cuisine) => (
+                        <SelectItem key={cuisine} value={cuisine}>
+                          {cuisine}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>

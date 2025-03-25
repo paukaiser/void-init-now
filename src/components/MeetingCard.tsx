@@ -114,13 +114,13 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
-    const cardOpacity = isCompleted ? 'opacity-25' : (isPastScheduled ? 'opacity-25' : 'opacity-100');
+    // Removed opacity for past meetings
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-    const meetingBgColor = isPastScheduled ? 'bg-[#FF8769]/60' : 'bg-[#FF8769]/100';
+    const meetingBgColor = 'bg-[#FF8769]/100';
     
     return (
       <div 
-        className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardOpacity} ${cardCursor}`}
+        className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardCursor}`}
         style={{ 
           top: `${startPercentage}%`, 
           height: `${durationPercentage}%`,
@@ -132,7 +132,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         <div className="p-2 flex flex-col h-full overflow-hidden">
           <div className="flex justify-between items-start mb-1">
             <div className="text-xs font-bold truncate">{meeting.title}</div>
-            <div className="opacity-100">
+            <div>
               {renderStatusBadge()}
             </div>
           </div>
@@ -151,12 +151,12 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     );
   }
   
-  // Regular card view
+  // Regular card view - removed opacity classes
   return (
     <div 
       className={cn(
         "allo-card hover-lift",
-        isCompleted ? "opacity-25 cursor-default" : "cursor-pointer"
+        isCompleted ? "cursor-default" : "cursor-pointer"
       )} 
       onClick={handleClick}
     >

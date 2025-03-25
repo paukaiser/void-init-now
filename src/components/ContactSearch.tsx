@@ -251,13 +251,13 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
     e.preventDefault();
     
     // Validate form
-    if (!newContact.firstName || !newContact.lastName) {
+    if (!newContact.firstName || !newContact.lastName || !newContact.email) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    // Validate email format if provided
-    if (newContact.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContact.email)) {
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContact.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
@@ -402,7 +402,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="new-contact-email">Email Address</Label>
+                <Label htmlFor="new-contact-email">Email Address <span className="text-red-500">*</span></Label>
                 <Input 
                   id="new-contact-email"
                   name="email"
@@ -410,6 +410,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
                   value={newContact.email}
                   onChange={handleNewContactChange}
                   placeholder="example@company.com"
+                  required
                 />
               </div>
               
