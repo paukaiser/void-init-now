@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import CalendarView from '@/components/CalendarView';
 
@@ -10,19 +10,19 @@ const Meetings: React.FC = () => {
   const userId = "current-user"; // In a real app, you'd get this from auth context
   
   return (
-    <div className="allo-page">
-      <div className="w-full max-w-5xl mx-auto py-4">
+    <div className="w-full max-w-5xl mx-auto">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">My Meetings</h2>
         <Button 
-          variant="outline" 
-          className="mb-6"
-          onClick={() => navigate('/')}
+          className="allo-button"
+          onClick={() => navigate('/add-meeting')}
         >
-          <ChevronLeft size={16} className="mr-1" />
-          Back to Home
+          <Plus size={16} className="mr-1" />
+          Add Meeting
         </Button>
-        
-        <CalendarView userId={userId} />
       </div>
+      
+      <CalendarView userId={userId} />
     </div>
   );
 };

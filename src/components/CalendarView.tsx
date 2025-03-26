@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, subDays } from 'date-fns';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import MeetingCard, { Meeting } from './MeetingCard';
-import { useNavigate } from 'react-router-dom';
 
 interface CalendarViewProps {
   userId: string;
@@ -17,18 +15,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   
   const calendarRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   
   const START_HOUR = 8; // 08:00
   const END_HOUR = 22; // 22:00
   
   const getWeekNumber = (date: Date) => {
-    // Use Monday as first day of week (1) instead of Sunday (0)
     const mondayStartWeek = startOfWeek(date, { weekStartsOn: 1 });
     return getWeek(date, { weekStartsOn: 1 });
   };
   
-  // Update current time every minute
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -41,75 +36,70 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     const fetchMeetings = async () => {
       setLoading(true);
       
-      // In a real app, you would fetch meetings from Hubspot API
-      // For now, we'll use mock data with the specific meeting times requested
-      setTimeout(() => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        // Set specific times as requested
-        const meetingTime1 = new Date(today);
-        meetingTime1.setHours(9, 0, 0);
-        
-        const meetingTime2 = new Date(today);
-        meetingTime2.setHours(11, 30, 0);
-        
-        const meetingTime3 = new Date(today);
-        meetingTime3.setHours(13, 45, 0);
-        
-        const meetingTime4 = new Date(today);
-        meetingTime4.setHours(16, 0, 0);
-        
-        const mockMeetings: Meeting[] = [
-          {
-            id: '1',
-            title: 'Product Demo',
-            contactName: 'Sarah Chen',
-            companyName: 'Acme Inc',
-            startTime: meetingTime1.toISOString(),
-            endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(), // 1 hour
-            date: format(today, 'dd.MM.yyyy'),
-            type: 'sales meeting',
-            status: 'scheduled'
-          },
-          {
-            id: '2',
-            title: 'Contract Discussion',
-            contactName: 'Michael Rodriguez',
-            companyName: 'Global Tech',
-            startTime: meetingTime2.toISOString(),
-            endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(), // 40 minutes
-            date: format(today, 'dd.MM.yyyy'),
-            type: 'sales followup',
-            status: 'completed'
-          },
-          {
-            id: '3',
-            title: 'Initial Consultation',
-            contactName: 'David Park',
-            companyName: 'Innovate Solutions',
-            startTime: meetingTime3.toISOString(),
-            endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours
-            date: format(today, 'dd.MM.yyyy'),
-            type: 'sales meeting',
-            status: 'scheduled'
-          },
-          {
-            id: '4',
-            title: 'Product Roadmap',
-            contactName: 'Emma Watson',
-            companyName: 'Tech Forward',
-            startTime: meetingTime4.toISOString(),
-            endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(), // 75 minutes
-            date: format(today, 'dd.MM.yyyy'),
-            type: 'sales followup',
-            status: 'rescheduled'
-          }
-        ];
-        
-        setMeetings(mockMeetings);
-        setLoading(false);
-      }, 1000);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const meetingTime1 = new Date(today);
+      meetingTime1.setHours(9, 0, 0);
+      
+      const meetingTime2 = new Date(today);
+      meetingTime2.setHours(11, 30, 0);
+      
+      const meetingTime3 = new Date(today);
+      meetingTime3.setHours(13, 45, 0);
+      
+      const meetingTime4 = new Date(today);
+      meetingTime4.setHours(16, 0, 0);
+      
+      const mockMeetings: Meeting[] = [
+        {
+          id: '1',
+          title: 'Product Demo',
+          contactName: 'Sarah Chen',
+          companyName: 'Acme Inc',
+          startTime: meetingTime1.toISOString(),
+          endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales meeting',
+          status: 'scheduled'
+        },
+        {
+          id: '2',
+          title: 'Contract Discussion',
+          contactName: 'Michael Rodriguez',
+          companyName: 'Global Tech',
+          startTime: meetingTime2.toISOString(),
+          endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales followup',
+          status: 'completed'
+        },
+        {
+          id: '3',
+          title: 'Initial Consultation',
+          contactName: 'David Park',
+          companyName: 'Innovate Solutions',
+          startTime: meetingTime3.toISOString(),
+          endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales meeting',
+          status: 'scheduled'
+        },
+        {
+          id: '4',
+          title: 'Product Roadmap',
+          contactName: 'Emma Watson',
+          companyName: 'Tech Forward',
+          startTime: meetingTime4.toISOString(),
+          endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales followup',
+          status: 'rescheduled'
+        }
+      ];
+      
+      setMeetings(mockMeetings);
+      setLoading(false);
     };
     
     fetchMeetings();
@@ -121,10 +111,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   
   const handleNextDay = () => {
     setCurrentDate(prevDate => addDays(prevDate, 1));
-  };
-  
-  const handleAddMeeting = () => {
-    navigate('/add-meeting');
   };
   
   const timeToY = (time: Date): number => {
@@ -164,7 +150,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     const dayCells = [];
     const currentTimePosition = calculateCurrentTimePosition();
     
-    // Add hour grid lines
     for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
       dayCells.push(
         <div 
@@ -176,7 +161,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
         />
       );
       
-      // Add 30-minute grid lines
       if (hour < END_HOUR) {
         dayCells.push(
           <div 
@@ -190,7 +174,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       }
     }
     
-    // Add current time indicator if it's today and within visible hours
     if (isSameDay(currentDate, new Date()) && currentTimePosition > 0 && currentTimePosition < 100) {
       dayCells.push(
         <div 
@@ -201,7 +184,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
       );
     }
     
-    // Add meetings
     meetings.filter(meeting => {
       const meetingDate = new Date(meeting.startTime);
       return isSameDay(meetingDate, currentDate);
@@ -223,7 +205,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   return (
     <div className="w-full flex flex-col space-y-4 animate-fade-in">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">My Meetings</h2>
         <div className="flex items-center space-x-2">
           <Button variant="outline" onClick={handlePreviousDay}>
             <ChevronLeft size={16} />
@@ -264,14 +245,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
           </div>
         </div>
       </div>
-      
-      <Button 
-        className="allo-button mt-4 self-center"
-        onClick={handleAddMeeting}
-      >
-        <Plus size={16} className="mr-1" />
-        Add New Meeting
-      </Button>
     </div>
   );
 };

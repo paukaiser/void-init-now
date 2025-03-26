@@ -4,16 +4,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import CompanySearch, { Company } from '@/components/CompanySearch';
-import ContactSearch, { Contact } from '@/components/ContactSearch';
 
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
@@ -34,34 +32,11 @@ const AddMeeting: React.FC = () => {
   );
   
   const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
     isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
   );
-  const [title, setTitle] = useState(prefilledData.title || "");
   const [notes, setNotes] = useState(prefilledData.notes || "");
-  
-  // Auto generate meeting title when company, contact and meeting type are selected
-  useEffect(() => {
-    if (selectedCompany && meetingType) {
-      const meetingTypeLabel = meetingType === "sales meeting" ? "Meeting" : "Followup";
-      const newTitle = `allO x ${selectedCompany.name} - ${meetingTypeLabel}`;
-      setTitle(newTitle);
-    }
-  }, [selectedCompany, meetingType]);
-  
-  // Auto set end time to 1 hour after start time when start time is selected
-  useEffect(() => {
-    if (startTime) {
-      const [hours, minutes] = startTime.split(':').map(Number);
-      const endHour = hours + 1 >= 24 ? 23 : hours + 1;
-      const formattedEndHour = endHour.toString().padStart(2, '0');
-      const formattedEndMinute = minutes.toString().padStart(2, '0');
-      setEndTime(`${formattedEndHour}:${formattedEndMinute}`);
-    }
-  }, [startTime]);
   
   // For follow-up, we could fetch meeting details using the meetingId
   useEffect(() => {
@@ -76,17 +51,7 @@ const AddMeeting: React.FC = () => {
           address: '123 Main St, San Francisco, CA 94105'
         };
         
-        const mockContact: Contact = {
-          id: '1',
-          fullName: prefilledData.contactName || 'John Doe',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john.doe@sample.com',
-          companyId: '1'
-        };
-        
         setSelectedCompany(mockCompany);
-        setSelectedContact(mockContact);
         // Meeting type is already set to "sales followup" in the initial state
       }, 300);
     } else if (prefilledData.companyName) {
@@ -98,16 +63,6 @@ const AddMeeting: React.FC = () => {
       };
       
       setSelectedCompany(mockCompany);
-      
-      if (prefilledData.contactName) {
-        const mockContact: Contact = {
-          id: prefilledData.contactId || 'temp-id',
-          fullName: prefilledData.contactName,
-          companyId: mockCompany.id
-        };
-        
-        setSelectedContact(mockContact);
-      }
     }
   }, [isFollowUp, prefilledData]);
   
@@ -117,35 +72,48 @@ const AddMeeting: React.FC = () => {
       const startDate = new Date(prefilledData.preselectedStartTime);
       setStartTime(`${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`);
     }
-    
-    if (prefilledData.preselectedEndTime) {
-      const endDate = new Date(prefilledData.preselectedEndTime);
-      setEndTime(`${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`);
-    }
   }, [prefilledData]);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
-    if (!date || !startTime || !endTime) {
+    if (!date || !startTime) {
       toast.error("Please select date and time");
       return;
     }
     
-    if (!selectedCompany || !title) {
-      toast.error("Please fill in all required fields");
+    if (!selectedCompany) {
+      toast.error("Please select a company");
       return;
     }
     
-    // Check if meeting is in the past
+    // Generate meeting title based on company name and meeting type
+    const meetingTypeLabel = meetingType === "sales meeting" ? "Meeting" : "Followup";
+    const title = `allO x ${selectedCompany.name} - ${meetingTypeLabel}`;
+    
+    // Calculate end time (1 hour after start time)
     const meetingDate = new Date(date);
     const [startHour, startMinute] = startTime.split(':').map(Number);
     meetingDate.setHours(startHour, startMinute, 0, 0);
     
+    const endDate = new Date(meetingDate);
+    endDate.setHours(endDate.getHours() + 1);
+    const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
+    
     const isInPast = meetingDate < new Date();
     
     // In a real app, this would send data to Hubspot API
+    console.log("Meeting data:", {
+      title,
+      company: selectedCompany,
+      meetingType,
+      date: format(date, 'dd.MM.yyyy'),
+      startTime,
+      endTime,
+      notes
+    });
+    
     // The API call would differ based on whether the meeting is in the past or future
     if (isInPast) {
       // For past meetings, log as completed
@@ -168,10 +136,10 @@ const AddMeeting: React.FC = () => {
     navigate('/meetings');
   };
   
-  const generateTimeOptions = (isStartTime = true) => {
+  const generateTimeOptions = () => {
     const options = [];
     const startHour = 7; // 7 AM
-    const endHour = isStartTime ? 21 : 24; // 9 PM for start times, midnight for end times
+    const endHour = 21; // 9 PM
     
     for (let hour = startHour; hour < endHour; hour++) {
       // For half-hour increments (0 and 30 minutes)
@@ -224,59 +192,36 @@ const AddMeeting: React.FC = () => {
                     />
                   </div>
                   
-                  <div className="md:col-span-2">
-                    <ContactSearch 
-                      onSelect={setSelectedContact}
-                      value={selectedContact}
-                      selectedCompany={selectedCompany}
-                      disabled={!selectedCompany}
-                    />
-                  </div>
-                  
                   {!isFollowUp && (
-                    <div className="space-y-2">
-                      <Label htmlFor="meeting-type">Meeting Type <span className="text-red-500">*</span></Label>
-                      <Select 
-                        value={meetingType} 
+                    <div className="md:col-span-2 space-y-2">
+                      <Label>Meeting Type <span className="text-red-500">*</span></Label>
+                      <RadioGroup 
+                        defaultValue={meetingType}
                         onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
+                        className="flex flex-col space-y-1"
                       >
-                        <SelectTrigger id="meeting-type">
-                          <SelectValue placeholder="Select meeting type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sales meeting">Sales Meeting</SelectItem>
-                          <SelectItem value="sales followup">Sales Follow-up</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="sales meeting" id="meeting-type-sales" />
+                          <Label htmlFor="meeting-type-sales" className="cursor-pointer">Sales Meeting</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="sales followup" id="meeting-type-followup" />
+                          <Label htmlFor="meeting-type-followup" className="cursor-pointer">Sales Follow-up</Label>
+                        </div>
+                      </RadioGroup>
                     </div>
                   )}
                   
                   {isFollowUp && (
                     <div className="space-y-2">
-                      <Label htmlFor="meeting-type">Meeting Type</Label>
-                      <Input 
-                        id="meeting-type" 
-                        value="Sales Follow-up" 
-                        readOnly
-                        className="bg-gray-50"
-                      />
+                      <Label>Meeting Type</Label>
+                      <div className="text-sm bg-gray-50 border rounded p-2">Sales Follow-up</div>
                     </div>
                   )}
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Meeting Title <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="title" 
-                      placeholder="Enter meeting title" 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
-                    />
-                  </div>
                 </>
               )}
               
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label>Date <span className="text-red-500">*</span></Label>
                 <Popover>
                   <PopoverTrigger asChild>
@@ -303,34 +248,19 @@ const AddMeeting: React.FC = () => {
                 </Popover>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="start-time">Start Time <span className="text-red-500">*</span></Label>
-                  <select
-                    id="start-time"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>Select time</option>
-                    {generateTimeOptions(true)}
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="end-time">End Time <span className="text-red-500">*</span></Label>
-                  <select
-                    id="end-time"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    required
-                  >
-                    <option value="" disabled>Select time</option>
-                    {generateTimeOptions(false)}
-                  </select>
-                </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="start-time">Start Time <span className="text-red-500">*</span></Label>
+                <select
+                  id="start-time"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  required
+                >
+                  <option value="" disabled>Select time</option>
+                  {generateTimeOptions()}
+                </select>
+                <p className="text-xs text-muted-foreground">Meeting will be scheduled for 1 hour</p>
               </div>
               
               <div className="md:col-span-2 space-y-2">

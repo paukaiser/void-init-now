@@ -1,69 +1,41 @@
 
-import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import React from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-interface UserInfo {
-  name: string;
-  email: string;
-  avatarUrl?: string;
+interface UserProfileProps {
+  small?: boolean;
 }
 
-const UserProfile: React.FC = () => {
-  const [user, setUser] = useState<UserInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const location = useLocation();
-
-  useEffect(() => {
-    // In a real app, you would fetch this information from your API
-    // For now, we'll extract it from the URL or use mock data
-    const pathSegments = location.pathname.split('/');
-    const userSlug = pathSegments.length > 1 ? pathSegments[1] : '';
-    
-    // Mock data - in reality would come from API
-    setTimeout(() => {
-      if (userSlug) {
-        // Try to decode name from slug
-        const decodedName = decodeURIComponent(userSlug.replace(/-/g, ' '));
-        setUser({
-          name: decodedName || 'Alex Johnson',
-          email: `${decodedName.toLowerCase().replace(/\s/g, '.')}@allo.com` || 'alex.johnson@allo.com',
-          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=' + encodeURIComponent(decodedName)
-        });
-      } else {
-        // Default mock user if no slug
-        setUser({
-          name: 'Alex Johnson',
-          email: 'alex.johnson@allo.com',
-          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=Alex'
-        });
-      }
-      setLoading(false);
-    }, 600); // Simulating API delay
-  }, [location]);
-
-  if (loading) {
+const UserProfile: React.FC<UserProfileProps> = ({ small = false }) => {
+  // In a real app, this would come from authentication
+  const user = {
+    name: "Alex Johnson",
+    role: "Sales Representative",
+    avatar: "/placeholder.svg" // Using placeholder as avatar
+  };
+  
+  if (small) {
     return (
-      <div className="flex flex-col items-center justify-center space-y-3">
-        <div className="w-20 h-20 rounded-full bg-gray-200 animate-pulse"></div>
-        <div className="h-5 w-40 bg-gray-200 rounded animate-pulse"></div>
-        <div className="h-4 w-52 bg-gray-200 rounded animate-pulse"></div>
+      <div className="flex items-center gap-2">
+        <Avatar className="h-8 w-8">
+          <AvatarImage src={user.avatar} alt={user.name} />
+          <AvatarFallback>AJ</AvatarFallback>
+        </Avatar>
+        <span className="text-sm font-medium">{user.name}</span>
       </div>
     );
   }
-
-  if (!user) return null;
-
+  
   return (
-    <div className="flex flex-col items-center justify-center space-y-3 transition-all duration-500 ease-out transform animate-fade-in">
-      <Avatar className="w-20 h-20 border-2 border-white shadow-lg transition-all duration-300 hover:scale-105">
-        <AvatarImage src={user.avatarUrl} alt={user.name} />
-        <AvatarFallback className="bg-allo-primary text-white text-lg">
-          {user.name.split(' ').map(name => name[0]).join('')}
-        </AvatarFallback>
+    <div className="flex items-center space-x-4 p-4 bg-white/90 rounded-lg border border-gray-200 shadow-sm">
+      <Avatar className="h-12 w-12">
+        <AvatarImage src={user.avatar} alt={user.name} />
+        <AvatarFallback>AJ</AvatarFallback>
       </Avatar>
-      <h2 className="text-xl font-semibold tracking-tight animate-slide-up">{user.name}</h2>
-      <p className="text-allo-muted text-sm animate-slide-up opacity-80">{user.email}</p>
+      <div>
+        <p className="text-base font-medium">{user.name}</p>
+        <p className="text-sm text-muted-foreground">{user.role}</p>
+      </div>
     </div>
   );
 };
