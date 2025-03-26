@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { format, addDays, isSameDay, parseISO, startOfWeek, subDays } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, startOfWeek, subDays, getWeek } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import MeetingCard, { Meeting } from './MeetingCard';
