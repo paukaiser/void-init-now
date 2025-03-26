@@ -55,7 +55,7 @@ const AddMeeting: React.FC = () => {
         // Meeting type is already set to "sales followup" in the initial state
       }, 300);
     } else if (prefilledData.companyName) {
-      // This is for the case when a meeting was canceled and we're creating a new one
+      // This is for the case when a task was clicked and we're creating a new meeting
       const mockCompany: Company = {
         id: prefilledData.companyId || 'temp-id',
         name: prefilledData.companyName,
@@ -159,6 +159,9 @@ const AddMeeting: React.FC = () => {
     return options;
   };
   
+  // Check if we're coming from a task (company name is already provided and forced)
+  const comingFromTask = prefilledData.companyName && !isRescheduling && !isFollowUp;
+  
   return (
     <div className="allo-page">
       <div className="w-full max-w-3xl mx-auto py-4">
@@ -182,7 +185,7 @@ const AddMeeting: React.FC = () => {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {!isRescheduling && (
+              {!isRescheduling && !comingFromTask && (
                 <>
                   <div className="md:col-span-2">
                     <CompanySearch 
@@ -192,7 +195,7 @@ const AddMeeting: React.FC = () => {
                     />
                   </div>
                   
-                  {!isFollowUp && (
+                  {!isFollowUp && !comingFromTask && (
                     <div className="md:col-span-2 space-y-2">
                       <Label>Meeting Type <span className="text-red-500">*</span></Label>
                       <RadioGroup 
@@ -211,14 +214,26 @@ const AddMeeting: React.FC = () => {
                       </RadioGroup>
                     </div>
                   )}
-                  
-                  {isFollowUp && (
-                    <div className="space-y-2">
-                      <Label>Meeting Type</Label>
-                      <div className="text-sm bg-gray-50 border rounded p-2">Sales Follow-up</div>
-                    </div>
-                  )}
                 </>
+              )}
+              
+              {comingFromTask && selectedCompany && (
+                <div className="md:col-span-2">
+                  <div className="border rounded-md p-3 bg-gray-50">
+                    <Label className="block mb-1 text-sm">Company</Label>
+                    <p className="font-medium">{selectedCompany.name}</p>
+                    {selectedCompany.address && (
+                      <p className="text-sm text-muted-foreground">{selectedCompany.address}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              
+              {isFollowUp && (
+                <div className="space-y-2">
+                  <Label>Meeting Type</Label>
+                  <div className="text-sm bg-gray-50 border rounded p-2">Sales Follow-up</div>
+                </div>
               )}
               
               <div className="space-y-2 md:col-span-2">

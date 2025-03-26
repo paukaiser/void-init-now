@@ -4,7 +4,11 @@ import TaskCard from '@/components/TaskCard';
 import { useTasks } from '@/hooks/useTasks';
 
 const Inbox: React.FC = () => {
-  const { tasks } = useTasks();
+  const { tasks, markAsRead } = useTasks();
+  
+  const handleTaskClick = (taskId: string) => {
+    markAsRead(taskId);
+  };
   
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -13,7 +17,11 @@ const Inbox: React.FC = () => {
       <div className="space-y-4">
         {tasks.length > 0 ? (
           tasks.map(task => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard 
+              key={task.id} 
+              task={task}
+              onClick={() => handleTaskClick(task.id)}
+            />
           ))
         ) : (
           <p className="text-center py-10 text-muted-foreground">
