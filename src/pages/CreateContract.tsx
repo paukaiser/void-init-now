@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Save, Download, Printer, Check, Home, Mail } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { ChevronLeft, Save, Download, Printer, Check, Home, Mail, Plus, Minus } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +25,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from 'react-signature-canvas';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface PackageOption {
   name: string;
@@ -47,6 +49,12 @@ interface PaymentOption {
     fee: string;
     type?: string;
   }
+}
+
+interface FreeHardwareItem {
+  id: string;
+  name: string;
+  quantity: number;
 }
 
 // Form validation schema
@@ -72,6 +80,7 @@ const formSchema = z.object({
 
 const CreateContract: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const contractRef = useRef<HTMLDivElement>(null);
   const signatureRef = useRef<SignatureCanvas>(null);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
@@ -84,6 +93,12 @@ const CreateContract: React.FC = () => {
   const [pdfDataUrl, setPdfDataUrl] = useState<string | null>(null);
   const [promotionMonths, setPromotionMonths] = useState(3);
   const [editingPrices, setEditingPrices] = useState(false);
+  const [additionalHardwareItem, setAdditionalHardwareItem] = useState<string>("");
+  const [showAdditionalHardware, setShowAdditionalHardware] = useState(false);
+  const [additionalHardwareQuantity, setAdditionalHardwareQuantity] = useState(1);
+  
+  // Get username from location state
+  const username = location.state?.username || "";
   
   // Create form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -94,7 +109,7 @@ const CreateContract: React.FC = () => {
       contactPerson: "",
       email: "",
       mobile: "",
-      alloBeratername: "",
+      alloBeratername: username,
       expectedCardVolume: "",
       remarks: "",
       accountHolder: "",
@@ -106,6 +121,26 @@ const CreateContract: React.FC = () => {
     },
     mode: "onChange", // This enables real-time validation
   });
+  
+  // Watch form fields for auto-fill
+  const contactPerson = form.watch('contactPerson');
+  const address = form.watch('address');
+  const expectedCardVolume = form.watch('expectedCardVolume');
+  
+  // Update SEPA fields when contact person or address changes
+  useEffect(() => {
+    if (contactPerson && !form.getValues('accountHolder')) {
+      form.setValue('accountHolder', contactPerson);
+    }
+    
+    if (address && !form.getValues('accountAddress')) {
+      form.setValue('accountAddress', address);
+    }
+    
+    if (contactPerson && !form.getValues('signerName')) {
+      form.setValue('signerName', contactPerson);
+    }
+  }, [contactPerson, address, form]);
   
   const [packages, setPackages] = useState<PackageOption[]>([
     {
@@ -150,26 +185,37 @@ const CreateContract: React.FC = () => {
   ];
   
   const [selfOrderOptions, setSelOrderOptions] = useState({
+    tabletOrdering: false,
+    tabletOrderingQuantity: 1,
     kiosk: false,
     kioskQuantity: 1,
     tablet: false,
     tabletQuantity: 1,
-    tabletOrdering: false,
-    tabletOrderingQuantity: 1,
     bierhahnkamera: false
   });
   
   const [hardwareOptions, setHardwareOptions] = useState({
     bonDrucker: false,
+    bonDruckerQuantity: 2,
     alloGo: false,
-    iPad: false
+    alloGoQuantity: 1,
+    iPad: false,
+    iPadQuantity: 1
   });
+  
+  const additionalHardwareOptions = [
+    "allO Go Hülle",
+    "Metal QR Code",
+    "Drucker mit Kassenladenabschluss",
+    "WisePOS E Terminal"
+  ];
   
   const [servicesOptions, setServicesOptions] = useState({
     support: true,
     steuerberater: true,
     website: false,
-    fotoshooting: false
+    fotoshooting: false,
+    tse: true
   });
   
   const [amexCheckbox, setAmexCheckbox] = useState(false);
@@ -192,15 +238,26 @@ const CreateContract: React.FC = () => {
   };
   
   const handleHardwareToggle = (option: keyof typeof hardwareOptions) => {
+    if (option.endsWith('Quantity')) return;
+    
     setHardwareOptions(prev => ({
       ...prev,
       [option]: !prev[option]
     }));
   };
   
+  const handleHardwareQuantityChange = (option: 'bonDruckerQuantity' | 'alloGoQuantity' | 'iPadQuantity', value: number) => {
+    if (value >= 1 && value <= 99) {
+      setHardwareOptions(prev => ({
+        ...prev,
+        [option]: value
+      }));
+    }
+  };
+  
   const handleServicesToggle = (option: keyof typeof servicesOptions) => {
-    // Only allow toggling website and fotoshooting
-    if (option === 'website' || option === 'fotoshooting') {
+    // Only allow toggling website, fotoshooting, and tse
+    if (option === 'website' || option === 'fotoshooting' || option === 'tse') {
       setServicesOptions(prev => ({
         ...prev,
         [option]: !prev[option]
@@ -209,7 +266,7 @@ const CreateContract: React.FC = () => {
   };
   
   const handleSelfOrderToggle = (option: keyof typeof selfOrderOptions) => {
-    if (option === 'kioskQuantity' || option === 'tabletQuantity' || option === 'tabletOrderingQuantity') return;
+    if (option.endsWith('Quantity')) return;
     
     setSelOrderOptions(prev => ({
       ...prev,
@@ -307,6 +364,14 @@ const CreateContract: React.FC = () => {
   };
   
   const currentPackage = packages.find(p => p.name === selectedPackage);
+  
+  // Format expected card volume with Euro sign
+  const formatCardVolume = (value: string) => {
+    if (!value) return '';
+    // Remove non-numeric characters
+    const numericValue = value.replace(/[^\d]/g, '');
+    return `${numericValue}€`;
+  };
   
   return (
     <div className="allo-page pb-12">
@@ -452,7 +517,7 @@ const CreateContract: React.FC = () => {
                                 </Popover>
                                 <Input 
                                   className="rounded-l-none"
-                                  placeholder="Mobilnummer" 
+                                  placeholder="+49xxxxxxxxxx" 
                                   {...field} 
                                 />
                               </div>
@@ -635,16 +700,18 @@ const CreateContract: React.FC = () => {
                   
                   <div className="border rounded-md p-3 bg-white">
                     <div className="font-medium text-sm text-gray-600 mb-2 text-center">Differenzierter Tarif</div>
-                    <div className="flex items-center space-x-3 mb-1">
-                      <Checkbox 
-                        id="payment-option2"
-                        checked={selectedPayment === "option2"}
-                        onCheckedChange={() => setSelectedPayment(selectedPayment === "option2" ? "" : "option2")}
-                      />
-                      <Label htmlFor="payment-option2">Debit / Kredit</Label>
+                    <div className="flex items-center space-x-0 flex-col items-start">
+                      <div className="pl-6 text-sm">Debit: 0.49% + 0.08€</div>
+                      <div className="flex items-center space-x-3">
+                        <Checkbox 
+                          id="payment-option2"
+                          checked={selectedPayment === "option2"}
+                          onCheckedChange={() => setSelectedPayment(selectedPayment === "option2" ? "" : "option2")}
+                        />
+                        <Label htmlFor="payment-option2"></Label>
+                      </div>
+                      <div className="pl-6 text-sm">Kredit: 0.99% + 0.08€</div>
                     </div>
-                    <div className="pl-6 text-sm">Debit: 0.49% + 0.08€</div>
-                    <div className="pl-6 text-sm">Kredit: 0.99% + 0.08€</div>
                   </div>
                   
                   <div className="md:col-span-2 flex justify-center items-center space-x-2 mt-1">
@@ -670,56 +737,6 @@ const CreateContract: React.FC = () => {
                   <div className="flex items-center justify-between space-x-2">
                     <div className="flex items-center space-x-2">
                       <Checkbox 
-                        id="self-order-kiosk"
-                        checked={selfOrderOptions.kiosk}
-                        onCheckedChange={() => handleSelfOrderToggle("kiosk")}
-                      />
-                      <Label htmlFor="self-order-kiosk">Self-order Kiosk: 59€ /Kiosk/Monat</Label>
-                    </div>
-                    {selfOrderOptions.kiosk && (
-                      <div className="flex items-center">
-                        <Label htmlFor="kiosk-quantity" className="mr-2 text-sm">Anzahl:</Label>
-                        <Input 
-                          id="kiosk-quantity"
-                          type="number" 
-                          min="1" 
-                          max="99"
-                          className="w-16 h-8 text-center"
-                          value={selfOrderOptions.kioskQuantity}
-                          onChange={(e) => handleQuantityChange('kioskQuantity', parseInt(e.target.value))}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="kitchen-monitor"
-                        checked={selfOrderOptions.tablet}
-                        onCheckedChange={() => handleSelfOrderToggle("tablet")}
-                      />
-                      <Label htmlFor="kitchen-monitor">Kitchen Monitor: 59€ /Monat</Label>
-                    </div>
-                    {selfOrderOptions.tablet && (
-                      <div className="flex items-center">
-                        <Label htmlFor="tablet-quantity" className="mr-2 text-sm">Anzahl:</Label>
-                        <Input 
-                          id="tablet-quantity"
-                          type="number" 
-                          min="1" 
-                          max="99"
-                          className="w-16 h-8 text-center"
-                          value={selfOrderOptions.tabletQuantity}
-                          onChange={(e) => handleQuantityChange('tabletQuantity', parseInt(e.target.value))}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex items-center justify-between space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
                         id="tablet-ordering"
                         checked={selfOrderOptions.tabletOrdering}
                         onCheckedChange={() => handleSelfOrderToggle("tabletOrdering")}
@@ -742,13 +759,47 @@ const CreateContract: React.FC = () => {
                     )}
                   </div>
                   
+                  <div className="flex items-center justify-between space-x-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="self-order-kiosk"
+                        checked={selfOrderOptions.kiosk}
+                        onCheckedChange={() => handleSelfOrderToggle("kiosk")}
+                      />
+                      <Label htmlFor="self-order-kiosk">Self-order Kiosk: 59€ /Kiosk/Monat</Label>
+                    </div>
+                    {selfOrderOptions.kiosk && (
+                      <div className="flex items-center">
+                        <Label htmlFor="kiosk-quantity" className="mr-2 text-sm">Anzahl:</Label>
+                        <Input 
+                          id="kiosk-quantity"
+                          type="number" 
+                          min="1" 
+                          max="99"
+                          className="w-16 h-8 text-center"
+                          value={selfOrderOptions.kioskQuantity}
+                          onChange={(e) => handleQuantityChange('kioskQuantity', parseInt(e.target.value))}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="kitchen-monitor"
+                      checked={selfOrderOptions.tablet}
+                      onCheckedChange={() => handleSelfOrderToggle("tablet")}
+                    />
+                    <Label htmlFor="kitchen-monitor">Kitchen Monitor: 59€ /Monat</Label>
+                  </div>
+                  
                   <div className="flex items-center space-x-2">
                     <Checkbox 
                       id="bierhahnkamera"
                       checked={selfOrderOptions.bierhahnkamera}
                       onCheckedChange={() => handleSelfOrderToggle("bierhahnkamera")}
                     />
-                    <Label htmlFor="bierhahnkamera">Dirmeler Bierhanksystem: 59€ /Monat</Label>
+                    <Label htmlFor="bierhahnkamera">Dirmeier Bierschranksystem: 59€ /Monat</Label>
                   </div>
                 </div>
               </div>
@@ -765,7 +816,45 @@ const CreateContract: React.FC = () => {
                       checked={hardwareOptions.bonDrucker}
                       onCheckedChange={() => handleHardwareToggle("bonDrucker")}
                     />
-                    <Label htmlFor="bon-drucker">2x Bon Drucker</Label>
+                    <Label htmlFor="bon-drucker">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <span className="cursor-pointer">{hardwareOptions.bonDruckerQuantity}x Bon Drucker</span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="bon-drucker-quantity">Anzahl</Label>
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('bonDruckerQuantity', Math.max(1, hardwareOptions.bonDruckerQuantity - 1))}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input 
+                                id="bon-drucker-quantity"
+                                type="number" 
+                                min="1" 
+                                max="99"
+                                className="w-16 h-8 text-center"
+                                value={hardwareOptions.bonDruckerQuantity}
+                                onChange={(e) => handleHardwareQuantityChange('bonDruckerQuantity', parseInt(e.target.value))}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('bonDruckerQuantity', Math.min(99, hardwareOptions.bonDruckerQuantity + 1))}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </Label>
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -774,7 +863,45 @@ const CreateContract: React.FC = () => {
                       checked={hardwareOptions.alloGo}
                       onCheckedChange={() => handleHardwareToggle("alloGo")}
                     />
-                    <Label htmlFor="allo-go">1x allO Go</Label>
+                    <Label htmlFor="allo-go">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <span className="cursor-pointer">{hardwareOptions.alloGoQuantity}x allO Go</span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="allo-go-quantity">Anzahl</Label>
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('alloGoQuantity', Math.max(1, hardwareOptions.alloGoQuantity - 1))}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input 
+                                id="allo-go-quantity"
+                                type="number" 
+                                min="1" 
+                                max="99"
+                                className="w-16 h-8 text-center"
+                                value={hardwareOptions.alloGoQuantity}
+                                onChange={(e) => handleHardwareQuantityChange('alloGoQuantity', parseInt(e.target.value))}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('alloGoQuantity', Math.min(99, hardwareOptions.alloGoQuantity + 1))}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </Label>
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -783,7 +910,122 @@ const CreateContract: React.FC = () => {
                       checked={hardwareOptions.iPad}
                       onCheckedChange={() => handleHardwareToggle("iPad")}
                     />
-                    <Label htmlFor="ipad">1x iPad</Label>
+                    <Label htmlFor="ipad">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <span className="cursor-pointer">{hardwareOptions.iPadQuantity}x iPad</span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-2">
+                          <div className="space-y-2">
+                            <Label htmlFor="ipad-quantity">Anzahl</Label>
+                            <div className="flex items-center space-x-2">
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('iPadQuantity', Math.max(1, hardwareOptions.iPadQuantity - 1))}
+                              >
+                                <Minus className="h-4 w-4" />
+                              </Button>
+                              <Input 
+                                id="ipad-quantity"
+                                type="number" 
+                                min="1" 
+                                max="99"
+                                className="w-16 h-8 text-center"
+                                value={hardwareOptions.iPadQuantity}
+                                onChange={(e) => handleHardwareQuantityChange('iPadQuantity', parseInt(e.target.value))}
+                              />
+                              <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleHardwareQuantityChange('iPadQuantity', Math.min(99, hardwareOptions.iPadQuantity + 1))}
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    {!showAdditionalHardware ? (
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowAdditionalHardware(true)}
+                        className="text-blue-500"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Weiteres Hardwarestück hinzufügen
+                      </Button>
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="additional-hardware"
+                          checked={!!additionalHardwareItem}
+                        />
+                        <Select 
+                          value={additionalHardwareItem} 
+                          onValueChange={setAdditionalHardwareItem}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Hardwarestück wählen" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {additionalHardwareOptions.map(option => (
+                              <SelectItem key={option} value={option}>
+                                {option}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        {additionalHardwareItem && (
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <span className="cursor-pointer ml-2">{additionalHardwareQuantity}x</span>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-48 p-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="additional-quantity">Anzahl</Label>
+                                <div className="flex items-center space-x-2">
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setAdditionalHardwareQuantity(Math.max(1, additionalHardwareQuantity - 1))}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </Button>
+                                  <Input 
+                                    id="additional-quantity"
+                                    type="number" 
+                                    min="1" 
+                                    max="99"
+                                    className="w-16 h-8 text-center"
+                                    value={additionalHardwareQuantity}
+                                    onChange={(e) => setAdditionalHardwareQuantity(parseInt(e.target.value) || 1)}
+                                  />
+                                  <Button 
+                                    type="button" 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setAdditionalHardwareQuantity(Math.min(99, additionalHardwareQuantity + 1))}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </PopoverContent>
+                          </Popover>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -805,20 +1047,20 @@ const CreateContract: React.FC = () => {
                   
                   <div className="flex items-center space-x-2">
                     <Checkbox 
-                      id="website"
-                      checked={servicesOptions.website}
-                      onCheckedChange={() => handleServicesToggle("website")}
-                    />
-                    <Label htmlFor="website">Website: 99€ einmalige Zahlung</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
                       id="steuerberater"
                       checked={servicesOptions.steuerberater}
                       disabled={true}
                     />
                     <Label htmlFor="steuerberater">Kostenlose Steuerberater-Support</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="website"
+                      checked={servicesOptions.website}
+                      onCheckedChange={() => handleServicesToggle("website")}
+                    />
+                    <Label htmlFor="website">Website: 99€ einmalige Zahlung</Label>
                   </div>
                   
                   <div className="flex items-center space-x-2">
@@ -831,9 +1073,22 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="text-xs text-gray-500">
-                  Drei Monate nach Go-Live fällt eine einmalige Gebühr i.H.v. 300€ an.
-                  Die TSE gilt für die gesamte Partnerschaft.
+                <Separator className="my-4" />
+                
+                <div className="flex items-start space-x-2">
+                  <Checkbox 
+                    id="tse"
+                    checked={servicesOptions.tse}
+                    onCheckedChange={() => handleServicesToggle("tse")}
+                    className="mt-1"
+                  />
+                  <div>
+                    <Label htmlFor="tse" className="font-medium">TSE</Label>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Drei Monate nach Go-Live fällt eine einmalige Gebühr i.H.v. 300€ an.
+                      Die TSE gilt für die gesamte Partnerschaft.
+                    </p>
+                  </div>
                 </div>
               </div>
               
@@ -888,14 +1143,24 @@ const CreateContract: React.FC = () => {
                 <FormField
                   control={form.control}
                   name="expectedCardVolume"
-                  render={({ field }) => (
+                  render={({ field: { onChange, ...rest } }) => (
                     <FormItem>
                       <FormLabel>Expected Card Volume (EUR)</FormLabel>
                       <FormControl>
                         <Input
-                          type="number"
-                          placeholder="z.B. 50000"
-                          {...field}
+                          type="text"
+                          placeholder="z.B. 50000€"
+                          onChange={(e) => {
+                            // Remove non-numeric characters for storing
+                            const rawValue = e.target.value.replace(/[^\d]/g, '');
+                            onChange(rawValue);
+                            
+                            // Format with € for display
+                            if (e.target.value && !e.target.value.endsWith('€') && rawValue) {
+                              e.target.value = `${rawValue}€`;
+                            }
+                          }}
+                          value={expectedCardVolume ? `${expectedCardVolume}€` : ''}
                         />
                       </FormControl>
                       <FormMessage />
