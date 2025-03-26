@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +93,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   
-  // Form state for adding new company
   const [newCompany, setNewCompany] = useState<Omit<Company, 'id' | 'address'>>({
     name: '',
     streetAddress: '',
@@ -122,8 +120,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     setShowResults(true);
     
     try {
-      // In a real app, this would be an API call to Hubspot
-      // For now, we'll simulate a response
       setTimeout(() => {
         const mockResults: Company[] = [
           { 
@@ -208,17 +204,12 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const handleSubmitNewCompany = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!newCompany.name || !newCompany.city || !newCompany.state) {
+    if (!newCompany.name || !newCompany.city || !newCompany.streetAddress || !newCompany.postalCode) {
       toast.error("Please fill in all required fields");
       return;
     }
     
     try {
-      // In a real app, this would be an API call to Hubspot
-      // For now, we'll simulate a response
-      
-      // Create the full address from the parts
       const address = [
         newCompany.streetAddress,
         newCompany.city,
@@ -233,11 +224,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         ...newCompany
       };
       
-      // Select the newly created company
       onSelect(createdCompany);
       setSearchTerm(createdCompany.name);
       
-      // Reset the form and close the dialog
       setNewCompany({
         name: '',
         streetAddress: '',
@@ -268,7 +257,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           className="pl-9"
           onFocus={() => searchTerm && searchTerm.length >= 2 && setShowResults(true)}
           onBlur={() => {
-            // Delay hiding results to allow for selection
             setTimeout(() => setShowResults(false), 200);
           }}
           required={required}
@@ -338,12 +326,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="new-company-street">Street Address</Label>
+                <Label htmlFor="new-company-street">Street Address <span className="text-red-500">*</span></Label>
                 <Input 
                   id="new-company-street"
                   name="streetAddress"
                   value={newCompany.streetAddress}
                   onChange={handleNewCompanyChange}
+                  required
                 />
               </div>
               
@@ -360,24 +349,24 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="new-company-state">State <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="new-company-state">State</Label>
                   <Input 
                     id="new-company-state"
                     name="state"
                     value={newCompany.state}
                     onChange={handleNewCompanyChange}
-                    required
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="new-company-postal">Postal Code</Label>
+                <Label htmlFor="new-company-postal">Postal Code <span className="text-red-500">*</span></Label>
                 <Input 
                   id="new-company-postal"
                   name="postalCode"
                   value={newCompany.postalCode}
                   onChange={handleNewCompanyChange}
+                  required
                 />
               </div>
               

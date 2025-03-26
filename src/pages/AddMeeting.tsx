@@ -43,6 +43,26 @@ const AddMeeting: React.FC = () => {
   const [title, setTitle] = useState(prefilledData.title || "");
   const [notes, setNotes] = useState(prefilledData.notes || "");
   
+  // Auto generate meeting title when company, contact and meeting type are selected
+  useEffect(() => {
+    if (selectedCompany && meetingType) {
+      const meetingTypeLabel = meetingType === "sales meeting" ? "Meeting" : "Followup";
+      const newTitle = `allO x ${selectedCompany.name} - ${meetingTypeLabel}`;
+      setTitle(newTitle);
+    }
+  }, [selectedCompany, meetingType]);
+  
+  // Auto set end time to 1 hour after start time when start time is selected
+  useEffect(() => {
+    if (startTime) {
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const endHour = hours + 1 >= 24 ? 23 : hours + 1;
+      const formattedEndHour = endHour.toString().padStart(2, '0');
+      const formattedEndMinute = minutes.toString().padStart(2, '0');
+      setEndTime(`${formattedEndHour}:${formattedEndMinute}`);
+    }
+  }, [startTime]);
+  
   // For follow-up, we could fetch meeting details using the meetingId
   useEffect(() => {
     if (isFollowUp && prefilledData.meetingId) {
@@ -196,14 +216,20 @@ const AddMeeting: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {!isRescheduling && (
                 <>
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Meeting Title <span className="text-red-500">*</span></Label>
-                    <Input 
-                      id="title" 
-                      placeholder="Enter meeting title" 
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)}
-                      required
+                  <div className="md:col-span-2">
+                    <CompanySearch 
+                      onSelect={setSelectedCompany}
+                      value={selectedCompany}
+                      required={true}
+                    />
+                  </div>
+                  
+                  <div className="md:col-span-2">
+                    <ContactSearch 
+                      onSelect={setSelectedContact}
+                      value={selectedContact}
+                      selectedCompany={selectedCompany}
+                      disabled={!selectedCompany}
                     />
                   </div>
                   
@@ -236,28 +262,18 @@ const AddMeeting: React.FC = () => {
                       />
                     </div>
                   )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Meeting Title <span className="text-red-500">*</span></Label>
+                    <Input 
+                      id="title" 
+                      placeholder="Enter meeting title" 
+                      value={title} 
+                      onChange={(e) => setTitle(e.target.value)}
+                      required
+                    />
+                  </div>
                 </>
-              )}
-              
-              {!isRescheduling && (
-                <div className="md:col-span-2">
-                  <CompanySearch 
-                    onSelect={setSelectedCompany}
-                    value={selectedCompany}
-                    required={true}
-                  />
-                </div>
-              )}
-              
-              {!isRescheduling && (
-                <div className="md:col-span-2">
-                  <ContactSearch 
-                    onSelect={setSelectedContact}
-                    value={selectedContact}
-                    selectedCompany={selectedCompany}
-                    disabled={!selectedCompany}
-                  />
-                </div>
               )}
               
               <div className="space-y-2">

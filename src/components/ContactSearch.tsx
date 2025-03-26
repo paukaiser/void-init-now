@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Search, Plus, User } from 'lucide-react';
 import { toast } from "sonner";
 import { Company } from './CompanySearch';
+import { FormDescription } from "@/components/ui/form";
 
 export interface Contact {
   id: string;
@@ -38,7 +38,6 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
   const [loading, setLoading] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   
-  // Form state for adding new contact
   const [newContact, setNewContact] = useState<Omit<Contact, 'id' | 'fullName'>>({
     firstName: '',
     lastName: '',
@@ -63,7 +62,6 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
         companyId: selectedCompany.id
       }));
       
-      // Load contacts for the selected company
       loadContactsForCompany(selectedCompany.id);
     }
   }, [selectedCompany]);
@@ -75,12 +73,9 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
     setShowResults(true);
     
     try {
-      // In a real app, this would be an API call to Hubspot
-      // For now, we'll simulate a response
       setTimeout(() => {
-        // These would be contacts associated with the selected company
         const mockContacts: { [key: string]: Contact[] } = {
-          '1': [ // Acme Inc.
+          '1': [
             { 
               id: '1',
               fullName: 'Sarah Chen',
@@ -102,7 +97,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
               companyId: '1'
             }
           ],
-          '2': [ // Global Tech
+          '2': [
             { 
               id: '3',
               fullName: 'Michael Rodriguez',
@@ -114,7 +109,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
               companyId: '2'
             }
           ],
-          '3': [ // Innovate Solutions
+          '3': [
             { 
               id: '4',
               fullName: 'David Park',
@@ -131,7 +126,6 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
         const companyContacts = mockContacts[companyId] || [];
         setSearchResults(companyContacts);
         
-        // If there's only one contact, automatically select it
         if (companyContacts.length === 1) {
           handleSelectContact(companyContacts[0]);
         }
@@ -154,12 +148,9 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
     setShowResults(true);
     
     try {
-      // In a real app, this would be an API call to Hubspot
-      // For now, we'll simulate a response
       setTimeout(() => {
-        // These would be contacts associated with the selected company
         const mockContacts: { [key: string]: Contact[] } = {
-          '1': [ // Acme Inc.
+          '1': [
             { 
               id: '1',
               fullName: 'Sarah Chen',
@@ -181,7 +172,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
               companyId: '1'
             }
           ],
-          '2': [ // Global Tech
+          '2': [
             { 
               id: '3',
               fullName: 'Michael Rodriguez',
@@ -193,7 +184,7 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
               companyId: '2'
             }
           ],
-          '3': [ // Innovate Solutions
+          '3': [
             { 
               id: '4',
               fullName: 'David Park',
@@ -250,22 +241,17 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
   const handleSubmitNewContact = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!newContact.firstName || !newContact.lastName || !newContact.email) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newContact.email)) {
       toast.error("Please enter a valid email address");
       return;
     }
     
     try {
-      // In a real app, this would be an API call to Hubspot
-      // For now, we'll simulate a response
-      
       const fullName = `${newContact.firstName} ${newContact.lastName}`;
       
       const createdContact: Contact = {
@@ -274,11 +260,9 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
         ...newContact
       };
       
-      // Select the newly created contact
       onSelect(createdContact);
       setSearchTerm(fullName);
       
-      // Reset the form and close the dialog
       setNewContact({
         firstName: '',
         lastName: '',
@@ -316,7 +300,6 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
             }
           }}
           onBlur={() => {
-            // Delay hiding results to allow for selection
             setTimeout(() => setShowResults(false), 200);
           }}
         />
@@ -422,8 +405,9 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
                     name="phone"
                     value={newContact.phone}
                     onChange={handleNewContactChange}
-                    placeholder="(555) 123-4567"
+                    placeholder="+49xxxxxxxxxx"
                   />
+                  <FormDescription>Format: +49xxxxxxxxxx</FormDescription>
                 </div>
                 
                 <div className="space-y-2">
@@ -433,8 +417,9 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
                     name="mobilePhone"
                     value={newContact.mobilePhone}
                     onChange={handleNewContactChange}
-                    placeholder="(555) 987-6543"
+                    placeholder="+49xxxxxxxxxx"
                   />
+                  <FormDescription>Format: +49xxxxxxxxxx</FormDescription>
                 </div>
               </div>
             </div>
