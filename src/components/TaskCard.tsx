@@ -22,7 +22,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <h3 className="font-semibold text-lg">{task.contactName}</h3>
-          <span className="text-xs text-muted-foreground">{formattedDate}</span>
         </div>
         
         <h4 className="text-sm font-medium mt-1">{task.restaurantName}</h4>

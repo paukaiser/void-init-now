@@ -260,7 +260,6 @@ const AddMeeting: React.FC = () => {
                   <option value="" disabled>Select time</option>
                   {generateTimeOptions()}
                 </select>
-                <p className="text-xs text-muted-foreground">Meeting will be scheduled for 1 hour</p>
               </div>
               
               <div className="md:col-span-2 space-y-2">

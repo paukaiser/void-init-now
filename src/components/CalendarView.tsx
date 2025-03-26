@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { format, addDays, isSameDay, parseISO, getWeek, startOfWeek, subDays } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, startOfWeek, subDays } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import MeetingCard, { Meeting } from './MeetingCard';
@@ -204,27 +204,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   
   return (
     <div className="w-full flex flex-col space-y-4 animate-fade-in">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" onClick={handlePreviousDay}>
-            <ChevronLeft size={16} />
-          </Button>
-          <Button variant="outline" onClick={handleNextDay}>
-            <ChevronRight size={16} />
-          </Button>
-        </div>
-      </div>
-      
       <div className="calendar-header bg-white/90 rounded-t-lg border border-gray-200 p-4 mb-0 border-b-0">
         <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm font-medium bg-gray-100 py-1 px-2 rounded">
-              KW {getWeekNumber(currentDate)}
-            </span>
-            <span className="text-lg font-medium">
-              {format(currentDate, 'EEEE, dd.MM.yyyy')}
-            </span>
-          </div>
+          <Button variant="outline" onClick={handlePreviousDay} className="mr-2">
+            <ChevronLeft size={16} />
+          </Button>
+          
+          <span className="text-lg font-medium">
+            {format(currentDate, 'EEEE, dd.MM.yyyy')}
+          </span>
+          
+          <Button variant="outline" onClick={handleNextDay} className="ml-2">
+            <ChevronRight size={16} />
+          </Button>
         </div>
       </div>
       

@@ -1,14 +1,19 @@
 
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Inbox } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import { useTasks } from '@/hooks/useTasks';
 import NotificationBadge from '@/components/NotificationBadge';
+import { cn } from '@/lib/utils';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useTasks();
+  const location = useLocation();
+  
+  const isInboxActive = location.pathname === '/inbox';
+  const isMeetingsActive = location.pathname === '/meetings';
   
   return (
     <div className="flex flex-col min-h-screen">
@@ -29,7 +34,10 @@ const Layout: React.FC = () => {
       <nav className="border-t bg-white py-2 px-4 sticky bottom-0 z-10">
         <div className="flex justify-around items-center">
           <button 
-            className="flex flex-col items-center p-2 text-sm"
+            className={cn(
+              "flex flex-col items-center p-2 text-sm w-1/2 rounded-l-lg transition-colors",
+              isMeetingsActive ? "bg-[#FF8769]/10 text-[#FF8769]" : ""
+            )}
             onClick={() => navigate('/meetings')}
           >
             <Calendar size={24} className="mb-1" />
@@ -37,7 +45,10 @@ const Layout: React.FC = () => {
           </button>
           
           <button 
-            className="flex flex-col items-center p-2 text-sm relative"
+            className={cn(
+              "flex flex-col items-center p-2 text-sm relative w-1/2 rounded-r-lg transition-colors",
+              isInboxActive ? "bg-[#FF8769]/10 text-[#FF8769]" : ""
+            )}
             onClick={() => navigate('/inbox')}
           >
             <div className="relative">

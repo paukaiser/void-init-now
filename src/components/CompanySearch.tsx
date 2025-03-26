@@ -1,24 +1,15 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Plus, Building } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { toast } from "sonner";
-import { SalesRegion, Cuisine } from "@/types";
 
 export interface Company {
   id: string;
   name: string;
   address: string;
-  streetAddress?: string;
-  city?: string;
-  state?: string;
-  postalCode?: string;
-  salesRegion?: SalesRegion | string;
-  cuisine?: Cuisine | string;
+  owner?: string;
 }
 
 interface CompanySearchProps {
@@ -27,81 +18,11 @@ interface CompanySearchProps {
   required?: boolean;
 }
 
-const SALES_REGIONS: SalesRegion[] = [
-  "Augsburg",
-  "Berlin",
-  "Bielefeld",
-  "Bonn",
-  "Dortmund",
-  "Dresden",
-  "Duisburg",
-  "Düsseldorf",
-  "Frankfurt",
-  "Hamburg",
-  "Hannover",
-  "Köln",
-  "Landshut",
-  "Leipzig",
-  "Mannheim",
-  "München",
-  "München Area",
-  "Nürnberg",
-  "Other",
-  "Regensburg",
-  "Stuttgart"
-];
-
-const CUISINES: Cuisine[] = [
-  "African",
-  "Burger",
-  "Cafe",
-  "Chinese",
-  "Chinese - All you can eat",
-  "Chinese - Hotpot",
-  "Chinese - Malatang",
-  "Döner",
-  "Fine Dining",
-  "French",
-  "German",
-  "German - Wirtshaus",
-  "Greek",
-  "Healthy/Salad/Bowl",
-  "Indian",
-  "Italian",
-  "Japanese",
-  "Japanese - BBQ",
-  "Japanese - Buffet",
-  "Japanese - Sushi",
-  "Korean",
-  "Korean - BBQ",
-  "Mediterranean",
-  "Mexican",
-  "Middle-Eastern",
-  "Other",
-  "Russian",
-  "Steakhouse",
-  "Tapas",
-  "Thai",
-  "Turkish",
-  "Vietnamese"
-];
-
 const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  
-  const [newCompany, setNewCompany] = useState<Omit<Company, 'id' | 'address'>>({
-    name: '',
-    streetAddress: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    salesRegion: '',
-    cuisine: ''
-  });
   
   useEffect(() => {
     if (value) {
@@ -120,40 +41,27 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     setShowResults(true);
     
     try {
+      // In a real app, this would call the Google Places API
+      // For now, we'll simulate the API call with mock data
       setTimeout(() => {
         const mockResults: Company[] = [
           { 
             id: '1', 
             name: 'Acme Inc', 
             address: '123 Main St, San Francisco, CA 94105',
-            streetAddress: '123 Main St',
-            city: 'San Francisco',
-            state: 'CA',
-            postalCode: '94105',
-            salesRegion: 'West',
-            cuisine: 'American'
+            owner: 'John Smith'
           },
           { 
             id: '2', 
             name: 'Global Tech', 
             address: '456 Market St, San Francisco, CA 94103',
-            streetAddress: '456 Market St',
-            city: 'San Francisco',
-            state: 'CA',
-            postalCode: '94103',
-            salesRegion: 'West',
-            cuisine: 'Tech Cafeteria'
+            owner: 'Sarah Johnson'
           },
           { 
             id: '3', 
             name: 'Innovate Solutions', 
             address: '789 Howard St, San Francisco, CA 94103',
-            streetAddress: '789 Howard St',
-            city: 'San Francisco',
-            state: 'CA',
-            postalCode: '94103',
-            salesRegion: 'West',
-            cuisine: 'Fusion'
+            owner: 'David Chen'
           }
         ].filter(company => 
           company.name.toLowerCase().includes(term.toLowerCase())
@@ -179,70 +87,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     onSelect(company);
     setSearchTerm(company.name);
     setShowResults(false);
-  };
-  
-  const handleAddCompany = () => {
-    setShowAddDialog(true);
-    setShowResults(false);
-  };
-  
-  const handleNewCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewCompany(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleSelectChange = (name: keyof Omit<Company, 'id' | 'address'>, value: string) => {
-    setNewCompany(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleSubmitNewCompany = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!newCompany.name || !newCompany.city || !newCompany.streetAddress || !newCompany.postalCode) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
-    try {
-      const address = [
-        newCompany.streetAddress,
-        newCompany.city,
-        newCompany.state,
-        newCompany.postalCode
-      ].filter(Boolean).join(', ');
-      
-      const createdCompany: Company = {
-        id: `new-${Date.now()}`,
-        name: newCompany.name,
-        address,
-        ...newCompany
-      };
-      
-      onSelect(createdCompany);
-      setSearchTerm(createdCompany.name);
-      
-      setNewCompany({
-        name: '',
-        streetAddress: '',
-        city: '',
-        state: '',
-        postalCode: '',
-        salesRegion: '',
-        cuisine: ''
-      });
-      setShowAddDialog(false);
-      
-      toast.success("Company added successfully");
-    } catch (error) {
-      console.error("Error adding company:", error);
-      toast.error("Failed to add company");
-    }
   };
   
   return (
@@ -278,150 +122,19 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                 >
                   <div className="font-medium">{company.name}</div>
                   <div className="text-sm text-gray-500">{company.address}</div>
+                  {company.owner && (
+                    <div className="text-sm text-gray-500 mt-1">Owner: {company.owner}</div>
+                  )}
                 </div>
               ))}
-              <div 
-                className="p-3 hover:bg-blue-50 cursor-pointer flex items-center text-blue-600"
-                onClick={handleAddCompany}
-              >
-                <Plus size={16} className="mr-2" />
-                <span>Add a new company</span>
-              </div>
             </div>
           ) : (
             <div>
               <div className="p-4 text-center text-sm text-gray-500">No companies found</div>
-              <div 
-                className="p-3 hover:bg-blue-50 cursor-pointer flex items-center text-blue-600 border-t border-gray-100"
-                onClick={handleAddCompany}
-              >
-                <Plus size={16} className="mr-2" />
-                <span>Add a new company</span>
-              </div>
             </div>
           )}
         </div>
       )}
-      
-      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="sm:max-w-[525px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Building className="mr-2 h-5 w-5" />
-              Add New Company
-            </DialogTitle>
-          </DialogHeader>
-          
-          <form onSubmit={handleSubmitNewCompany} className="space-y-4 py-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="new-company-name">Company Name <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="new-company-name"
-                  name="name"
-                  value={newCompany.name}
-                  onChange={handleNewCompanyChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="new-company-street">Street Address <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="new-company-street"
-                  name="streetAddress"
-                  value={newCompany.streetAddress}
-                  onChange={handleNewCompanyChange}
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-company-city">City <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="new-company-city"
-                    name="city"
-                    value={newCompany.city}
-                    onChange={handleNewCompanyChange}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="new-company-state">State</Label>
-                  <Input 
-                    id="new-company-state"
-                    name="state"
-                    value={newCompany.state}
-                    onChange={handleNewCompanyChange}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="new-company-postal">Postal Code <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="new-company-postal"
-                  name="postalCode"
-                  value={newCompany.postalCode}
-                  onChange={handleNewCompanyChange}
-                  required
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-company-region">Sales Region</Label>
-                  <Select 
-                    value={newCompany.salesRegion?.toString() || ""} 
-                    onValueChange={(value) => handleSelectChange('salesRegion', value)}
-                  >
-                    <SelectTrigger id="new-company-region" className="w-full">
-                      <SelectValue placeholder="Select a region" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SALES_REGIONS.map((region) => (
-                        <SelectItem key={region} value={region}>
-                          {region}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="new-company-cuisine">Cuisine</Label>
-                  <Select
-                    value={newCompany.cuisine?.toString() || ""}
-                    onValueChange={(value) => handleSelectChange('cuisine', value)}
-                  >
-                    <SelectTrigger id="new-company-cuisine" className="w-full">
-                      <SelectValue placeholder="Select a cuisine" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CUISINES.map((cuisine) => (
-                        <SelectItem key={cuisine} value={cuisine}>
-                          {cuisine}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={() => setShowAddDialog(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                Add Company
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
