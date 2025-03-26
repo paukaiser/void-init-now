@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
@@ -42,22 +43,38 @@ const FormField = <
 const useFormField = () => {
   const fieldContext = React.useContext(FormFieldContext)
   const itemContext = React.useContext(FormItemContext)
-  const { getFieldState, formState } = useFormContext()
-
-  const fieldState = getFieldState(fieldContext.name, formState)
+  const formContext = useFormContext()
 
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
-  const { id } = itemContext
+  // Return safe default values if used outside a form context
+  if (!formContext) {
+    return {
+      id: itemContext?.id,
+      name: fieldContext.name,
+      formItemId: itemContext?.id ? `${itemContext.id}-form-item` : undefined,
+      formDescriptionId: itemContext?.id ? `${itemContext.id}-form-item-description` : undefined,
+      formMessageId: itemContext?.id ? `${itemContext.id}-form-item-message` : undefined,
+      isDirty: false,
+      isTouched: false,
+      invalid: false,
+      error: undefined,
+    }
+  }
+
+  const { getFieldState, formState } = formContext
+  const fieldState = getFieldState(fieldContext.name, formState)
+
+  const { id } = itemContext || {}
 
   return {
     id,
     name: fieldContext.name,
-    formItemId: `${id}-form-item`,
-    formDescriptionId: `${id}-form-item-description`,
-    formMessageId: `${id}-form-item-message`,
+    formItemId: id ? `${id}-form-item` : undefined,
+    formDescriptionId: id ? `${id}-form-item-description` : undefined,
+    formMessageId: id ? `${id}-form-item-message` : undefined,
     ...fieldState,
   }
 }
@@ -66,8 +83,8 @@ type FormItemContextValue = {
   id: string
 }
 
-const FormItemContext = React.createContext<FormItemContextValue>(
-  {} as FormItemContextValue
+const FormItemContext = React.createContext<FormItemContextValue | undefined>(
+  undefined
 )
 
 const FormItem = React.forwardRef<
@@ -127,7 +144,9 @@ const FormDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => {
-  const { formDescriptionId } = useFormField()
+  // We make formDescriptionId optional here to handle cases where FormDescription
+  // is used outside of a proper form context
+  const { formDescriptionId } = useFormField();
 
   return (
     <p
