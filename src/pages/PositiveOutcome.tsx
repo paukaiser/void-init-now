@@ -5,18 +5,19 @@ import { ChevronLeft, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import AudioRecorder from '@/components/AudioRecorder';
 import FileUploader from '@/components/FileUploader';
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import ClosedWonReasonForm from '@/components/ClosedWonReasonForm';
 
 const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [step, setStep] = useState<'contract' | 'voice'>('contract');
+  const [step, setStep] = useState<'contract' | 'voice' | 'reason'>('contract');
   const [contractUploaded, setContractUploaded] = useState(false);
   
   const handleAudioSend = (audioBlob: Blob) => {
     // In a real app, you would upload the audio to your server
     console.log('Audio blob:', audioBlob);
+    setStep('reason');
   };
   
   const handleFileUpload = (file: File) => {
@@ -30,10 +31,7 @@ const PositiveOutcome: React.FC = () => {
   };
   
   const handleComplete = () => {
-    toast({
-      title: 'Meeting Updated',
-      description: 'The meeting has been marked as completed with a positive outcome.',
-    });
+    toast.success('Meeting updated with positive outcome');
     navigate('/meetings');
   };
   
@@ -52,7 +50,7 @@ const PositiveOutcome: React.FC = () => {
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-6 text-center">Positive Outcome</h2>
           
-          {step === 'contract' ? (
+          {step === 'contract' && (
             <div className="space-y-6">
               <FileUploader 
                 onUpload={handleFileUpload} 
@@ -68,17 +66,19 @@ const PositiveOutcome: React.FC = () => {
                 <ArrowRight size={16} className="ml-1" />
               </Button>
             </div>
-          ) : (
+          )}
+          
+          {step === 'voice' && (
             <div className="space-y-6">
               <AudioRecorder onSend={handleAudioSend} />
-              
-              <Button 
-                className="allo-button w-full mt-6"
-                onClick={handleComplete}
-              >
-                Complete
-              </Button>
             </div>
+          )}
+          
+          {step === 'reason' && (
+            <ClosedWonReasonForm 
+              meetingId={id || ''}
+              onComplete={handleComplete}
+            />
           )}
         </div>
       </div>

@@ -38,6 +38,9 @@ const AddMeeting: React.FC = () => {
   );
   const [notes, setNotes] = useState(prefilledData.notes || "");
   
+  // Check if company selection is forced (from task or canceled meeting)
+  const forceCompany = prefilledData.forceCompany || false;
+  
   // For follow-up, we could fetch meeting details using the meetingId
   useEffect(() => {
     if (isFollowUp && prefilledData.meetingId) {
@@ -185,7 +188,7 @@ const AddMeeting: React.FC = () => {
           
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {!isRescheduling && !comingFromTask && (
+              {!isRescheduling && !comingFromTask && !forceCompany && (
                 <>
                   <div className="md:col-span-2">
                     <CompanySearch 
@@ -217,7 +220,7 @@ const AddMeeting: React.FC = () => {
                 </>
               )}
               
-              {comingFromTask && selectedCompany && (
+              {(comingFromTask || forceCompany) && selectedCompany && (
                 <div className="md:col-span-2">
                   <div className="border rounded-md p-3 bg-gray-50">
                     <Label className="block mb-1 text-sm">Company</Label>

@@ -13,7 +13,9 @@ const mockTasks: Task[] = [
     restaurantName: "Schmidts Gourmet",
     cuisine: "German",
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    isRead: false
+    isRead: false,
+    completed: false,
+    disqualified: false
   },
   {
     id: "2",
@@ -23,7 +25,9 @@ const mockTasks: Task[] = [
     restaurantName: "Tapas Bar München",
     cuisine: "Spanish",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    isRead: false
+    isRead: false,
+    completed: false,
+    disqualified: false
   },
   {
     id: "3",
@@ -33,7 +37,9 @@ const mockTasks: Task[] = [
     restaurantName: "Bavarian Eats",
     cuisine: "Bavarian",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    isRead: true
+    isRead: true,
+    completed: false,
+    disqualified: false
   }
 ];
 
@@ -57,6 +63,29 @@ export const useTasks = () => {
   const markAllAsRead = () => {
     setTasks(prev => 
       prev.map(task => ({ ...task, isRead: true }))
+    );
+  };
+
+  // Function to mark a task as completed
+  const markAsCompleted = (taskId: string) => {
+    setTasks(prev => 
+      prev.map(task => 
+        task.id === taskId ? { ...task, completed: true } : task
+      )
+    );
+  };
+
+  // Function to disqualify a task
+  const disqualifyTask = (taskId: string, reason: string, otherReason?: string) => {
+    setTasks(prev => 
+      prev.map(task => 
+        task.id === taskId ? { 
+          ...task, 
+          disqualified: true,
+          disqualifyReason: reason,
+          disqualifyOtherReason: otherReason
+        } : task
+      )
     );
   };
   
@@ -85,5 +114,13 @@ export const useTasks = () => {
     // In a real implementation, you would set up a webhook or polling mechanism here
   }, []);
   
-  return { tasks, loading, unreadCount, markAsRead, markAllAsRead };
+  return { 
+    tasks, 
+    loading, 
+    unreadCount, 
+    markAsRead, 
+    markAllAsRead,
+    markAsCompleted,
+    disqualifyTask
+  };
 };

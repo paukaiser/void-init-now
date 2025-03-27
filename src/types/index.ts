@@ -1,4 +1,3 @@
-
 export interface Task {
   id: string;
   contactName: string;
@@ -8,6 +7,10 @@ export interface Task {
   cuisine: string;
   createdAt: string;
   isRead: boolean;
+  completed?: boolean;
+  disqualified?: boolean;
+  disqualifyReason?: string;
+  disqualifyOtherReason?: string;
 }
 
 export type SalesRegion = 

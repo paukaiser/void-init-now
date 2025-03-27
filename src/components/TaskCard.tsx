@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Calendar, Mail, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
+import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Task } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -9,16 +9,25 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { useState as useStateDialog } from "react";
+import { Label } from "@/components/ui/label";
 
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
+  onComplete?: (taskId: string) => void;
+  onDisqualify?: (taskId: string, reason: string, otherReason?: string) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqualify }) => {
   const formattedDate = format(new Date(task.createdAt), 'dd MMM yyyy, HH:mm');
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [disqualifyReason, setDisqualifyReason] = useState<string>("");
+  const [otherReason, setOtherReason] = useState<string>("");
+  const [showDisqualifyDialog, setShowDisqualifyDialog] = useState(false);
   
   const handleCardClick = () => {
     setIsDialogOpen(true);
@@ -27,6 +36,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
   
   const handleScheduleMeeting = () => {
     setIsDialogOpen(false);
+    // If this task is scheduled, we also mark it as completed
+    if (onComplete) onComplete(task.id);
     navigate('/add-meeting', {
       state: {
         companyName: task.restaurantName,
@@ -41,21 +52,38 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
     setIsDialogOpen(false);
   };
   
-  const handleEmail = () => {
-    window.location.href = `mailto:${task.email}`;
-    setIsDialogOpen(false);
-  };
-  
   const handleComplete = () => {
     toast.success(`Task for ${task.contactName} marked as completed`);
     setIsDialogOpen(false);
-    // In a real app, you would call an API to update the task
+    if (onComplete) onComplete(task.id);
   };
   
-  const handleDisqualify = () => {
-    toast.info(`Task for ${task.contactName} marked as disqualified`);
+  const openDisqualifyDialog = () => {
+    setShowDisqualifyDialog(true);
     setIsDialogOpen(false);
-    // In a real app, you would call an API to update the task
+  };
+
+  const handleDisqualify = () => {
+    if (!disqualifyReason) {
+      toast.error("Please select a disqualification reason");
+      return;
+    }
+
+    if (disqualifyReason === "Other" && !otherReason) {
+      toast.error("Please provide details for the other reason");
+      return;
+    }
+
+    if (onDisqualify) {
+      onDisqualify(
+        task.id, 
+        disqualifyReason, 
+        disqualifyReason === "Other" ? otherReason : undefined
+      );
+    }
+    
+    toast.info(`Task for ${task.contactName} marked as disqualified`);
+    setShowDisqualifyDialog(false);
   };
   
   return (
@@ -78,11 +106,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               <span>{task.phoneNumber}</span>
             </div>
             
-            <div className="flex items-center text-sm">
-              <Mail size={14} className="mr-2" />
-              <span className="text-sm truncate">{task.email}</span>
-            </div>
-            
             <div className="flex items-center text-sm text-muted-foreground">
               <Calendar size={14} className="mr-2" />
               <span>Created: {formattedDate}</span>
@@ -98,14 +121,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <Button 
-              onClick={handleScheduleMeeting} 
-              className="w-full flex items-center justify-start"
-              variant="outline"
-            >
-              <CalendarIcon size={16} className="mr-2" />
-              Schedule Meeting
-            </Button>
-            <Button 
               onClick={handleCall} 
               className="w-full flex items-center justify-start"
               variant="outline"
@@ -114,12 +129,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               Call
             </Button>
             <Button 
-              onClick={handleEmail} 
+              onClick={handleScheduleMeeting} 
               className="w-full flex items-center justify-start"
               variant="outline"
             >
-              <Mail size={16} className="mr-2" />
-              Email
+              <CalendarIcon size={16} className="mr-2" />
+              Schedule Meeting
+            </Button>
+            <Button 
+              onClick={openDisqualifyDialog} 
+              className="w-full flex items-center justify-start"
+              variant="outline"
+            >
+              <XCircle size={16} className="mr-2" />
+              Disqualify
             </Button>
             <Button 
               onClick={handleComplete} 
@@ -129,13 +152,56 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick }) => {
               <CheckCircle size={16} className="mr-2" />
               Mark as Completed
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDisqualifyDialog} onOpenChange={setShowDisqualifyDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Disqualify {task.contactName}</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="disqualify-reason">Disqualification Reason</Label>
+              <Select 
+                onValueChange={(value) => setDisqualifyReason(value)}
+                value={disqualifyReason}
+              >
+                <SelectTrigger id="disqualify-reason">
+                  <SelectValue placeholder="Select a reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Bad Timing">Bad Timing</SelectItem>
+                  <SelectItem value="Budget Constraints">Budget Constraints</SelectItem>
+                  <SelectItem value="No Decision-making Power">No Decision-making Power</SelectItem>
+                  <SelectItem value="Competitor Preference">Competitor Preference</SelectItem>
+                  <SelectItem value="Not a Good Fit">Not a Good Fit</SelectItem>
+                  <SelectItem value="No Interest">No Interest</SelectItem>
+                  <SelectItem value="Prior Negative Experience">Prior Negative Experience</SelectItem>
+                  <SelectItem value="Technical Limitations">Technical Limitations</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {disqualifyReason === "Other" && (
+              <div className="space-y-2">
+                <Label htmlFor="other-reason">Disqualification Reason - Other</Label>
+                <Input 
+                  id="other-reason" 
+                  value={otherReason}
+                  onChange={(e) => setOtherReason(e.target.value)}
+                  placeholder="Please specify the reason"
+                />
+              </div>
+            )}
+
             <Button 
               onClick={handleDisqualify} 
-              className="w-full flex items-center justify-start"
-              variant="outline"
+              className="w-full"
             >
-              <XCircle size={16} className="mr-2" />
-              Disqualify
+              Submit
             </Button>
           </div>
         </DialogContent>

@@ -5,11 +5,13 @@ import { ChevronLeft, Home } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AudioRecorder from '@/components/AudioRecorder';
+import ClosedLostReasonForm from '@/components/ClosedLostReasonForm';
 
 const NegativeOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [step, setStep] = useState<'voice' | 'reason'>('voice');
   
   const handleAudioSend = (blob: Blob) => {
     setAudioBlob(blob);
@@ -18,6 +20,7 @@ const NegativeOutcome: React.FC = () => {
     console.log('Sending voice note to Zapier webhook');
     
     toast.success("Voice note recorded successfully");
+    setStep('reason');
   };
   
   const handleComplete = () => {
@@ -46,19 +49,18 @@ const NegativeOutcome: React.FC = () => {
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-8 text-center">Negative Outcome</h2>
           
-          <div className="allo-card mb-6">
-            <AudioRecorder onSend={handleAudioSend} />
-          </div>
+          {step === 'voice' && (
+            <div className="allo-card mb-6">
+              <AudioRecorder onSend={handleAudioSend} />
+            </div>
+          )}
           
-          <div className="flex justify-center">
-            <Button 
-              className="flex items-center justify-center"
-              onClick={handleComplete}
-            >
-              <Home size={18} className="mr-2" />
-              Return to Homepage
-            </Button>
-          </div>
+          {step === 'reason' && (
+            <ClosedLostReasonForm 
+              meetingId={id || ''}
+              onComplete={handleComplete}
+            />
+          )}
         </div>
       </div>
     </div>

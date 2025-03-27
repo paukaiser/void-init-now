@@ -25,7 +25,9 @@ const MeetingCanceled: React.FC = () => {
           companyName: meetingDetails.companyName,
           companyAddress: meetingDetails.companyAddress,
           contactId: meetingDetails.contactId,
-          contactName: meetingDetails.contactName
+          contactName: meetingDetails.contactName,
+          // Force company selection to be disabled
+          forceCompany: true
         }
       });
     } else {
