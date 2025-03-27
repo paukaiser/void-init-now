@@ -17,15 +17,29 @@ const MeetingActions: React.FC = () => {
     title: 'Product Demo',
     contactName: 'Sarah Chen',
     companyName: 'Acme Inc',
+    companyId: 'acme-123',
+    companyAddress: '123 Main St, San Francisco, CA',
+    contactId: 'sarah-456',
     startTime: new Date(Date.now() + 3600000).toISOString(), // 1 hour from now
     endTime: new Date(Date.now() + 7200000).toISOString(),   // 2 hours from now
     date: '12.06.2024',
-    status: 'scheduled'
+    status: 'scheduled',
+    meetingType: 'sales meeting'
   };
   
   const handleCancel = () => {
-    // In a real app, you would call Hubspot API to cancel the meeting
-    navigate('/meeting-canceled');
+    // Pass meeting details to the canceled page
+    navigate('/meeting-canceled', {
+      state: {
+        meetingDetails: {
+          companyId: meetingDetails.companyId,
+          companyName: meetingDetails.companyName,
+          companyAddress: meetingDetails.companyAddress,
+          contactId: meetingDetails.contactId,
+          contactName: meetingDetails.contactName
+        }
+      }
+    });
   };
   
   const handleComplete = () => {
@@ -35,13 +49,19 @@ const MeetingActions: React.FC = () => {
   
   const handleReschedule = () => {
     // Navigate to add meeting page with rescheduling data
+    // Only pass the necessary details for rescheduling
     navigate('/add-meeting', { 
       state: { 
         isRescheduling: true,
         meetingId: id,
         title: meetingDetails.title,
         companyName: meetingDetails.companyName,
-        contactName: meetingDetails.contactName
+        companyId: meetingDetails.companyId,
+        companyAddress: meetingDetails.companyAddress,
+        contactId: meetingDetails.contactId,
+        contactName: meetingDetails.contactName,
+        meetingType: meetingDetails.meetingType,
+        forceCompany: true // Force company selection to be disabled
       } 
     });
   };

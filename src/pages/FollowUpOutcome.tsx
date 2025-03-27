@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Home, Clock } from 'lucide-react';
@@ -28,7 +27,8 @@ const FollowUpOutcome: React.FC = () => {
       companyName: 'Acme Inc',
       companyAddress: '123 Main St, San Francisco, CA',
       contactId: 'mock-contact-id',
-      contactName: 'John Doe'
+      contactName: 'John Doe',
+      meetingType: 'sales followup'
     };
     
     // Navigate to add meeting page with follow-up data
@@ -36,7 +36,6 @@ const FollowUpOutcome: React.FC = () => {
       state: { 
         isFollowUp: true,
         meetingId: id,
-        meetingType: "sales followup",
         companyId: mockMeetingDetails.companyId,
         companyName: mockMeetingDetails.companyName,
         companyAddress: mockMeetingDetails.companyAddress,

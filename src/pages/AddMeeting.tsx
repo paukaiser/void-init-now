@@ -40,9 +40,9 @@ const AddMeeting: React.FC = () => {
   // Check if company selection is forced (from task or canceled meeting)
   const forceCompany = prefilledData.forceCompany || false;
   
-  // For follow-up or coming from canceled meeting, we use prefilled company data
+  // For follow-up, canceled meeting, or rescheduling we use prefilled company data
   useEffect(() => {
-    if ((isFollowUp || forceCompany) && prefilledData.companyName) {
+    if ((isFollowUp || forceCompany || isRescheduling) && prefilledData.companyName) {
       // Create a company object from the prefilled data
       const company: Company = {
         id: prefilledData.companyId || 'temp-id',
@@ -52,7 +52,7 @@ const AddMeeting: React.FC = () => {
       
       setSelectedCompany(company);
     }
-  }, [isFollowUp, forceCompany, prefilledData]);
+  }, [isFollowUp, forceCompany, isRescheduling, prefilledData]);
   
   // Process preselected times if provided
   useEffect(() => {
@@ -149,10 +149,10 @@ const AddMeeting: React.FC = () => {
   };
   
   // Determine what form elements to show based on context
-  const showCompanySelection = !forceCompany && !isFollowUp;
-  const showMeetingTypeSelection = !isFollowUp && !forceCompany;
+  const showCompanySelection = !forceCompany && !isFollowUp && !isRescheduling;
+  const showMeetingTypeSelection = !isFollowUp && !forceCompany && !isRescheduling;
   const showMeetingTypeDisplay = isFollowUp;
-  const showCompanyDetails = (forceCompany || isFollowUp) && (selectedCompany || prefilledData.companyName);
+  const showCompanyDetails = (forceCompany || isFollowUp || isRescheduling) && (selectedCompany || prefilledData.companyName);
   
   return (
     <div className="allo-page">
@@ -199,28 +199,8 @@ const AddMeeting: React.FC = () => {
                 </div>
               )}
               
-              {/* Only show meeting type radio selection for new meetings from canceled page */}
-              {isRescheduling && !isFollowUp && forceCompany && (
-                <div className="md:col-span-2 space-y-2">
-                  <Label>Meeting Type <span className="text-red-500">*</span></Label>
-                  <RadioGroup 
-                    defaultValue={meetingType}
-                    onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
-                    className="flex flex-col space-y-1"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sales meeting" id="meeting-type-sales" />
-                      <Label htmlFor="meeting-type-sales" className="cursor-pointer">Sales Meeting</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sales followup" id="meeting-type-followup" />
-                      <Label htmlFor="meeting-type-followup" className="cursor-pointer">Sales Follow-up</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
-              
-              {showMeetingTypeSelection && !forceCompany && (
+              {/* Only show meeting type radio selection for new meetings */}
+              {showMeetingTypeSelection && (
                 <div className="md:col-span-2 space-y-2">
                   <Label>Meeting Type <span className="text-red-500">*</span></Label>
                   <RadioGroup 
