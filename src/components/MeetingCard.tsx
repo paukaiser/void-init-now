@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle } from 'lucide-react';
@@ -32,6 +31,14 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   
   const isCompleted = meeting.status === 'completed';
   const isPastScheduled = meeting.status === 'scheduled' && new Date(meeting.startTime) < new Date();
+  
+  const getDayOfWeek = (dateString: string) => {
+    const [day, month, year] = dateString.split('.').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
+  };
+  
+  const dayOfWeek = getDayOfWeek(meeting.date);
   
   const handleClick = () => {
     if (isCompleted) return; // Prevent clicking on completed meetings
@@ -103,7 +110,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   };
   
   if (isCalendarView && startHour !== undefined && endHour !== undefined) {
-    // Calculate position and size for calendar view
     const startDate = new Date(meeting.startTime);
     const endDate = new Date(meeting.endTime);
     
@@ -114,7 +120,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
-    // Removed opacity for past meetings
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
     const meetingBgColor = 'bg-[#FF8769]/100';
     
@@ -151,7 +156,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     );
   }
   
-  // Regular card view - removed opacity classes
   return (
     <div 
       className={cn(
@@ -186,7 +190,10 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
         <div className="flex justify-between text-xs text-allo-muted mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1.5">
             <Calendar size={14} />
-            <span>{meeting.date}</span>
+            <div className="flex flex-col items-center">
+              <span className="text-xs">{meeting.date}</span>
+              <span className="text-[10px]">{dayOfWeek}</span>
+            </div>
           </div>
           <div className="flex items-center gap-1.5">
             <Clock size={14} />

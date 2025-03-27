@@ -13,6 +13,15 @@ const MeetingCanceled: React.FC = () => {
     // In a real app, this would fetch the meeting details from the state or API
     if (location.state && location.state.meetingDetails) {
       setMeetingDetails(location.state.meetingDetails);
+    } else {
+      // Mock data for demonstration purposes
+      setMeetingDetails({
+        companyId: 'mock-company-id',
+        companyName: 'Acme Inc',
+        companyAddress: '123 Main St, San Francisco, CA',
+        contactId: 'mock-contact-id',
+        contactName: 'John Doe'
+      });
     }
   }, [location]);
   

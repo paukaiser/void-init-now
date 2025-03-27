@@ -21,12 +21,28 @@ const FollowUpOutcome: React.FC = () => {
   };
   
   const handleScheduleFollowUp = () => {
+    // In a real app, you would fetch meeting details from the API
+    // For demonstration purposes, we're using mock data
+    const mockMeetingDetails = {
+      companyId: 'mock-company-id',
+      companyName: 'Acme Inc',
+      companyAddress: '123 Main St, San Francisco, CA',
+      contactId: 'mock-contact-id',
+      contactName: 'John Doe'
+    };
+    
     // Navigate to add meeting page with follow-up data
     navigate('/add-meeting', { 
       state: { 
         isFollowUp: true,
         meetingId: id,
-        meetingType: "sales followup"
+        meetingType: "sales followup",
+        companyId: mockMeetingDetails.companyId,
+        companyName: mockMeetingDetails.companyName,
+        companyAddress: mockMeetingDetails.companyAddress,
+        contactId: mockMeetingDetails.contactId,
+        contactName: mockMeetingDetails.contactName,
+        forceCompany: true // Force company selection to be disabled
       } 
     });
   };
