@@ -15,6 +15,8 @@ interface ClosedWonReasonFormProps {
 const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ meetingId, onComplete }) => {
   const [reason, setReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
+  const [posCompetitor, setPosCompetitor] = useState<string>("");
+  const [paymentCompetitor, setPaymentCompetitor] = useState<string>("");
   const navigate = useNavigate();
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -34,7 +36,9 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ meetingId, on
     console.log("Closed Won Reason:", {
       meetingId,
       reason,
-      otherReason: reason === "Other" ? otherReason : undefined
+      otherReason: reason === "Other" ? otherReason : undefined,
+      posCompetitor,
+      paymentCompetitor
     });
     
     toast.success("Meeting outcome recorded successfully");
@@ -81,6 +85,57 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ meetingId, on
               />
             </div>
           )}
+          
+          <div className="space-y-2">
+            <Label htmlFor="pos-competitor">POS Competitor</Label>
+            <Select 
+              onValueChange={setPosCompetitor}
+              value={posCompetitor}
+            >
+              <SelectTrigger id="pos-competitor">
+                <SelectValue placeholder="Select a POS competitor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Lightspeed">Lightspeed</SelectItem>
+                <SelectItem value="Toast">Toast</SelectItem>
+                <SelectItem value="Square">Square</SelectItem>
+                <SelectItem value="Clover">Clover</SelectItem>
+                <SelectItem value="TouchBistro">TouchBistro</SelectItem>
+                <SelectItem value="Revel">Revel</SelectItem>
+                <SelectItem value="Aloha">Aloha</SelectItem>
+                <SelectItem value="Lavu">Lavu</SelectItem>
+                <SelectItem value="Loyverse">Loyverse</SelectItem>
+                <SelectItem value="Custom Solution">Custom Solution</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="None">None</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="payment-competitor">Payment Competitor</Label>
+            <Select 
+              onValueChange={setPaymentCompetitor}
+              value={paymentCompetitor}
+            >
+              <SelectTrigger id="payment-competitor">
+                <SelectValue placeholder="Select a payment competitor" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Stripe">Stripe</SelectItem>
+                <SelectItem value="Square">Square</SelectItem>
+                <SelectItem value="PayPal">PayPal</SelectItem>
+                <SelectItem value="Adyen">Adyen</SelectItem>
+                <SelectItem value="WorldPay">WorldPay</SelectItem>
+                <SelectItem value="Braintree">Braintree</SelectItem>
+                <SelectItem value="Authorize.net">Authorize.net</SelectItem>
+                <SelectItem value="Shopify Payments">Shopify Payments</SelectItem>
+                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+                <SelectItem value="None">None</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         <div className="flex justify-end pt-4">

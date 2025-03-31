@@ -1,14 +1,22 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Home, Clock } from 'lucide-react';
+import { ChevronLeft, Home, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import AudioRecorder from '@/components/AudioRecorder';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [showTaskOptions, setShowTaskOptions] = useState(false);
+  const [date, setDate] = useState<Date | undefined>(undefined);
+  const [showDateSelector, setShowDateSelector] = useState(false);
   
   const handleAudioSend = (blob: Blob) => {
     setAudioBlob(blob);
@@ -46,6 +54,53 @@ const FollowUpOutcome: React.FC = () => {
     });
   };
   
+  const handleTaskSchedule = (timeframe: string) => {
+    let taskDate: Date;
+    const today = new Date();
+    
+    switch(timeframe) {
+      case '3days':
+        taskDate = new Date(today);
+        taskDate.setDate(today.getDate() + 3);
+        break;
+      case '1week':
+        taskDate = new Date(today);
+        taskDate.setDate(today.getDate() + 7);
+        break;
+      case '2weeks':
+        taskDate = new Date(today);
+        taskDate.setDate(today.getDate() + 14);
+        break;
+      case '3weeks':
+        taskDate = new Date(today);
+        taskDate.setDate(today.getDate() + 21);
+        break;
+      case 'custom':
+        setShowDateSelector(true);
+        return;
+      default:
+        taskDate = new Date(today);
+        taskDate.setDate(today.getDate() + 7);
+    }
+    
+    scheduleTask(taskDate);
+  };
+  
+  const scheduleTask = (taskDate: Date) => {
+    // In a real app, this would create a task in your API
+    console.log(`Scheduling follow-up task for ${format(taskDate, 'dd.MM.yyyy')}`);
+    
+    // Simulate API call success
+    toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
+    
+    // Close the task options and reset
+    setShowTaskOptions(false);
+    setShowDateSelector(false);
+    
+    // Navigate to home page
+    navigate('/');
+  };
+  
   const handleComplete = () => {
     // In a real app, this would call the Hubspot API to mark the meeting as completed
     console.log(`Marking meeting ${id} as completed with follow-up outcome`);
@@ -55,6 +110,17 @@ const FollowUpOutcome: React.FC = () => {
     
     // Navigate to home page
     navigate('/');
+  };
+  
+  const handleScheduleFollowUpTask = () => {
+    setShowTaskOptions(true);
+  };
+  
+  const handleCalendarSelect = (selectedDate: Date | undefined) => {
+    if (selectedDate) {
+      setDate(selectedDate);
+      scheduleTask(selectedDate);
+    }
   };
   
   return (
@@ -72,27 +138,84 @@ const FollowUpOutcome: React.FC = () => {
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-8 text-center">Follow-Up</h2>
           
-          <div className="allo-card mb-6">
-            <AudioRecorder onSend={handleAudioSend} />
-          </div>
-          
-          <div className="flex flex-col space-y-4">
-            <Button 
-              className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
-              onClick={handleScheduleFollowUp}
-            >
-              <Clock size={18} className="mr-2" />
-              Schedule Follow-up Meeting
-            </Button>
-            
-            <Button 
-              className="flex items-center justify-center"
-              onClick={handleComplete}
-            >
-              <Home size={18} className="mr-2" />
-              Return to Homepage
-            </Button>
-          </div>
+          {!showTaskOptions ? (
+            <>
+              <div className="allo-card mb-6">
+                <AudioRecorder onSend={handleAudioSend} />
+              </div>
+              
+              <div className="flex flex-col space-y-4">
+                <Button 
+                  className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={handleScheduleFollowUp}
+                >
+                  <Clock size={18} className="mr-2" />
+                  Schedule Follow-up Meeting
+                </Button>
+                
+                <Button 
+                  className="flex items-center justify-center py-4 bg-amber-500 hover:bg-amber-600 text-white"
+                  onClick={handleScheduleFollowUpTask}
+                >
+                  <Clock size={18} className="mr-2" />
+                  Schedule Follow-up Task
+                </Button>
+                
+                <Button 
+                  className="flex items-center justify-center"
+                  onClick={handleComplete}
+                >
+                  <Home size={18} className="mr-2" />
+                  Return to Homepage
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="allo-card">
+              <h3 className="text-lg font-medium mb-4">When to follow up?</h3>
+              
+              {showDateSelector ? (
+                <div className="mb-4">
+                  <Popover open={true}>
+                    <PopoverTrigger asChild>
+                      <div></div>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 pointer-events-auto" align="center">
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={handleCalendarSelect}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  <Button onClick={() => handleTaskSchedule('3days')}>In 3 days</Button>
+                  <Button onClick={() => handleTaskSchedule('1week')}>In 1 week</Button>
+                  <Button onClick={() => handleTaskSchedule('2weeks')}>In 2 weeks</Button>
+                  <Button onClick={() => handleTaskSchedule('3weeks')}>In 3 weeks</Button>
+                  <Button 
+                    className="bg-gray-100 text-gray-800 hover:bg-gray-200"
+                    onClick={() => handleTaskSchedule('custom')}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Select a date
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="mt-2"
+                    onClick={() => setShowTaskOptions(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

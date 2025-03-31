@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search } from 'lucide-react';
+import { Search, Plus } from 'lucide-react';
 import { toast } from "sonner";
 
 export interface Company {
@@ -89,6 +89,19 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     setShowResults(false);
   };
   
+  const handleAddNewCompany = () => {
+    // Create a new company with the entered name
+    const newCompany: Company = {
+      id: `new-${Date.now()}`, // Generate a temporary ID
+      name: searchTerm,
+      address: 'Please update address'
+    };
+    
+    onSelect(newCompany);
+    setShowResults(false);
+    toast.success("New company created. Please update the address.");
+  };
+  
   return (
     <div className="space-y-2 relative">
       <Label htmlFor="company">Company Name {required && <span className="text-red-500">*</span>}</Label>
@@ -131,6 +144,15 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           ) : (
             <div>
               <div className="p-4 text-center text-sm text-gray-500">No companies found</div>
+              {searchTerm && searchTerm.length >= 2 && (
+                <div 
+                  className="p-3 hover:bg-gray-100 cursor-pointer border-t border-gray-100 flex items-center text-blue-600"
+                  onClick={handleAddNewCompany}
+                >
+                  <Plus size={16} className="mr-2" />
+                  <span>Add "{searchTerm}" as new company</span>
+                </div>
+              )}
             </div>
           )}
         </div>
