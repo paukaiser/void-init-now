@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, FileText, CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -145,11 +144,11 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
             )}
             <button 
               className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
-              onClick={toggleOptions}
-              aria-label={isOpen ? "Close Menu" : "Open Menu"}
+              onClick={isOpen ? handleCreateMeeting : toggleOptions}
+              aria-label={isOpen ? "Create Meeting" : "Open Menu"}
             >
               {isOpen ? (
-                <Calendar size={24} onClick={handleCreateMeeting} />
+                <Calendar size={24} />
               ) : (
                 <Plus size={24} />
               )}
