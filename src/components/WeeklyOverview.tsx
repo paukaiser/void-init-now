@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
@@ -109,6 +109,10 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   // Check if any day in the current week is today
   const isTodayInCurrentWeek = weekDays.some(day => isToday(day));
 
+  // Define the max dots to display before showing a plus sign
+  const MAX_DOTS = 4;
+  const MAX_DOTS_TOTAL = 8;
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-4 mb-4"
@@ -141,16 +145,17 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           
           {/* Only show "Today" button when not on today's date */}
           {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-2 text-xs flex items-center"
+            <button
               onClick={goToToday}
+              className="ml-2 flex items-center justify-center w-6 h-6 relative"
               aria-label="Go to today"
             >
-              <CalendarDays className="h-3.5 w-3.5 mr-1" />
-              Today
-            </Button>
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="14" height="14" rx="1" stroke="#333" strokeWidth="1.5"/>
+                <path d="M3 6.5H17" stroke="#333" strokeWidth="1.5"/>
+                <circle cx="10" cy="11" r="2" fill="#FF8769" />
+              </svg>
+            </button>
           )}
         </div>
         <UserProfile small={true} />
@@ -161,6 +166,23 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           const dayMeetings = getMeetingsForDay(day);
           const dayTasks = getTasksForDay(day);
           const isSelected = isSameDay(day, currentDate);
+          
+          // Calculate how many dots to display
+          const totalItems = dayMeetings.length + dayTasks.length;
+          const showPlus = totalItems > MAX_DOTS_TOTAL;
+          const dotSize = totalItems > MAX_DOTS ? "w-1.5 h-1.5" : "w-2 h-2";
+          
+          // Determine how many dots of each type to show
+          let meetingDotsToShow = Math.min(dayMeetings.length, showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS);
+          let taskDotsToShow = Math.min(dayTasks.length, showPlus ? (MAX_DOTS_TOTAL - meetingDotsToShow) : (MAX_DOTS - meetingDotsToShow));
+          
+          // If we have more of one type than the other, allow it to use more dots up to MAX_DOTS_TOTAL
+          if (meetingDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
+            taskDotsToShow = Math.min(dayTasks.length, MAX_DOTS_TOTAL - meetingDotsToShow);
+          }
+          if (taskDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
+            meetingDotsToShow = Math.min(dayMeetings.length, MAX_DOTS_TOTAL - taskDotsToShow);
+          }
           
           return (
             <button
@@ -184,12 +206,30 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
               </span>
               
               {/* Dots for meetings and tasks */}
-              <div className="flex gap-1 mt-1">
-                {dayMeetings.length > 0 && (
-                  <div className="w-2 h-2 rounded-full bg-[#FF8769]" title={`${dayMeetings.length} meetings`}></div>
-                )}
-                {dayTasks.length > 0 && (
-                  <div className="w-2 h-2 rounded-full bg-[#2E1813]" title={`${dayTasks.length} tasks`}></div>
+              <div className="flex gap-0.5 mt-1 items-center justify-center h-2">
+                {/* Meeting dots (orange) */}
+                {Array.from({ length: meetingDotsToShow }).map((_, i) => (
+                  <div 
+                    key={`meeting-${i}`} 
+                    className={`${dotSize} rounded-full bg-[#FF8769]`} 
+                    title={`${dayMeetings.length} meetings`}
+                  />
+                ))}
+                
+                {/* Task dots (black) */}
+                {Array.from({ length: taskDotsToShow }).map((_, i) => (
+                  <div 
+                    key={`task-${i}`} 
+                    className={`${dotSize} rounded-full bg-[#2E1813]`} 
+                    title={`${dayTasks.length} tasks`}
+                  />
+                ))}
+                
+                {/* Plus indicator if there are more than MAX_DOTS_TOTAL total items */}
+                {showPlus && (
+                  <div className={`${dotSize} flex items-center justify-center ml-0.5 font-bold text-[8px] text-gray-600`} title={`${totalItems} total items`}>
+                    +
+                  </div>
                 )}
               </div>
             </button>

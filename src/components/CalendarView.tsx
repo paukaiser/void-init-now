@@ -3,6 +3,18 @@ import React, { useState, useEffect, useRef } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface CalendarViewProps {
   userId: string;
@@ -14,7 +26,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [meetingToCancel, setMeetingToCancel] = useState<Meeting | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   
   const START_HOUR = 8; // 08:00
   const END_HOUR = 22; // 22:00
@@ -139,6 +153,27 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   const calculateCurrentTimePosition = () => {
     return timeToY(new Date());
   };
+
+  const handleCancelMeeting = (meeting: Meeting) => {
+    setMeetingToCancel(meeting);
+  };
+
+  const confirmCancelMeeting = () => {
+    if (meetingToCancel) {
+      navigate('/meeting-canceled', {
+        state: {
+          meetingDetails: {
+            companyId: 'company-123', // Mock ID
+            companyName: meetingToCancel.companyName,
+            companyAddress: '123 Main St, San Francisco, CA', // Mock address
+            contactId: 'contact-123', // Mock ID
+            contactName: meetingToCancel.contactName
+          }
+        }
+      });
+    }
+    setMeetingToCancel(null);
+  };
   
   const generateCalendarGrid = () => {
     const dayCells = [];
@@ -189,6 +224,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           isCalendarView={true}
           startHour={START_HOUR}
           endHour={END_HOUR}
+          onCancel={() => handleCancelMeeting(meeting)}
         />
       );
     });
@@ -219,6 +255,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           </div>
         </div>
       </ScrollArea>
+
+      <AlertDialog open={!!meetingToCancel} onOpenChange={(open) => !open && setMeetingToCancel(null)}>
+        <AlertDialogContent className="max-w-[350px]">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center">
+              <AlertTriangle className="text-red-500 mr-2 h-5 w-5" />
+              Cancel Meeting
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {meetingToCancel && (
+                <>Are you sure you want to cancel this meeting with {meetingToCancel.contactName} from {meetingToCancel.companyName}?</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmCancelMeeting} className="bg-red-600 hover:bg-red-700">
+              Yes, cancel
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ interface FloatingActionButtonProps {
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTask }) => {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
+  const fabRef = useRef<HTMLDivElement>(null);
 
   const toggleOptions = () => {
     setIsOpen(!isOpen);
@@ -28,50 +29,76 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     }
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (fabRef.current && !fabRef.current.contains(event.target as Node) && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40">
-      {/* Meeting option - now on bottom */}
-      <div className="flex items-center flex-row-reverse">
-        <button 
-          className={cn(
-            "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-14 h-14",
-            isOpen ? "bg-[#2E1813]" : "bg-[#FF8769] hover:bg-[#FF8769]/90"
-          )}
-          onClick={isOpen ? handleCreateMeeting : toggleOptions}
-          aria-label={isOpen ? "Create Meeting" : "Open Menu"}
-        >
-          {isOpen ? (
-            <Calendar size={24} className="text-white" />
-          ) : (
-            <Plus size={24} className="text-white" />
-          )}
-        </button>
-        {isOpen && (
-          <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-            Meeting
-          </span>
-        )}
-      </div>
+    <>
+      {/* Overlay that darkens the screen when FAB is open */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/30 z-30"
+          aria-hidden="true"
+        />
+      )}
       
-      {/* Task option - now on top */}
       <div 
-        className={cn(
-          "transition-all duration-200 transform flex items-center flex-row-reverse",
-          isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
-        )}
+        ref={fabRef}
+        className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40"
       >
-        <button 
-          className="bg-[#2E1813] text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
-          onClick={handleCreateTask}
-          aria-label="Create Task"
+        {/* Task option - now on top */}
+        <div 
+          className={cn(
+            "transition-all duration-200 transform flex items-center flex-row-reverse",
+            isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+          )}
         >
-          <FileText size={20} />
-        </button>
-        <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-          Task
-        </span>
+          <button 
+            className="bg-[#FF8769] text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
+            onClick={handleCreateTask}
+            aria-label="Create Task"
+          >
+            <FileText size={20} />
+          </button>
+          <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+            Task
+          </span>
+        </div>
+        
+        {/* Meeting option - now on bottom */}
+        <div className="flex items-center flex-row-reverse">
+          <button 
+            className={cn(
+              "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-14 h-14",
+              isOpen ? "bg-[#2E1813]" : "bg-black hover:bg-black/90"
+            )}
+            onClick={isOpen ? handleCreateMeeting : toggleOptions}
+            aria-label={isOpen ? "Create Meeting" : "Open Menu"}
+          >
+            {isOpen ? (
+              <Calendar size={24} className="text-white" />
+            ) : (
+              <Plus size={24} className="text-[#FF8769]" />
+            )}
+          </button>
+          {isOpen && (
+            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+              Meeting
+            </span>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
