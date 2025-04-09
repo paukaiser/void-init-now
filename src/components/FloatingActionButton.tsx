@@ -54,47 +54,44 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
       
       <div 
         ref={fabRef}
-        className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40"
+        className="fixed bottom-6 right-6 z-40"
       >
-        {/* Task option - Shows ABOVE the main button when open */}
-        <div 
-          className={cn(
-            "transition-all duration-200 transform flex items-center flex-row-reverse",
-            isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
-          )}
-        >
-          <button 
-            className="bg-[#FF8769] text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
-            onClick={handleCreateTask}
-            aria-label="Create Task"
-          >
-            <FileText size={20} />
-          </button>
+        <div className="flex flex-col items-end space-y-4">
+          {/* Task button - appears above the main button when open */}
           {isOpen && (
-            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-              Task
-            </span>
+            <div className="flex items-center">
+              <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+                Task
+              </span>
+              <button 
+                className="bg-[#FF8769] text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
+                onClick={handleCreateTask}
+                aria-label="Create Task"
+              >
+                <FileText size={20} />
+              </button>
+            </div>
           )}
-        </div>
-        
-        {/* Main FAB button - Changes to Calendar when open */}
-        <div className="flex items-center flex-row-reverse">
-          <button 
-            className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
-            onClick={toggleOptions}
-            aria-label={isOpen ? "Close Menu" : "Open Menu"}
-          >
-            {isOpen ? (
-              <Calendar size={24} />
-            ) : (
-              <Plus size={24} />
+          
+          {/* Main FAB button */}
+          <div className="flex items-center">
+            {isOpen && (
+              <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+                Meeting
+              </span>
             )}
-          </button>
-          {isOpen && (
-            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-              Meeting
-            </span>
-          )}
+            <button 
+              className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
+              onClick={toggleOptions}
+              aria-label={isOpen ? "Close Menu" : "Open Menu"}
+            >
+              {isOpen ? (
+                <Calendar size={24} />
+              ) : (
+                <Plus size={24} />
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>
