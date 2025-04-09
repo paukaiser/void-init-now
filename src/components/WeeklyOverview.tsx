@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   format, 
@@ -44,7 +43,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   }, [currentDate, weekOffset]);
 
   const weekDays = useMemo(() => {
-    const start = startOfWeek(displayedWeek, { weekStartsOn: 1 }); // Start on Monday
+    const start = startOfWeek(displayedWeek, { weekStartsOn: 1 });
     return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
   }, [displayedWeek]);
 
@@ -77,7 +76,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
 
   const handleDayClick = (day: Date) => {
     onDateSelect(day);
-    // Reset week offset when selecting a date
     setWeekOffset(0);
   };
   
@@ -93,10 +91,8 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
-        // Swipe left - go to next week
         goToNextWeek();
       } else {
-        // Swipe right - go to previous week
         goToPreviousWeek();
       }
     }
@@ -104,9 +100,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     touchStartX.current = null;
   };
 
-  // Check if current date is today
   const isCurrentDateToday = isToday(currentDate);
-  // Check if any day in the current week is today
   const isTodayInCurrentWeek = weekDays.some(day => isToday(day));
 
   return (
@@ -139,18 +133,15 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
             <ChevronRight className="h-5 w-5" />
           </Button>
           
-          {/* Only show "Today" button when not on today's date */}
           {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-2 text-xs flex items-center"
+            <button
+              className="ml-2 flex items-center justify-center relative cursor-pointer"
               onClick={goToToday}
               aria-label="Go to today"
             >
-              <CalendarDays className="h-3.5 w-3.5 mr-1" />
-              Today
-            </Button>
+              <CalendarDays className="h-5 w-5 text-gray-600" />
+              <div className="absolute w-2 h-2 rounded-full bg-[#FF8769] bottom-0.5 right-0.5"></div>
+            </button>
           )}
         </div>
         <UserProfile small={true} />
@@ -183,7 +174,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
                 {format(day, 'd')}
               </span>
               
-              {/* Dots for meetings and tasks */}
               <div className="flex gap-1 mt-1">
                 {dayMeetings.length > 0 && (
                   <div className="w-2 h-2 rounded-full bg-[#FF8769]" title={`${dayMeetings.length} meetings`}></div>
