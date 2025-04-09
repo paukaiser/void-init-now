@@ -64,7 +64,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
                 Task
               </span>
               <button 
-                className="bg-[#FF8769] text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
+                className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-12 h-12 flex items-center justify-center"
                 onClick={handleCreateTask}
                 aria-label="Create Task"
               >
