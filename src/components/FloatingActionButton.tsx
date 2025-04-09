@@ -75,38 +75,14 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </span>
         </div>
         
-        {/* Meeting option - on bottom (should also be orange now) */}
-        <div 
-          className={cn(
-            "transition-all duration-200 transform flex items-center flex-row-reverse",
-            isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-0 pointer-events-none"
-          )}
-        >
-          <button 
-            className={cn(
-              "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-12 h-12",
-              isOpen ? "bg-[#FF8769]" : "opacity-0"
-            )}
-            onClick={handleCreateMeeting}
-            aria-label="Create Meeting"
-          >
-            <Calendar size={20} className="text-white" />
-          </button>
-          {isOpen && (
-            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-              Meeting
-            </span>
-          )}
-        </div>
-        
-        {/* Main FAB button */}
+        {/* Main FAB button - now has Calendar icon */}
         <div className="flex items-center flex-row-reverse">
           <button 
             className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
             onClick={toggleOptions}
             aria-label={isOpen ? "Close Menu" : "Open Menu"}
           >
-            <Plus size={24} />
+            <Calendar size={24} />
           </button>
         </div>
       </div>
