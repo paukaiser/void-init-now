@@ -2,8 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Building2 } from 'lucide-react';
 import { toast } from "sonner";
+import { searchHubspotCompanies, createHubspotCompany, HubspotCompany } from '@/utils/hubspotApi';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Company {
   id: string;
@@ -23,6 +25,31 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  
+  // Convert from HubSpot format to our Company interface
+  const convertHubspotCompany = (hubspotCompany: HubspotCompany): Company => {
+    const { properties } = hubspotCompany;
+    
+    // Construct address from various HubSpot address components
+    let fullAddress = properties.address || '';
+    if (properties.city) {
+      fullAddress += fullAddress ? `, ${properties.city}` : properties.city;
+    }
+    if (properties.zip) {
+      fullAddress += fullAddress ? `, ${properties.zip}` : properties.zip;
+    }
+    if (properties.country) {
+      fullAddress += fullAddress ? `, ${properties.country}` : properties.country;
+    }
+    
+    return {
+      id: hubspotCompany.id,
+      name: properties.name,
+      address: fullAddress || 'No address provided',
+      // Add other properties as needed
+    };
+  };
   
   useEffect(() => {
     if (value) {
@@ -38,41 +65,23 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     }
     
     setLoading(true);
+    setApiError(null);
     setShowResults(true);
     
     try {
-      // In a real app, this would call the Google Places API
-      // For now, we'll simulate the API call with mock data
-      setTimeout(() => {
-        const mockResults: Company[] = [
-          { 
-            id: '1', 
-            name: 'Acme Inc', 
-            address: '123 Main St, San Francisco, CA 94105',
-            owner: 'John Smith'
-          },
-          { 
-            id: '2', 
-            name: 'Global Tech', 
-            address: '456 Market St, San Francisco, CA 94103',
-            owner: 'Sarah Johnson'
-          },
-          { 
-            id: '3', 
-            name: 'Innovate Solutions', 
-            address: '789 Howard St, San Francisco, CA 94103',
-            owner: 'David Chen'
-          }
-        ].filter(company => 
-          company.name.toLowerCase().includes(term.toLowerCase())
-        );
-        
-        setSearchResults(mockResults);
-        setLoading(false);
-      }, 500);
+      // Call the HubSpot API to search for companies
+      const hubspotCompanies = await searchHubspotCompanies(term);
+      
+      // Convert HubSpot companies to our format
+      const companies = hubspotCompanies.map(convertHubspotCompany);
+      setSearchResults(companies);
     } catch (error) {
       console.error("Error searching companies:", error);
+      setApiError("Failed to search companies. Please check your API key and try again.");
       toast.error("Failed to search companies");
+      // Fallback to empty results
+      setSearchResults([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -89,17 +98,41 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     setShowResults(false);
   };
   
-  const handleAddNewCompany = () => {
-    // Create a new company with the entered name
-    const newCompany: Company = {
-      id: `new-${Date.now()}`, // Generate a temporary ID
-      name: searchTerm,
-      address: 'Please update address'
-    };
+  const handleAddNewCompany = async () => {
+    if (!searchTerm.trim()) {
+      toast.error("Please enter a company name");
+      return;
+    }
     
-    onSelect(newCompany);
-    setShowResults(false);
-    toast.success("New company created. Please update the address.");
+    setLoading(true);
+    try {
+      // Create a new company in HubSpot
+      const hubspotCompany = await createHubspotCompany({
+        name: searchTerm,
+      });
+      
+      // Convert the response to our format
+      const newCompany = convertHubspotCompany(hubspotCompany);
+      
+      onSelect(newCompany);
+      setShowResults(false);
+      toast.success(`Company "${searchTerm}" created successfully`);
+    } catch (error) {
+      console.error("Error creating company:", error);
+      
+      // Fallback to local company object if API fails
+      const newCompany: Company = {
+        id: `new-${Date.now()}`,
+        name: searchTerm,
+        address: 'Please update address'
+      };
+      
+      onSelect(newCompany);
+      setShowResults(false);
+      toast.warning("Created company locally. API connection failed.");
+    } finally {
+      setLoading(false);
+    }
   };
   
   return (
@@ -114,6 +147,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           className="pl-9"
           onFocus={() => searchTerm && searchTerm.length >= 2 && setShowResults(true)}
           onBlur={() => {
+            // Delayed hide to allow clicks on results
             setTimeout(() => setShowResults(false), 200);
           }}
           required={required}
@@ -124,7 +158,33 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       {showResults && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
           {loading ? (
-            <div className="p-4 text-center text-sm text-gray-500">Loading...</div>
+            <div className="p-4 space-y-3">
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[150px]" />
+                  <Skeleton className="h-3 w-[200px]" />
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <Skeleton className="h-10 w-10 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-[170px]" />
+                  <Skeleton className="h-3 w-[220px]" />
+                </div>
+              </div>
+            </div>
+          ) : apiError ? (
+            <div className="p-4 text-center">
+              <p className="text-sm text-red-500 mb-2">{apiError}</p>
+              <div 
+                className="p-3 hover:bg-gray-100 cursor-pointer border-t border-gray-100 flex items-center text-blue-600"
+                onClick={handleAddNewCompany}
+              >
+                <Plus size={16} className="mr-2" />
+                <span>Create "{searchTerm}" as new company</span>
+              </div>
+            </div>
           ) : searchResults.length > 0 ? (
             <div>
               {searchResults.map((company) => (
@@ -133,24 +193,36 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                   className="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                   onClick={() => handleSelectCompany(company)}
                 >
-                  <div className="font-medium">{company.name}</div>
-                  <div className="text-sm text-gray-500">{company.address}</div>
-                  {company.owner && (
-                    <div className="text-sm text-gray-500 mt-1">Owner: {company.owner}</div>
-                  )}
+                  <div className="flex items-start">
+                    <Building2 className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
+                    <div>
+                      <div className="font-medium">{company.name}</div>
+                      <div className="text-sm text-gray-500">{company.address}</div>
+                      {company.owner && (
+                        <div className="text-sm text-gray-500 mt-1">Owner: {company.owner}</div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
+              <div 
+                className="p-3 hover:bg-blue-50 cursor-pointer flex items-center text-blue-600 border-t border-gray-100"
+                onClick={handleAddNewCompany}
+              >
+                <Plus size={16} className="mr-2" />
+                <span>Create "{searchTerm}" as new company</span>
+              </div>
             </div>
           ) : (
             <div>
               <div className="p-4 text-center text-sm text-gray-500">No companies found</div>
               {searchTerm && searchTerm.length >= 2 && (
                 <div 
-                  className="p-3 hover:bg-gray-100 cursor-pointer border-t border-gray-100 flex items-center text-blue-600"
+                  className="p-3 hover:bg-blue-50 cursor-pointer flex items-center text-blue-600 border-t border-gray-100"
                   onClick={handleAddNewCompany}
                 >
                   <Plus size={16} className="mr-2" />
-                  <span>Add "{searchTerm}" as new company</span>
+                  <span>Create "{searchTerm}" as new company</span>
                 </div>
               )}
             </div>
