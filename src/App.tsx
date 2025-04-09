@@ -5,7 +5,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
-import Meetings from "./pages/Meetings";
 import AddMeeting from "./pages/AddMeeting";
 import MeetingActions from "./pages/MeetingActions";
 import MeetingOutcome from "./pages/MeetingOutcome";
@@ -13,7 +12,6 @@ import PositiveOutcome from "./pages/PositiveOutcome";
 import NegativeOutcome from "./pages/NegativeOutcome";
 import FollowUpOutcome from "./pages/FollowUpOutcome";
 import MeetingCanceled from "./pages/MeetingCanceled";
-import Inbox from "./pages/Inbox";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 
@@ -31,8 +29,6 @@ const App = () => (
           
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/meetings" element={<Meetings />} />
-            <Route path="/inbox" element={<Inbox />} />
           </Route>
           
           <Route path="/add-meeting" element={<AddMeeting />} />

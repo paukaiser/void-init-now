@@ -139,10 +139,6 @@ const Dashboard: React.FC = () => {
   
   return (
     <div className="w-full max-w-5xl mx-auto pb-16">
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold">My Dashboard</h2>
-      </div>
-      
       <WeeklyOverview 
         currentDate={currentDate}
         meetings={meetings}
@@ -152,6 +148,7 @@ const Dashboard: React.FC = () => {
       
       {incompleteTasks.length > 0 && (
         <div className="mb-6">
+          <h3 className="text-lg font-medium mb-2">Your Tasks</h3>
           <div className="grid grid-cols-2 gap-2 sm:gap-4">
             {incompleteTasks.map(task => (
               <TaskCard 
@@ -166,7 +163,10 @@ const Dashboard: React.FC = () => {
         </div>
       )}
       
-      <CalendarView userId={userId} selectedDate={currentDate} />
+      <div>
+        <h3 className="text-lg font-medium mb-2">Your Meetings</h3>
+        <CalendarView userId={userId} selectedDate={currentDate} />
+      </div>
       
       <FloatingActionButton onCreateTask={openCreateTaskDialog} />
       

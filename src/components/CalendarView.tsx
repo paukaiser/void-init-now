@@ -1,8 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay, parseISO, startOfWeek, subDays, getWeek } from 'date-fns';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from "@/components/ui/button";
 import MeetingCard, { Meeting } from './MeetingCard';
 
 interface CalendarViewProps {
@@ -114,14 +111,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
     fetchMeetings();
   }, [userId, currentDate]);
   
-  const handlePreviousDay = () => {
-    setCurrentDate(prevDate => subDays(prevDate, 1));
-  };
-  
-  const handleNextDay = () => {
-    setCurrentDate(prevDate => addDays(prevDate, 1));
-  };
-  
   const timeToY = (time: Date): number => {
     const hours = time.getHours();
     const minutes = time.getMinutes();
@@ -213,23 +202,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   
   return (
     <div className="w-full flex flex-col space-y-4 animate-fade-in">
-      <div className="calendar-header bg-white/90 rounded-t-lg border border-gray-200 p-4 mb-0 border-b-0">
-        <div className="flex justify-between items-center">
-          <Button variant="outline" onClick={handlePreviousDay} className="mr-2">
-            <ChevronLeft size={16} />
-          </Button>
-          
-          <span className="text-lg font-medium">
-            {format(currentDate, 'EEEE, dd.MM.yyyy')}
-          </span>
-          
-          <Button variant="outline" onClick={handleNextDay} className="ml-2">
-            <ChevronRight size={16} />
-          </Button>
-        </div>
-      </div>
-      
-      <div className="calendar-grid daily-view rounded-b-lg border border-gray-200 bg-white/90 overflow-auto relative">
+      <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 overflow-auto relative">
         <div className="flex flex-col min-w-[60px]">
           <div className="h-10 border-b border-gray-100"></div>
           {generateTimeSlots()}
