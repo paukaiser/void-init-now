@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { format, isPast, isSameDay } from 'date-fns';
 import { Task } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -27,6 +27,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   const [disqualifyReason, setDisqualifyReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
   const [showDisqualifyDialog, setShowDisqualifyDialog] = useState(false);
+  
+  const isPastDue = task.dueDate && isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), new Date());
   
   const handleCardClick = () => {
     setIsDialogOpen(true);
@@ -93,7 +95,12 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       >
         <CardContent className="p-2">
           <div className="flex flex-col">
-            <h3 className="font-semibold text-xs">{task.contactName}</h3>
+            <div className="flex justify-between items-start">
+              <h3 className="font-semibold text-xs">{task.contactName}</h3>
+              {isPastDue && (
+                <Clock className="h-3 w-3 text-amber-500" />
+              )}
+            </div>
             <p className="text-xs text-muted-foreground truncate">{task.restaurantName}</p>
           </div>
         </CardContent>

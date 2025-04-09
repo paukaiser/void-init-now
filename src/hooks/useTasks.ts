@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { Task } from "@/types";
+import { v4 as uuidv4 } from 'uuid';
 
 // This is a mock service for now
 // In a real app, this would fetch data from Hubspot via a webhook
@@ -13,6 +14,7 @@ const mockTasks: Task[] = [
     restaurantName: "Schmidts Gourmet",
     cuisine: "German",
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+    dueDate: new Date().toISOString(), // Today
     isRead: false,
     completed: false,
     disqualified: false
@@ -25,6 +27,7 @@ const mockTasks: Task[] = [
     restaurantName: "Tapas Bar München",
     cuisine: "Spanish",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+    dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Yesterday
     isRead: false,
     completed: false,
     disqualified: false
@@ -37,11 +40,21 @@ const mockTasks: Task[] = [
     restaurantName: "Bavarian Eats",
     cuisine: "Bavarian",
     createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+    dueDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days from now
     isRead: true,
     completed: false,
     disqualified: false
   }
 ];
+
+interface CreateTaskInput {
+  contactName: string;
+  phoneNumber: string;
+  email: string;
+  restaurantName: string;
+  cuisine: string;
+  dueDate: string;
+}
 
 export const useTasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -89,6 +102,26 @@ export const useTasks = () => {
     );
   };
   
+  // Function to create a new task
+  const createTask = (taskInput: Partial<CreateTaskInput>) => {
+    const newTask: Task = {
+      id: uuidv4(),
+      contactName: taskInput.contactName || "",
+      phoneNumber: taskInput.phoneNumber || "",
+      email: taskInput.email || "",
+      restaurantName: taskInput.restaurantName || "",
+      cuisine: taskInput.cuisine || "",
+      createdAt: new Date().toISOString(),
+      dueDate: taskInput.dueDate || new Date().toISOString(),
+      isRead: false,
+      completed: false,
+      disqualified: false
+    };
+    
+    setTasks(prev => [newTask, ...prev]);
+    return newTask;
+  };
+  
   // Fetch tasks (mock implementation)
   useEffect(() => {
     const fetchTasks = async () => {
@@ -121,6 +154,7 @@ export const useTasks = () => {
     markAsRead, 
     markAllAsRead,
     markAsCompleted,
-    disqualifyTask
+    disqualifyTask,
+    createTask
   };
 };

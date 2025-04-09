@@ -1,3 +1,4 @@
+
 export interface Task {
   id: string;
   contactName: string;
@@ -6,6 +7,7 @@ export interface Task {
   restaurantName: string;
   cuisine: string;
   createdAt: string;
+  dueDate: string;
   isRead: boolean;
   completed?: boolean;
   disqualified?: boolean;

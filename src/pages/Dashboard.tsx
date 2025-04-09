@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -5,13 +6,18 @@ import CalendarView from '@/components/CalendarView';
 import TaskCard from '@/components/TaskCard';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import { Meeting } from '@/components/MeetingCard';
-import { format } from 'date-fns';
+import { format, addDays, addWeeks, isPast, isSameDay } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -22,10 +28,14 @@ const Dashboard: React.FC = () => {
   const [newTaskCompany, setNewTaskCompany] = useState('');
   const [newTaskContact, setNewTaskContact] = useState('');
   const [newTaskPhone, setNewTaskPhone] = useState('');
+  const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
+  const [customDateMode, setCustomDateMode] = useState(false);
+  const [showAllTasks, setShowAllTasks] = useState(false);
   const userId = "current-user"; // In a real app, you'd get this from auth context
   
-  const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
+  const { tasks, markAsRead, markAsCompleted, disqualifyTask, createTask } = useTasks();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -125,24 +135,81 @@ const Dashboard: React.FC = () => {
   
   const openCreateTaskDialog = () => {
     setIsCreateTaskDialogOpen(true);
+    setFollowUpDate(undefined);
+    setCustomDateMode(false);
   };
   
   const handleCreateTask = () => {
-    if (!newTaskName || !newTaskCompany || !newTaskContact) {
+    if (!newTaskCompany || !newTaskContact) {
       toast.error("Please fill in all required fields");
       return;
     }
     
-    toast.success(`Task "${newTaskName}" created successfully`);
+    if (!followUpDate) {
+      toast.error("Please select a follow-up date");
+      return;
+    }
+
+    const taskName = newTaskName || `Follow up with ${newTaskContact}`;
+    
+    createTask({
+      contactName: newTaskContact,
+      restaurantName: newTaskCompany,
+      phoneNumber: newTaskPhone || '',
+      email: '',
+      cuisine: '',
+      dueDate: format(followUpDate, 'yyyy-MM-dd')
+    });
+    
+    toast.success(`Task "${taskName}" created for ${format(followUpDate, 'MMMM dd, yyyy')}`);
     setIsCreateTaskDialogOpen(false);
     
+    // Reset form
     setNewTaskName('');
     setNewTaskCompany('');
     setNewTaskContact('');
     setNewTaskPhone('');
+    setFollowUpDate(undefined);
+    setCustomDateMode(false);
+  };
+
+  const setFollowUpDays = (days: number) => {
+    const date = addDays(new Date(), days);
+    setFollowUpDate(date);
+    setCustomDateMode(false);
+  };
+
+  const setFollowUpWeeks = (weeks: number) => {
+    const date = addWeeks(new Date(), weeks);
+    setFollowUpDate(date);
+    setCustomDateMode(false);
+  };
+
+  const handleSelectCustomDate = () => {
+    setCustomDateMode(true);
+  };
+
+  const handleCancelTask = () => {
+    setIsCreateTaskDialogOpen(false);
+    // Reset form
+    setNewTaskName('');
+    setNewTaskCompany('');
+    setNewTaskContact('');
+    setNewTaskPhone('');
+    setFollowUpDate(undefined);
+    setCustomDateMode(false);
   };
   
-  const incompleteTasks = tasks.filter(task => !task.completed && !task.disqualified);
+  // Filter tasks that are due on the selected date
+  const tasksForSelectedDate = tasks.filter(task => 
+    !task.completed && 
+    !task.disqualified && 
+    (isSameDay(new Date(task.dueDate), currentDate) || 
+     (isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), currentDate)))
+  );
+  
+  const displayedTasks = isMobile && !showAllTasks ? tasksForSelectedDate.slice(0, 4) : tasksForSelectedDate;
+  const hasMoreTasks = isMobile && tasksForSelectedDate.length > 4;
   
   return (
     <div className="h-screen overflow-hidden flex flex-col">
@@ -156,11 +223,11 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div className="flex-none mb-2">
-        {incompleteTasks.length > 0 && (
+        {tasksForSelectedDate.length > 0 && (
           <div>
             <h3 className="text-sm font-medium mb-1 text-muted-foreground">Tasks</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {incompleteTasks.map(task => (
+              {displayedTasks.map(task => (
                 <TaskCard 
                   key={task.id} 
                   task={task}
@@ -170,6 +237,26 @@ const Dashboard: React.FC = () => {
                 />
               ))}
             </div>
+            {hasMoreTasks && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full mt-1 flex items-center justify-center"
+                onClick={() => setShowAllTasks(!showAllTasks)}
+              >
+                {showAllTasks ? (
+                  <>
+                    <ChevronUp className="h-4 w-4 mr-1" />
+                    Show less
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="h-4 w-4 mr-1" />
+                    Show all ({tasksForSelectedDate.length})
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         )}
       </div>
@@ -190,21 +277,12 @@ const Dashboard: React.FC = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="task-name">Task Name</Label>
-              <Input 
-                id="task-name" 
-                value={newTaskName}
-                onChange={(e) => setNewTaskName(e.target.value)}
-                placeholder="Follow up with client"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="company">Company</Label>
+              <Label htmlFor="company">Restaurant</Label>
               <Input 
                 id="company" 
                 value={newTaskCompany}
                 onChange={(e) => setNewTaskCompany(e.target.value)}
-                placeholder="Acme Inc."
+                placeholder="Restaurant name"
               />
             </div>
             <div className="grid gap-2">
@@ -213,24 +291,124 @@ const Dashboard: React.FC = () => {
                 id="contact" 
                 value={newTaskContact}
                 onChange={(e) => setNewTaskContact(e.target.value)}
-                placeholder="John Doe"
+                placeholder="Contact name"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number</Label>
+              <Label htmlFor="phone">Phone Number (optional)</Label>
               <Input 
                 id="phone" 
                 value={newTaskPhone}
                 onChange={(e) => setNewTaskPhone(e.target.value)}
-                placeholder="+1 (555) 123-4567"
+                placeholder="+49 (123) 456-7890"
               />
             </div>
-            <Button 
-              className="w-full mt-2"
-              onClick={handleCreateTask}
-            >
-              Create Task
-            </Button>
+            
+            <div className="grid gap-2">
+              <Label>When to follow up?</Label>
+              
+              {!customDateMode && (
+                <div className="space-y-2">
+                  <Button 
+                    type="button" 
+                    onClick={() => setFollowUpDays(3)}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-center py-6 text-base font-medium",
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addDays(new Date(), 3), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                    )}
+                  >
+                    In 3 days
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    onClick={() => setFollowUpWeeks(1)}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-center py-6 text-base font-medium",
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 1), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                    )}
+                  >
+                    In 1 week
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    onClick={() => setFollowUpWeeks(2)}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-center py-6 text-base font-medium",
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 2), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                    )}
+                  >
+                    In 2 weeks
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    onClick={() => setFollowUpWeeks(3)}
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-center py-6 text-base font-medium",
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 3), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                    )}
+                  >
+                    In 3 weeks
+                  </Button>
+                  
+                  <Button 
+                    type="button" 
+                    onClick={handleSelectCustomDate}
+                    variant="outline"
+                    className="w-full justify-center py-6 text-base font-medium flex items-center gap-2"
+                  >
+                    <CalendarIcon className="h-5 w-5" />
+                    Select a date
+                  </Button>
+                </div>
+              )}
+              
+              {customDateMode && (
+                <div className="flex flex-col items-center space-y-2">
+                  <Calendar
+                    mode="single"
+                    selected={followUpDate}
+                    onSelect={(date) => setFollowUpDate(date)}
+                    disabled={(date) => date < new Date()}
+                    className="border rounded-md p-2 pointer-events-auto"
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={() => setCustomDateMode(false)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Back to preset options
+                  </Button>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              <Button 
+                type="button" 
+                onClick={handleCreateTask}
+                disabled={!followUpDate}
+                className="w-full"
+              >
+                Create Task
+              </Button>
+              
+              <Button 
+                type="button" 
+                onClick={handleCancelTask}
+                variant="outline"
+                className="w-full"
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
