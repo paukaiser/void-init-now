@@ -1,4 +1,3 @@
-
 export interface Task {
   id: string;
   contactName: string;
@@ -13,6 +12,7 @@ export interface Task {
   disqualified?: boolean;
   disqualifyReason?: string;
   disqualifyOtherReason?: string;
+  moreInfo?: string;
 }
 
 export type SalesRegion = 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -24,10 +23,8 @@ const Dashboard: React.FC = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
-  const [newTaskName, setNewTaskName] = useState('');
   const [newTaskCompany, setNewTaskCompany] = useState('');
-  const [newTaskContact, setNewTaskContact] = useState('');
-  const [newTaskPhone, setNewTaskPhone] = useState('');
+  const [moreInfo, setMoreInfo] = useState('');
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
   const [customDateMode, setCustomDateMode] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
@@ -140,8 +137,8 @@ const Dashboard: React.FC = () => {
   };
   
   const handleCreateTask = () => {
-    if (!newTaskCompany || !newTaskContact) {
-      toast.error("Please fill in all required fields");
+    if (!newTaskCompany) {
+      toast.error("Please enter a restaurant name");
       return;
     }
     
@@ -150,25 +147,18 @@ const Dashboard: React.FC = () => {
       return;
     }
 
-    const taskName = newTaskName || `Follow up with ${newTaskContact}`;
-    
     createTask({
-      contactName: newTaskContact,
       restaurantName: newTaskCompany,
-      phoneNumber: newTaskPhone || '',
-      email: '',
-      cuisine: '',
+      moreInfo: moreInfo,
       dueDate: format(followUpDate, 'yyyy-MM-dd')
     });
     
-    toast.success(`Task "${taskName}" created for ${format(followUpDate, 'MMMM dd, yyyy')}`);
+    toast.success(`Task created for ${format(followUpDate, 'MMMM dd, yyyy')}`);
     setIsCreateTaskDialogOpen(false);
     
     // Reset form
-    setNewTaskName('');
     setNewTaskCompany('');
-    setNewTaskContact('');
-    setNewTaskPhone('');
+    setMoreInfo('');
     setFollowUpDate(undefined);
     setCustomDateMode(false);
   };
@@ -192,20 +182,17 @@ const Dashboard: React.FC = () => {
   const handleCancelTask = () => {
     setIsCreateTaskDialogOpen(false);
     // Reset form
-    setNewTaskName('');
     setNewTaskCompany('');
-    setNewTaskContact('');
-    setNewTaskPhone('');
+    setMoreInfo('');
     setFollowUpDate(undefined);
     setCustomDateMode(false);
   };
   
-  // Filter tasks that are due on the selected date
   const tasksForSelectedDate = tasks.filter(task => 
     !task.completed && 
     !task.disqualified && 
     (isSameDay(new Date(task.dueDate), currentDate) || 
-     (isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), currentDate)))
+     (isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), new Date())))
   );
   
   const displayedTasks = isMobile && !showAllTasks ? tasksForSelectedDate.slice(0, 4) : tasksForSelectedDate;
@@ -252,7 +239,7 @@ const Dashboard: React.FC = () => {
                 ) : (
                   <>
                     <ChevronDown className="h-4 w-4 mr-1" />
-                    Show all ({tasksForSelectedDate.length})
+                    Show all
                   </>
                 )}
               </Button>
@@ -285,22 +272,14 @@ const Dashboard: React.FC = () => {
                 placeholder="Restaurant name"
               />
             </div>
+            
             <div className="grid gap-2">
-              <Label htmlFor="contact">Contact Person</Label>
+              <Label htmlFor="moreInfo">More Info (optional)</Label>
               <Input 
-                id="contact" 
-                value={newTaskContact}
-                onChange={(e) => setNewTaskContact(e.target.value)}
-                placeholder="Contact name"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="phone">Phone Number (optional)</Label>
-              <Input 
-                id="phone" 
-                value={newTaskPhone}
-                onChange={(e) => setNewTaskPhone(e.target.value)}
-                placeholder="+49 (123) 456-7890"
+                id="moreInfo" 
+                value={moreInfo}
+                onChange={(e) => setMoreInfo(e.target.value)}
+                placeholder="Additional information"
               />
             </div>
             
@@ -315,7 +294,7 @@ const Dashboard: React.FC = () => {
                     variant="outline"
                     className={cn(
                       "w-full justify-center py-6 text-base font-medium",
-                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addDays(new Date(), 3), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addDays(new Date(), 3), 'yyyy-MM-dd') && "bg-[#E5DEFF] text-black border-[#E5DEFF] hover:bg-[#E5DEFF]/90 hover:text-black hover:border-[#E5DEFF]"
                     )}
                   >
                     In 3 days
@@ -327,7 +306,7 @@ const Dashboard: React.FC = () => {
                     variant="outline"
                     className={cn(
                       "w-full justify-center py-6 text-base font-medium",
-                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 1), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 1), 'yyyy-MM-dd') && "bg-[#E5DEFF] text-black border-[#E5DEFF] hover:bg-[#E5DEFF]/90 hover:text-black hover:border-[#E5DEFF]"
                     )}
                   >
                     In 1 week
@@ -339,7 +318,7 @@ const Dashboard: React.FC = () => {
                     variant="outline"
                     className={cn(
                       "w-full justify-center py-6 text-base font-medium",
-                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 2), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 2), 'yyyy-MM-dd') && "bg-[#E5DEFF] text-black border-[#E5DEFF] hover:bg-[#E5DEFF]/90 hover:text-black hover:border-[#E5DEFF]"
                     )}
                   >
                     In 2 weeks
@@ -351,7 +330,7 @@ const Dashboard: React.FC = () => {
                     variant="outline"
                     className={cn(
                       "w-full justify-center py-6 text-base font-medium",
-                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 3), 'yyyy-MM-dd') && "bg-[#2E1813] text-white hover:bg-[#2E1813]/90"
+                      followUpDate && format(followUpDate, 'yyyy-MM-dd') === format(addWeeks(new Date(), 3), 'yyyy-MM-dd') && "bg-[#E5DEFF] text-black border-[#E5DEFF] hover:bg-[#E5DEFF]/90 hover:text-black hover:border-[#E5DEFF]"
                     )}
                   >
                     In 3 weeks

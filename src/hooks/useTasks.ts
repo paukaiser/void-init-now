@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Task } from "@/types";
 import { v4 as uuidv4 } from 'uuid';
+import { isPast, isSameDay } from 'date-fns';
 
 // This is a mock service for now
 // In a real app, this would fetch data from Hubspot via a webhook
@@ -48,11 +48,8 @@ const mockTasks: Task[] = [
 ];
 
 interface CreateTaskInput {
-  contactName: string;
-  phoneNumber: string;
-  email: string;
   restaurantName: string;
-  cuisine: string;
+  moreInfo?: string;
   dueDate: string;
 }
 
@@ -104,22 +101,44 @@ export const useTasks = () => {
   
   // Function to create a new task
   const createTask = (taskInput: Partial<CreateTaskInput>) => {
+    // In a real app, this would call Hubspot API to get additional contact info
+    // For now, we'll simulate this with placeholder data
     const newTask: Task = {
       id: uuidv4(),
-      contactName: taskInput.contactName || "",
-      phoneNumber: taskInput.phoneNumber || "",
-      email: taskInput.email || "",
+      contactName: "New Contact", // In real app, this would come from Hubspot
+      phoneNumber: "", // In real app, this would come from Hubspot
+      email: "", // In real app, this would come from Hubspot
       restaurantName: taskInput.restaurantName || "",
-      cuisine: taskInput.cuisine || "",
+      cuisine: "", // In real app, this would come from Hubspot
       createdAt: new Date().toISOString(),
       dueDate: taskInput.dueDate || new Date().toISOString(),
       isRead: false,
       completed: false,
-      disqualified: false
+      disqualified: false,
+      moreInfo: taskInput.moreInfo
     };
     
     setTasks(prev => [newTask, ...prev]);
     return newTask;
+  };
+
+  // Helper function to sort tasks with past due dates first
+  const sortTasksByDueDate = (tasks: Task[]) => {
+    return [...tasks].sort((a, b) => {
+      const aDate = new Date(a.dueDate);
+      const bDate = new Date(b.dueDate);
+      
+      // Check if either date is in the past and not today
+      const aIsPastDue = isPast(aDate) && !isSameDay(aDate, new Date());
+      const bIsPastDue = isPast(bDate) && !isSameDay(bDate, new Date());
+      
+      // If one is past due and the other isn't, the past due one comes first
+      if (aIsPastDue && !bIsPastDue) return -1;
+      if (!aIsPastDue && bIsPastDue) return 1;
+      
+      // Otherwise sort by creation date (newest first)
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   };
   
   // Fetch tasks (mock implementation)
@@ -129,10 +148,8 @@ export const useTasks = () => {
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 500));
         
-        // Sort tasks by createdAt (newest first)
-        const sortedTasks = [...mockTasks].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+        // Sort tasks with past due first, then by createdAt (newest first)
+        const sortedTasks = sortTasksByDueDate(mockTasks);
         
         setTasks(sortedTasks);
       } catch (error) {
