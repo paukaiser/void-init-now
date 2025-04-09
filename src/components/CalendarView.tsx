@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { format, addDays, isSameDay, parseISO, startOfWeek, subDays, getWeek } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
@@ -131,7 +132,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
       slots.push(
         <div 
           key={`time-${hour}`} 
-          className="time-slot flex items-start justify-end pr-2 text-xs text-allo-muted"
+          className="time-slot flex items-start justify-end pr-2 text-xs text-muted-foreground"
         >
           <span className="mt-[-10px] mr-1">{`${hour.toString().padStart(2, '0')}:00`}</span>
         </div>
@@ -201,8 +202,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   };
   
   return (
-    <div className="w-full flex flex-col space-y-4 animate-fade-in">
-      <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 overflow-auto relative">
+    <div className="w-full h-full flex flex-col animate-fade-in">
+      <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 overflow-auto flex-grow relative">
         <div className="flex flex-col min-w-[60px]">
           <div className="h-10 border-b border-gray-100"></div>
           {generateTimeSlots()}

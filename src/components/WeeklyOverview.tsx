@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
+import UserProfile from './UserProfile';
 
 interface WeeklyOverviewProps {
   currentDate: Date;
@@ -46,9 +47,12 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-      <h2 className="text-xl font-semibold mb-3 text-center">
-        {format(currentDate, 'MMMM yyyy')}
-      </h2>
+      <div className="flex justify-between items-center mb-3">
+        <h2 className="text-xl font-semibold">
+          {format(currentDate, 'MMMM')}
+        </h2>
+        <UserProfile small={true} />
+      </div>
       
       <div className="grid grid-cols-7 gap-1 text-center">
         {weekDays.map((day, index) => {

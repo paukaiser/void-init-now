@@ -29,7 +29,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   };
 
   return (
-    <div className="fixed bottom-20 right-4 flex flex-col-reverse items-end space-y-reverse space-y-2 z-40">
+    <div className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-2 z-40">
       {/* Create Task option */}
       <div 
         className={cn(
@@ -73,7 +73,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         {isOpen ? (
           <X size={24} className="text-gray-700" />
         ) : (
-          <Plus size={24} className="text-white" />
+          <Calendar size={24} className="text-white" />
         )}
       </button>
     </div>

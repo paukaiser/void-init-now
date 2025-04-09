@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -21,7 +22,6 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqualify }) => {
-  const formattedDate = format(new Date(task.createdAt), 'dd MMM yyyy, HH:mm');
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [disqualifyReason, setDisqualifyReason] = useState<string>("");
@@ -88,20 +88,13 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   return (
     <>
       <Card 
-        className={`mb-2 cursor-pointer transition-all hover:shadow-md ${!task.isRead ? 'border-l-4 border-l-[#2E1813]' : ''}`}
+        className={`cursor-pointer transition-all hover:shadow-md ${!task.isRead ? 'border-l-4 border-l-[#2E1813]' : ''}`}
         onClick={handleCardClick}
       >
-        <CardContent className="p-3">
-          <div className="flex justify-between items-start">
-            <h3 className="font-semibold text-sm">{task.contactName}</h3>
-          </div>
-          
-          <h4 className="text-xs font-medium">{task.restaurantName}</h4>
-          <p className="text-xs text-muted-foreground truncate">{task.cuisine}</p>
-          
-          <div className="flex items-center text-xs mt-1">
-            <Phone size={12} className="mr-1" />
-            <span className="truncate">{task.phoneNumber}</span>
+        <CardContent className="p-2">
+          <div className="flex flex-col">
+            <h3 className="font-semibold text-xs">{task.contactName}</h3>
+            <p className="text-xs text-muted-foreground truncate">{task.restaurantName}</p>
           </div>
         </CardContent>
       </Card>
@@ -111,38 +104,52 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
           <DialogHeader>
             <DialogTitle>Actions for {task.contactName}</DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          
+          <div className="space-y-2 py-2">
+            <div className="text-sm">
+              <p><span className="font-medium">Restaurant:</span> {task.restaurantName}</p>
+              <p><span className="font-medium">Cuisine:</span> {task.cuisine}</p>
+              <p><span className="font-medium">Phone:</span> {task.phoneNumber}</p>
+              <p><span className="font-medium">Email:</span> {task.email}</p>
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 pt-2">
             <Button 
               onClick={handleCall} 
-              className="w-full flex items-center justify-start"
+              className="w-full flex items-center justify-center"
               variant="outline"
+              size="sm"
             >
-              <Phone size={16} className="mr-2" />
+              <Phone size={16} className="mr-1" />
               Call
             </Button>
             <Button 
               onClick={handleScheduleMeeting} 
-              className="w-full flex items-center justify-start"
+              className="w-full flex items-center justify-center"
               variant="outline"
+              size="sm"
             >
-              <CalendarIcon size={16} className="mr-2" />
-              Schedule Meeting
+              <CalendarIcon size={16} className="mr-1" />
+              Schedule
             </Button>
             <Button 
               onClick={openDisqualifyDialog} 
-              className="w-full flex items-center justify-start"
+              className="w-full flex items-center justify-center"
               variant="outline"
+              size="sm"
             >
-              <XCircle size={16} className="mr-2" />
+              <XCircle size={16} className="mr-1" />
               Disqualify
             </Button>
             <Button 
               onClick={handleComplete} 
-              className="w-full flex items-center justify-start"
+              className="w-full flex items-center justify-center"
               variant="outline"
+              size="sm"
             >
-              <CheckCircle size={16} className="mr-2" />
-              Mark as Completed
+              <CheckCircle size={16} className="mr-1" />
+              Complete
             </Button>
           </div>
         </DialogContent>

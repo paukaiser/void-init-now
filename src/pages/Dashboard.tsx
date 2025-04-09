@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -26,6 +27,14 @@ const Dashboard: React.FC = () => {
   
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
   const navigate = useNavigate();
+  
+  // Add overflow hidden to body when component mounts
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
   
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -138,34 +147,40 @@ const Dashboard: React.FC = () => {
   const incompleteTasks = tasks.filter(task => !task.completed && !task.disqualified);
   
   return (
-    <div className="w-full max-w-5xl mx-auto pb-16">
-      <WeeklyOverview 
-        currentDate={currentDate}
-        meetings={meetings}
-        tasks={tasks}
-        onDateSelect={handleDateSelect}
-      />
+    <div className="h-screen overflow-hidden flex flex-col">
+      <div className="flex-none">
+        <WeeklyOverview 
+          currentDate={currentDate}
+          meetings={meetings}
+          tasks={tasks}
+          onDateSelect={handleDateSelect}
+        />
+      </div>
       
-      {incompleteTasks.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Your Tasks</h3>
-          <div className="grid grid-cols-2 gap-2 sm:gap-4">
-            {incompleteTasks.map(task => (
-              <TaskCard 
-                key={task.id} 
-                task={task}
-                onClick={() => handleTaskClick(task.id)}
-                onComplete={handleTaskComplete}
-                onDisqualify={handleTaskDisqualify}
-              />
-            ))}
+      <div className="flex-none mb-2">
+        {incompleteTasks.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-1 text-muted-foreground">Your Tasks</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {incompleteTasks.map(task => (
+                <TaskCard 
+                  key={task.id} 
+                  task={task}
+                  onClick={() => handleTaskClick(task.id)}
+                  onComplete={handleTaskComplete}
+                  onDisqualify={handleTaskDisqualify}
+                />
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       
-      <div>
-        <h3 className="text-lg font-medium mb-2">Your Meetings</h3>
-        <CalendarView userId={userId} selectedDate={currentDate} />
+      <div className="flex-grow overflow-hidden">
+        <h3 className="text-sm font-medium mb-1 text-muted-foreground">Your Meetings</h3>
+        <div className="h-full overflow-hidden">
+          <CalendarView userId={userId} selectedDate={currentDate} />
+        </div>
       </div>
       
       <FloatingActionButton onCreateTask={openCreateTaskDialog} />
