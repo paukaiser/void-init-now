@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef } from 'react';
 import { 
   format, 
   startOfWeek, 
@@ -31,6 +31,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   onDateSelect
 }) => {
   const [weekOffset, setWeekOffset] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   const displayedWeek = useMemo(() => {
     let baseDate = currentDate;
@@ -74,9 +75,36 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     // Reset week offset when selecting a date
     setWeekOffset(0);
   };
+  
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+    
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        // Swipe left - go to next week
+        goToNextWeek();
+      } else {
+        // Swipe right - go to previous week
+        goToPreviousWeek();
+      }
+    }
+    
+    touchStartX.current = null;
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+    <div 
+      className="bg-white rounded-lg shadow-sm p-4 mb-4"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center">
           <Button 

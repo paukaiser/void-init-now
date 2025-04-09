@@ -1,8 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { format, addDays, isSameDay, parseISO, startOfWeek, endOfWeek, addWeeks, subWeeks, getWeekOfMonth } from 'date-fns';
+import { format, isSameDay, parseISO, getWeekOfMonth } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface CalendarViewProps {
@@ -16,7 +15,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const calendarRef = useRef<HTMLDivElement>(null);
-  const touchStartX = useRef<number | null>(null);
   
   const START_HOUR = 8; // 08:00
   const END_HOUR = 22; // 22:00
@@ -109,35 +107,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
     fetchMeetings();
   }, [userId, currentDate]);
   
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
-  
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStartX.current === null) return;
-    
-    const touchEndX = e.changedTouches[0].clientX;
-    const diff = touchStartX.current - touchEndX;
-    
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        setCurrentDate(addWeeks(currentDate, 1));
-      } else {
-        setCurrentDate(subWeeks(currentDate, 1));
-      }
-    }
-    
-    touchStartX.current = null;
-  };
-  
-  const goToNextWeek = () => {
-    setCurrentDate(addWeeks(currentDate, 1));
-  };
-  
-  const goToPreviousWeek = () => {
-    setCurrentDate(subWeeks(currentDate, 1));
-  };
-  
   const timeToY = (time: Date): number => {
     const hours = time.getHours();
     const minutes = time.getMinutes();
@@ -229,35 +198,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <div className="flex justify-between items-center mb-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-1" 
-          onClick={goToPreviousWeek}
-          aria-label="Previous week"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
+      <div className="mb-2">
         <span className="text-sm font-medium">
-          {format(currentDate, 'MMM d')}
+          {format(currentDate, 'MMMM d, yyyy')}
         </span>
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-1" 
-          onClick={goToNextWeek}
-          aria-label="Next week"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
       </div>
       
       <ScrollArea className="flex-grow h-full">
         <div 
           className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative"
-          onTouchStart={handleTouchStart}
-          onTouchEnd={handleTouchEnd}
         >
           <div className="flex flex-col min-w-[60px]">
             <div className="h-10 border-b border-gray-100"></div>
