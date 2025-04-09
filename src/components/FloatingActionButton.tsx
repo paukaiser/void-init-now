@@ -54,7 +54,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         <button 
           className={cn(
             "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-14 h-14",
-            isOpen ? "bg-[#2E1813]" : "bg-[#FF8769] hover:bg-[#FF8769]/90"
+            isOpen ? "bg-[#2E1813]" : "bg-[#8B5CF6] hover:bg-[#8B5CF6]/90" // Changed to purple
           )}
           onClick={isOpen ? handleCreateMeeting : toggleOptions}
           aria-label={isOpen ? "Create Meeting" : "Open Menu"}

@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   format, 
@@ -59,6 +60,71 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       const taskDate = new Date(task.createdAt);
       return isSameDay(taskDate, date);
     });
+  };
+
+  const renderDayIndicators = (date: Date) => {
+    const dayMeetings = getMeetingsForDay(date);
+    const dayTasks = getTasksForDay(date);
+    
+    const meetingCount = dayMeetings.length;
+    const taskCount = dayTasks.length;
+    const totalCount = meetingCount + taskCount;
+    
+    // Maximum 6 dots total
+    const maxDots = 6;
+    
+    // Prioritize meetings over tasks
+    let meetingDots = Math.min(meetingCount, maxDots);
+    let taskDots = Math.min(taskCount, maxDots - meetingDots);
+    
+    // If we have more than 5 combined items, show + instead of the 6th dot
+    const showPlusIndicator = totalCount > 5;
+    
+    if (showPlusIndicator) {
+      // Adjust dots to show 5 total (prioritizing meetings) plus a + indicator
+      const totalDotsToShow = 5;
+      meetingDots = Math.min(meetingCount, totalDotsToShow);
+      taskDots = Math.min(taskCount, totalDotsToShow - meetingDots);
+    }
+    
+    const dots = [];
+    
+    // Add meeting dots (orange)
+    for (let i = 0; i < meetingDots; i++) {
+      dots.push(
+        <div 
+          key={`meeting-${i}`} 
+          className="w-2 h-2 rounded-full bg-[#FF8769]" 
+          title={`${meetingCount} meetings`}
+        />
+      );
+    }
+    
+    // Add task dots (black)
+    for (let i = 0; i < taskDots; i++) {
+      dots.push(
+        <div 
+          key={`task-${i}`} 
+          className="w-2 h-2 rounded-full bg-[#2E1813]" 
+          title={`${taskCount} tasks`}
+        />
+      );
+    }
+    
+    // Add the + indicator if needed
+    if (showPlusIndicator) {
+      dots.push(
+        <div 
+          key="plus-indicator" 
+          className="text-xs text-gray-600 font-semibold ml-0.5" 
+          title={`${totalCount - 5} more items`}
+        >
+          +
+        </div>
+      );
+    }
+    
+    return dots;
   };
 
   const goToPreviousWeek = () => {
@@ -135,12 +201,11 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           
           {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
             <button
-              className="ml-2 flex items-center justify-center relative cursor-pointer"
+              className="ml-2 flex items-center justify-center cursor-pointer"
               onClick={goToToday}
               aria-label="Go to today"
             >
               <CalendarDays className="h-5 w-5 text-gray-600" />
-              <div className="absolute w-2 h-2 rounded-full bg-[#FF8769] bottom-0.5 right-0.5"></div>
             </button>
           )}
         </div>
@@ -149,8 +214,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       
       <div className="grid grid-cols-7 gap-1 text-center">
         {weekDays.map((day, index) => {
-          const dayMeetings = getMeetingsForDay(day);
-          const dayTasks = getTasksForDay(day);
           const isSelected = isSameDay(day, currentDate);
           
           return (
@@ -174,13 +237,8 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
                 {format(day, 'd')}
               </span>
               
-              <div className="flex gap-1 mt-1">
-                {dayMeetings.length > 0 && (
-                  <div className="w-2 h-2 rounded-full bg-[#FF8769]" title={`${dayMeetings.length} meetings`}></div>
-                )}
-                {dayTasks.length > 0 && (
-                  <div className="w-2 h-2 rounded-full bg-[#2E1813]" title={`${dayTasks.length} tasks`}></div>
-                )}
+              <div className="flex flex-wrap gap-1 mt-1 justify-center max-w-[36px]">
+                {renderDayIndicators(day)}
               </div>
             </button>
           );
