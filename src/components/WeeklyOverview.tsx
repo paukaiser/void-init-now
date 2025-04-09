@@ -104,6 +104,11 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     touchStartX.current = null;
   };
 
+  // Check if current date is today
+  const isCurrentDateToday = isToday(currentDate);
+  // Check if any day in the current week is today
+  const isTodayInCurrentWeek = weekDays.some(day => isToday(day));
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-4 mb-4"
@@ -133,16 +138,20 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           >
             <ChevronRight className="h-5 w-5" />
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-2 text-xs flex items-center"
-            onClick={goToToday}
-            aria-label="Go to today"
-          >
-            <CalendarDays className="h-3.5 w-3.5 mr-1" />
-            Today
-          </Button>
+          
+          {/* Only show "Today" button when not on today's date */}
+          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-2 text-xs flex items-center"
+              onClick={goToToday}
+              aria-label="Go to today"
+            >
+              <CalendarDays className="h-3.5 w-3.5 mr-1" />
+              Today
+            </Button>
+          )}
         </div>
         <UserProfile small={true} />
       </div>
