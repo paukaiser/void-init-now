@@ -56,7 +56,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         ref={fabRef}
         className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40"
       >
-        {/* Task option - now on top */}
+        {/* Task option - on top */}
         <div 
           className={cn(
             "transition-all duration-200 transform flex items-center flex-row-reverse",
@@ -75,27 +75,39 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </span>
         </div>
         
-        {/* Meeting option - now on bottom */}
-        <div className="flex items-center flex-row-reverse">
+        {/* Meeting option - on bottom (should also be orange now) */}
+        <div 
+          className={cn(
+            "transition-all duration-200 transform flex items-center flex-row-reverse",
+            isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-0 pointer-events-none"
+          )}
+        >
           <button 
             className={cn(
-              "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-14 h-14",
-              isOpen ? "bg-[#2E1813]" : "bg-black hover:bg-black/90"
+              "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-12 h-12",
+              isOpen ? "bg-[#FF8769]" : "opacity-0"
             )}
-            onClick={isOpen ? handleCreateMeeting : toggleOptions}
-            aria-label={isOpen ? "Create Meeting" : "Open Menu"}
+            onClick={handleCreateMeeting}
+            aria-label="Create Meeting"
           >
-            {isOpen ? (
-              <Calendar size={24} className="text-white" />
-            ) : (
-              <Plus size={24} className="text-[#FF8769]" />
-            )}
+            <Calendar size={20} className="text-white" />
           </button>
           {isOpen && (
             <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
               Meeting
             </span>
           )}
+        </div>
+        
+        {/* Main FAB button */}
+        <div className="flex items-center flex-row-reverse">
+          <button 
+            className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
+            onClick={toggleOptions}
+            aria-label={isOpen ? "Close Menu" : "Open Menu"}
+          >
+            <Plus size={24} />
+          </button>
         </div>
       </div>
     </>

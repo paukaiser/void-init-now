@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle } from 'lucide-react';
@@ -23,9 +24,10 @@ interface MeetingCardProps {
   isCalendarView?: boolean;
   startHour?: number;
   endHour?: number;
+  onCancel?: (meeting: Meeting) => void;
 }
 
-const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = false, startHour, endHour }) => {
+const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = false, startHour, endHour, onCancel }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
@@ -43,6 +45,13 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   const handleClick = () => {
     if (isCompleted) return; // Prevent clicking on completed meetings
     navigate(`/meeting/${meeting.id}`);
+  };
+
+  const handleCancel = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    if (onCancel) {
+      onCancel(meeting);
+    }
   };
 
   const renderStatusBadge = () => {
