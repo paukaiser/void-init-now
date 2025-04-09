@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
@@ -89,27 +88,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   return (
     <>
       <Card 
-        className={`mb-3 cursor-pointer transition-all hover:shadow-md ${!task.isRead ? 'border-l-4 border-l-[#2E1813]' : ''}`}
+        className={`mb-2 cursor-pointer transition-all hover:shadow-md ${!task.isRead ? 'border-l-4 border-l-[#2E1813]' : ''}`}
         onClick={handleCardClick}
       >
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <div className="flex justify-between items-start">
-            <h3 className="font-semibold text-lg">{task.contactName}</h3>
+            <h3 className="font-semibold text-sm">{task.contactName}</h3>
           </div>
           
-          <h4 className="text-sm font-medium mt-1">{task.restaurantName}</h4>
-          <p className="text-xs text-muted-foreground">{task.cuisine}</p>
+          <h4 className="text-xs font-medium">{task.restaurantName}</h4>
+          <p className="text-xs text-muted-foreground truncate">{task.cuisine}</p>
           
-          <div className="grid grid-cols-1 gap-1 mt-3">
-            <div className="flex items-center text-sm">
-              <Phone size={14} className="mr-2" />
-              <span>{task.phoneNumber}</span>
-            </div>
-            
-            <div className="flex items-center text-sm text-muted-foreground">
-              <Calendar size={14} className="mr-2" />
-              <span>Created: {formattedDate}</span>
-            </div>
+          <div className="flex items-center text-xs mt-1">
+            <Phone size={12} className="mr-1" />
+            <span className="truncate">{task.phoneNumber}</span>
           </div>
         </CardContent>
       </Card>

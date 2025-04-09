@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -127,11 +126,9 @@ const Dashboard: React.FC = () => {
       return;
     }
     
-    // In a real app, you would call an API to create the task
     toast.success(`Task "${newTaskName}" created successfully`);
     setIsCreateTaskDialogOpen(false);
     
-    // Reset form
     setNewTaskName('');
     setNewTaskCompany('');
     setNewTaskContact('');
@@ -146,7 +143,6 @@ const Dashboard: React.FC = () => {
         <h2 className="text-xl font-semibold">My Dashboard</h2>
       </div>
       
-      {/* Weekly Overview */}
       <WeeklyOverview 
         currentDate={currentDate}
         meetings={meetings}
@@ -154,11 +150,9 @@ const Dashboard: React.FC = () => {
         onDateSelect={handleDateSelect}
       />
       
-      {/* Tasks Section */}
       {incompleteTasks.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-medium mb-2">Tasks</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:gap-4">
             {incompleteTasks.map(task => (
               <TaskCard 
                 key={task.id} 
@@ -172,16 +166,10 @@ const Dashboard: React.FC = () => {
         </div>
       )}
       
-      {/* Meetings Calendar */}
-      <div>
-        <h3 className="text-lg font-medium mb-2">Meetings</h3>
-        <CalendarView userId={userId} selectedDate={currentDate} />
-      </div>
+      <CalendarView userId={userId} selectedDate={currentDate} />
       
-      {/* Floating Action Button */}
       <FloatingActionButton onCreateTask={openCreateTaskDialog} />
       
-      {/* Create Task Dialog */}
       <Dialog open={isCreateTaskDialogOpen} onOpenChange={setIsCreateTaskDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

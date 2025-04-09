@@ -2,17 +2,14 @@
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Inbox, Layout as LayoutIcon } from 'lucide-react';
-import UserProfile from '@/components/UserProfile';
 import { useTasks } from '@/hooks/useTasks';
 import NotificationBadge from '@/components/NotificationBadge';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
   const { unreadCount } = useTasks();
   const location = useLocation();
-  const today = new Date();
   
   const isDashboardActive = location.pathname === '/dashboard';
   const isInboxActive = location.pathname === '/inbox';
@@ -20,14 +17,6 @@ const Layout: React.FC = () => {
   
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Top Bar - changed to show date on left and profile on right */}
-      <header className="p-4 flex justify-between items-center border-b bg-white/90 sticky top-0 z-10">
-        <span className="font-medium text-gray-600">{format(today, 'EEEE, MMMM d')}</span>
-        <div className="flex items-center gap-2">
-          <UserProfile small={true} />
-        </div>
-      </header>
-      
       {/* Main Content */}
       <main className="flex-grow p-4">
         <Outlet />
