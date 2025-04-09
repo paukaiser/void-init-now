@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { format, isSameDay, parseISO, getWeekOfMonth } from 'date-fns';
+import { format, isSameDay, parseISO } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -198,12 +198,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <div className="mb-2">
-        <span className="text-sm font-medium">
-          {format(currentDate, 'MMMM d, yyyy')}
-        </span>
-      </div>
-      
       <ScrollArea className="flex-grow h-full">
         <div 
           className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative"

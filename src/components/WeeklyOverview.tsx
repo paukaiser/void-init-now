@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
@@ -68,6 +68,11 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
 
   const goToNextWeek = () => {
     setWeekOffset(prev => prev + 1);
+  };
+
+  const goToToday = () => {
+    setWeekOffset(0);
+    onDateSelect(new Date());
   };
 
   const handleDayClick = (day: Date) => {
@@ -127,6 +132,16 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
             aria-label="Next week"
           >
             <ChevronRight className="h-5 w-5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-2 text-xs flex items-center"
+            onClick={goToToday}
+            aria-label="Go to today"
+          >
+            <CalendarDays className="h-3.5 w-3.5 mr-1" />
+            Today
           </Button>
         </div>
         <UserProfile small={true} />

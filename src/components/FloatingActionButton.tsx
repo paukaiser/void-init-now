@@ -30,10 +30,10 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
 
   return (
     <div className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40">
-      {/* Create Task option */}
+      {/* Task option - now on top */}
       <div 
         className={cn(
-          "transition-all duration-200 transform flex items-center",
+          "transition-all duration-200 transform flex items-center flex-row-reverse",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
       >
@@ -44,13 +44,13 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         >
           <FileText size={20} />
         </button>
-        <span className="ml-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+        <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
           Task
         </span>
       </div>
       
       {/* Main FAB */}
-      <div className="flex items-center">
+      <div className="flex items-center flex-row-reverse">
         <button 
           className={cn(
             "rounded-full shadow-lg flex items-center justify-center transition-all duration-200 w-14 h-14",
@@ -66,7 +66,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           )}
         </button>
         {isOpen && (
-          <span className="ml-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+          <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
             Meeting
           </span>
         )}
