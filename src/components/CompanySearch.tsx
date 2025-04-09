@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, Plus, Building2 } from 'lucide-react';
+import { Search, Plus, Building2, AlertCircle } from 'lucide-react';
 import { toast } from "sonner";
 import { searchHubspotCompanies, createHubspotCompany, HubspotCompany } from '@/utils/hubspotApi';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -26,6 +26,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isApiKeyMissing, setIsApiKeyMissing] = useState(false);
   
   // Convert from HubSpot format to our Company interface
   const convertHubspotCompany = (hubspotCompany: HubspotCompany): Company => {
@@ -66,6 +67,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     
     setLoading(true);
     setApiError(null);
+    setIsApiKeyMissing(false);
     setShowResults(true);
     
     try {
@@ -75,10 +77,18 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       // Convert HubSpot companies to our format
       const companies = hubspotCompanies.map(convertHubspotCompany);
       setSearchResults(companies);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error searching companies:", error);
-      setApiError("Failed to search companies. Please check your API key and try again.");
-      toast.error("Failed to search companies");
+      
+      if (error.message && error.message.includes("API key not configured")) {
+        setIsApiKeyMissing(true);
+        setApiError("HubSpot API key is not configured. Please update the API key in src/utils/hubspotApi.ts");
+        toast.error("HubSpot API key not configured");
+      } else {
+        setApiError("Failed to search companies. Please check your network connection and try again.");
+        toast.error("Failed to search companies");
+      }
+      
       // Fallback to empty results
       setSearchResults([]);
     } finally {
@@ -117,8 +127,15 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       onSelect(newCompany);
       setShowResults(false);
       toast.success(`Company "${searchTerm}" created successfully`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating company:", error);
+      
+      if (error.message && error.message.includes("API key not configured")) {
+        setIsApiKeyMissing(true);
+        toast.error("HubSpot API key is not configured");
+      } else {
+        toast.warning("Created company locally. API connection failed.");
+      }
       
       // Fallback to local company object if API fails
       const newCompany: Company = {
@@ -129,7 +146,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       
       onSelect(newCompany);
       setShowResults(false);
-      toast.warning("Created company locally. API connection failed.");
     } finally {
       setLoading(false);
     }
@@ -154,6 +170,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         />
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
       </div>
+      
+      {isApiKeyMissing && (
+        <div className="text-sm text-red-500 flex items-center mt-1">
+          <AlertCircle className="h-4 w-4 mr-1" />
+          <span>Please replace the API key placeholder in src/utils/hubspotApi.ts</span>
+        </div>
+      )}
       
       {showResults && (
         <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
