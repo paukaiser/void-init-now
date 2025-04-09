@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
-import { ChevronLeft, ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
@@ -87,44 +87,42 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       taskDots = Math.min(taskCount, totalDotsToShow - meetingDots);
     }
     
-    const dots = [];
+    // If there are no items, return null
+    if (totalCount === 0) return null;
     
-    // Add meeting dots (orange)
-    for (let i = 0; i < meetingDots; i++) {
-      dots.push(
-        <div 
-          key={`meeting-${i}`} 
-          className="w-2 h-2 rounded-full bg-[#FF8769]" 
-          title={`${meetingCount} meetings`}
-        />
-      );
-    }
-    
-    // Add task dots (black)
-    for (let i = 0; i < taskDots; i++) {
-      dots.push(
-        <div 
-          key={`task-${i}`} 
-          className="w-2 h-2 rounded-full bg-[#2E1813]" 
-          title={`${taskCount} tasks`}
-        />
-      );
-    }
-    
-    // Add the + indicator if needed
-    if (showPlusIndicator) {
-      dots.push(
-        <div 
-          key="plus-indicator" 
-          className="text-xs text-gray-600 font-semibold ml-0.5" 
-          title={`${totalCount - 5} more items`}
-        >
-          +
-        </div>
-      );
-    }
-    
-    return dots;
+    // Better organized dots layout
+    return (
+      <div className="flex justify-center mt-1 gap-[2px] flex-wrap max-w-[32px] mx-auto">
+        {/* Meeting dots (orange) */}
+        {Array.from({ length: meetingDots }).map((_, i) => (
+          <div 
+            key={`meeting-${i}`} 
+            className="w-1.5 h-1.5 rounded-full bg-[#FF8769]" 
+            title={`${meetingCount} meetings`}
+          />
+        ))}
+        
+        {/* Task dots (black) */}
+        {Array.from({ length: taskDots }).map((_, i) => (
+          <div 
+            key={`task-${i}`} 
+            className="w-1.5 h-1.5 rounded-full bg-[#2E1813]" 
+            title={`${taskCount} tasks`}
+          />
+        ))}
+        
+        {/* Plus indicator if needed */}
+        {showPlusIndicator && (
+          <div 
+            key="plus-indicator" 
+            className="text-xs text-gray-600 font-semibold" 
+            title={`${totalCount - 5} more items`}
+          >
+            +
+          </div>
+        )}
+      </div>
+    );
   };
 
   const goToPreviousWeek = () => {
@@ -169,6 +167,27 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   const isCurrentDateToday = isToday(currentDate);
   const isTodayInCurrentWeek = weekDays.some(day => isToday(day));
 
+  // Create a more Google Calendar like Today button
+  const renderTodayButton = () => {
+    if (isCurrentDateToday || !isTodayInCurrentWeek) return null;
+    
+    return (
+      <button
+        className="ml-2 flex items-center justify-center cursor-pointer group"
+        onClick={goToToday}
+        aria-label="Go to today"
+        title="Today"
+      >
+        <div className="relative">
+          <Calendar className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
+          <div className="absolute left-1/2 top-1/2 -translate-x-[0.5px] translate-y-[1px] w-2 h-2 flex items-center justify-center">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#FF8769]"></div>
+          </div>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div 
       className="bg-white rounded-lg shadow-sm p-4 mb-4"
@@ -199,15 +218,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
             <ChevronRight className="h-5 w-5" />
           </Button>
           
-          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-            <button
-              className="ml-2 flex items-center justify-center cursor-pointer"
-              onClick={goToToday}
-              aria-label="Go to today"
-            >
-              <CalendarDays className="h-5 w-5 text-gray-600" />
-            </button>
-          )}
+          {renderTodayButton()}
         </div>
         <UserProfile small={true} />
       </div>
@@ -237,9 +248,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
                 {format(day, 'd')}
               </span>
               
-              <div className="flex flex-wrap gap-1 mt-1 justify-center max-w-[36px]">
-                {renderDayIndicators(day)}
-              </div>
+              {renderDayIndicators(day)}
             </button>
           );
         })}
