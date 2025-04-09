@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -28,7 +27,6 @@ const Dashboard: React.FC = () => {
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
   const navigate = useNavigate();
   
-  // Add overflow hidden to body when component mounts
   useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => {
@@ -160,7 +158,7 @@ const Dashboard: React.FC = () => {
       <div className="flex-none mb-2">
         {incompleteTasks.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium mb-1 text-muted-foreground">Your Tasks</h3>
+            <h3 className="text-sm font-medium mb-1 text-muted-foreground">Tasks</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {incompleteTasks.map(task => (
                 <TaskCard 
@@ -177,7 +175,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div className="flex-grow overflow-hidden">
-        <h3 className="text-sm font-medium mb-1 text-muted-foreground">Your Meetings</h3>
+        <h3 className="text-sm font-medium mb-1 text-muted-foreground">Meetings</h3>
         <div className="h-full overflow-hidden">
           <CalendarView userId={userId} selectedDate={currentDate} />
         </div>
