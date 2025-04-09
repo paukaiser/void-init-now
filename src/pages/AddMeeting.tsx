@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import CompanySearch from '@/components/CompanySearch';
-import { Company } from '@/types/company';
+import CompanySearch, { Company } from '@/components/CompanySearch';
 
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
