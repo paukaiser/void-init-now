@@ -3,6 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 interface FloatingActionButtonProps {
   onCreateTask?: () => void;
@@ -10,6 +15,13 @@ interface FloatingActionButtonProps {
 
 const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTask }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCreateMeetingDialogOpen, setIsCreateMeetingDialogOpen] = useState(false);
+  const [newMeetingTitle, setNewMeetingTitle] = useState('');
+  const [newMeetingCompany, setNewMeetingCompany] = useState('');
+  const [newMeetingContact, setNewMeetingContact] = useState('');
+  const [newMeetingDate, setNewMeetingDate] = useState('');
+  const [newMeetingTime, setNewMeetingTime] = useState('');
+  
   const navigate = useNavigate();
   const fabRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +31,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
 
   const handleCreateMeeting = () => {
     setIsOpen(false);
-    navigate('/add-meeting');
+    setIsCreateMeetingDialogOpen(true);
   };
 
   const handleCreateTask = () => {
@@ -27,6 +39,26 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     if (onCreateTask) {
       onCreateTask();
     }
+  };
+  
+  const handleSubmitMeeting = () => {
+    if (!newMeetingTitle || !newMeetingCompany || !newMeetingContact || !newMeetingDate || !newMeetingTime) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    toast.success(`Meeting "${newMeetingTitle}" created successfully`);
+    setIsCreateMeetingDialogOpen(false);
+    
+    // Reset form fields
+    setNewMeetingTitle('');
+    setNewMeetingCompany('');
+    setNewMeetingContact('');
+    setNewMeetingDate('');
+    setNewMeetingTime('');
+    
+    // Optional: Navigate to meetings page after creation
+    // navigate('/meetings');
   };
 
   useEffect(() => {
@@ -86,7 +118,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
               aria-label={isOpen ? "Close Menu" : "Open Menu"}
             >
               {isOpen ? (
-                <Calendar size={24} />
+                <Calendar size={24} onClick={handleCreateMeeting} />
               ) : (
                 <Plus size={24} />
               )}
@@ -94,6 +126,70 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </div>
         </div>
       </div>
+      
+      {/* Create Meeting Dialog */}
+      <Dialog open={isCreateMeetingDialogOpen} onOpenChange={setIsCreateMeetingDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Schedule New Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="meeting-title">Meeting Title</Label>
+              <Input 
+                id="meeting-title" 
+                value={newMeetingTitle}
+                onChange={(e) => setNewMeetingTitle(e.target.value)}
+                placeholder="Product Demo"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="company">Company</Label>
+              <Input 
+                id="company" 
+                value={newMeetingCompany}
+                onChange={(e) => setNewMeetingCompany(e.target.value)}
+                placeholder="Acme Inc."
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="contact">Contact Person</Label>
+              <Input 
+                id="contact" 
+                value={newMeetingContact}
+                onChange={(e) => setNewMeetingContact(e.target.value)}
+                placeholder="John Doe"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="date">Date</Label>
+                <Input 
+                  id="date" 
+                  type="date"
+                  value={newMeetingDate}
+                  onChange={(e) => setNewMeetingDate(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="time">Time</Label>
+                <Input 
+                  id="time" 
+                  type="time"
+                  value={newMeetingTime}
+                  onChange={(e) => setNewMeetingTime(e.target.value)}
+                />
+              </div>
+            </div>
+            <Button 
+              className="w-full mt-2"
+              onClick={handleSubmitMeeting}
+            >
+              Schedule Meeting
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
