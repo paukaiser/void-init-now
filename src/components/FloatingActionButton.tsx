@@ -56,7 +56,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         ref={fabRef}
         className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-4 z-40"
       >
-        {/* Task option - on top */}
+        {/* Task option - Shows ABOVE the main button when open */}
         <div 
           className={cn(
             "transition-all duration-200 transform flex items-center flex-row-reverse",
@@ -70,20 +70,31 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           >
             <FileText size={20} />
           </button>
-          <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
-            Task
-          </span>
+          {isOpen && (
+            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+              Task
+            </span>
+          )}
         </div>
         
-        {/* Main FAB button - now has Calendar icon */}
+        {/* Main FAB button - Changes to Calendar when open */}
         <div className="flex items-center flex-row-reverse">
           <button 
             className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center"
             onClick={toggleOptions}
             aria-label={isOpen ? "Close Menu" : "Open Menu"}
           >
-            <Calendar size={24} />
+            {isOpen ? (
+              <Calendar size={24} />
+            ) : (
+              <Plus size={24} />
+            )}
           </button>
+          {isOpen && (
+            <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">
+              Meeting
+            </span>
+          )}
         </div>
       </div>
     </>
