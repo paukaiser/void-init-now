@@ -1,25 +1,14 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, X, Clock } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const MeetingActions: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   
   // In a real app, you would fetch meeting details from Hubspot API
   // For now, we'll use mock data
@@ -38,12 +27,7 @@ const MeetingActions: React.FC = () => {
     meetingType: 'sales meeting'
   };
   
-  const handleCancelRequest = () => {
-    setShowCancelConfirm(true);
-  };
-  
-  const handleCancelConfirm = () => {
-    setShowCancelConfirm(false);
+  const handleCancel = () => {
     // Pass meeting details to the canceled page
     navigate('/meeting-canceled', {
       state: {
@@ -120,7 +104,7 @@ const MeetingActions: React.FC = () => {
           <div className={`mt-6 ${isMobile ? 'flex flex-col space-y-3' : 'grid grid-cols-3 gap-3'}`}>
             <Button 
               className="flex items-center justify-center py-2 bg-red-600 hover:bg-red-700 text-white"
-              onClick={handleCancelRequest}
+              onClick={handleCancel}
             >
               <X size={16} className="mr-1" />
               Cancel
@@ -144,23 +128,6 @@ const MeetingActions: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      <AlertDialog open={showCancelConfirm} onOpenChange={setShowCancelConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Meeting</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to cancel this meeting? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>No, keep it</AlertDialogCancel>
-            <AlertDialogAction onClick={handleCancelConfirm} className="bg-red-600 hover:bg-red-700 text-white">
-              Yes, cancel meeting
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
