@@ -26,7 +26,7 @@ const Layout: React.FC = () => {
       </header>
       
       {/* Main Content */}
-      <main className="flex-grow p-0">
+      <main className="flex-grow p-4">
         <Outlet />
       </main>
       

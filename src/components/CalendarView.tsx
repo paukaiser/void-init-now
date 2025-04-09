@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { format, parseISO, startOfWeek, isToday, isSameDay } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
-import { Skeleton } from "@/components/ui/skeleton";
+import { format, addDays, isSameDay, parseISO, startOfWeek, subDays, getWeek } from 'date-fns';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 import MeetingCard, { Meeting } from './MeetingCard';
 
 interface CalendarViewProps {
@@ -13,9 +13,25 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [currentTime, setCurrentTime] = useState(new Date());
   
-  const navigate = useNavigate();
+  const calendarRef = useRef<HTMLDivElement>(null);
+  
+  const START_HOUR = 8; // 08:00
+  const END_HOUR = 22; // 22:00
+  
+  const getWeekNumber = (date: Date) => {
+    const mondayStartWeek = startOfWeek(date, { weekStartsOn: 1 });
+    return getWeek(date, { weekStartsOn: 1 });
+  };
+  
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    
+    return () => clearInterval(timer);
+  }, []);
   
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -90,38 +106,138 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
     fetchMeetings();
   }, [userId, currentDate]);
   
-  const filteredMeetings = meetings.filter(meeting => {
-    const meetingDate = new Date(meeting.startTime);
-    return isSameDay(meetingDate, selectedDate);
-  });
+  const handlePreviousDay = () => {
+    setCurrentDate(prevDate => subDays(prevDate, 1));
+  };
   
-  if (loading) {
-    return (
-      <div className="space-y-3 px-4">
-        <Skeleton className="h-20 w-full rounded-lg" />
-        <Skeleton className="h-20 w-full rounded-lg" />
-        <Skeleton className="h-20 w-full rounded-lg" />
-      </div>
-    );
-  }
+  const handleNextDay = () => {
+    setCurrentDate(prevDate => addDays(prevDate, 1));
+  };
   
-  const sortedMeetings = [...filteredMeetings].sort((a, b) => 
-    new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-  );
+  const timeToY = (time: Date): number => {
+    const hours = time.getHours();
+    const minutes = time.getMinutes();
+    
+    if (hours < START_HOUR || hours >= END_HOUR) {
+      return -1; // Outside visible hours
+    }
+    
+    const totalMinutesInView = (END_HOUR - START_HOUR) * 60;
+    const minutesSinceStart = (hours - START_HOUR) * 60 + minutes;
+    
+    return (minutesSinceStart / totalMinutesInView) * 100;
+  };
+  
+  const generateTimeSlots = () => {
+    const slots = [];
+    for (let hour = START_HOUR; hour < END_HOUR; hour++) {
+      slots.push(
+        <div 
+          key={`time-${hour}`} 
+          className="time-slot flex items-start justify-end pr-2 text-xs text-allo-muted"
+        >
+          <span className="mt-[-10px] mr-1">{`${hour.toString().padStart(2, '0')}:00`}</span>
+        </div>
+      );
+    }
+    return slots;
+  };
+  
+  const calculateCurrentTimePosition = () => {
+    return timeToY(new Date());
+  };
+  
+  const generateCalendarGrid = () => {
+    const dayCells = [];
+    const currentTimePosition = calculateCurrentTimePosition();
+    
+    for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
+      dayCells.push(
+        <div 
+          key={`hour-line-${hour}`} 
+          className="hour-grid-line"
+          style={{
+            top: `${((hour - START_HOUR) * 60) / ((END_HOUR - START_HOUR) * 60) * 100}%`
+          }}
+        />
+      );
+      
+      if (hour < END_HOUR) {
+        dayCells.push(
+          <div 
+            key={`half-hour-line-${hour}`} 
+            className="minute-grid-line"
+            style={{
+              top: `${((hour - START_HOUR) * 60 + 30) / ((END_HOUR - START_HOUR) * 60) * 100}%`
+            }}
+          />
+        );
+      }
+    }
+    
+    if (isSameDay(currentDate, new Date()) && currentTimePosition > 0 && currentTimePosition < 100) {
+      dayCells.push(
+        <div 
+          key="current-time-indicator" 
+          className="current-time-indicator"
+          style={{ top: `${currentTimePosition}%` }}
+        />
+      );
+    }
+    
+    meetings.filter(meeting => {
+      const meetingDate = new Date(meeting.startTime);
+      return isSameDay(meetingDate, currentDate);
+    }).forEach(meeting => {
+      dayCells.push(
+        <MeetingCard 
+          key={meeting.id} 
+          meeting={meeting} 
+          isCalendarView={true}
+          startHour={START_HOUR}
+          endHour={END_HOUR}
+        />
+      );
+    });
+    
+    return dayCells;
+  };
   
   return (
-    <div className="w-full flex flex-col space-y-4 px-4 animate-fade-in">
-      {sortedMeetings.length > 0 ? (
-        sortedMeetings.map(meeting => (
-          <div key={meeting.id} onClick={() => navigate(`/meeting/${meeting.id}`)}>
-            <MeetingCard meeting={meeting} />
-          </div>
-        ))
-      ) : (
-        <div className="text-center py-10 text-gray-500">
-          <p>No meetings scheduled for this day</p>
+    <div className="w-full flex flex-col space-y-4 animate-fade-in">
+      <div className="calendar-header bg-white/90 rounded-t-lg border border-gray-200 p-4 mb-0 border-b-0">
+        <div className="flex justify-between items-center">
+          <Button variant="outline" onClick={handlePreviousDay} className="mr-2">
+            <ChevronLeft size={16} />
+          </Button>
+          
+          <span className="text-lg font-medium">
+            {format(currentDate, 'EEEE, dd.MM.yyyy')}
+          </span>
+          
+          <Button variant="outline" onClick={handleNextDay} className="ml-2">
+            <ChevronRight size={16} />
+          </Button>
         </div>
-      )}
+      </div>
+      
+      <div className="calendar-grid daily-view rounded-b-lg border border-gray-200 bg-white/90 overflow-auto relative">
+        <div className="flex flex-col min-w-[60px]">
+          <div className="h-10 border-b border-gray-100"></div>
+          {generateTimeSlots()}
+        </div>
+        <div className="flex flex-col flex-1 relative">
+          <div className="text-center text-sm font-medium py-2 border-b border-gray-100 invisible">
+            Spacer
+          </div>
+          <div 
+            className="flex-1 relative"
+            ref={calendarRef}
+          >
+            {generateCalendarGrid()}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
