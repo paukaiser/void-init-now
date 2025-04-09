@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { format, addDays, isSameDay, parseISO, startOfWeek, endOfWeek, addWeeks, subWeeks } from 'date-fns';
+import { format, addDays, isSameDay, parseISO, startOfWeek, endOfWeek, addWeeks, subWeeks, getWeekOfMonth } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -29,8 +29,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   }, [selectedDate]);
   
   const getWeekNumber = (date: Date) => {
-    const mondayStartWeek = startOfWeek(date, { weekStartsOn: 1 });
-    return getWeek(date, { weekStartsOn: 1 });
+    // Using getWeekOfMonth from date-fns instead of the undefined getWeek function
+    return getWeekOfMonth(date, { weekStartsOn: 1 });
   };
   
   useEffect(() => {
