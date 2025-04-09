@@ -1,17 +1,21 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   format, 
   startOfWeek, 
   addDays, 
   isSameDay,
   isSameMonth,
-  isToday
+  isToday,
+  addWeeks,
+  subWeeks
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
   currentDate: Date;
@@ -26,10 +30,22 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   tasks,
   onDateSelect
 }) => {
+  const [weekOffset, setWeekOffset] = useState(0);
+
+  const displayedWeek = useMemo(() => {
+    let baseDate = currentDate;
+    if (weekOffset > 0) {
+      baseDate = addWeeks(currentDate, weekOffset);
+    } else if (weekOffset < 0) {
+      baseDate = subWeeks(currentDate, Math.abs(weekOffset));
+    }
+    return baseDate;
+  }, [currentDate, weekOffset]);
+
   const weekDays = useMemo(() => {
-    const start = startOfWeek(currentDate, { weekStartsOn: 1 }); // Start on Monday
+    const start = startOfWeek(displayedWeek, { weekStartsOn: 1 }); // Start on Monday
     return Array.from({ length: 7 }).map((_, i) => addDays(start, i));
-  }, [currentDate]);
+  }, [displayedWeek]);
 
   const getMeetingsForDay = (date: Date) => {
     return meetings.filter(meeting => {
@@ -45,12 +61,46 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     });
   };
 
+  const goToPreviousWeek = () => {
+    setWeekOffset(prev => prev - 1);
+  };
+
+  const goToNextWeek = () => {
+    setWeekOffset(prev => prev + 1);
+  };
+
+  const handleDayClick = (day: Date) => {
+    onDateSelect(day);
+    // Reset week offset when selecting a date
+    setWeekOffset(0);
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-xl font-semibold">
-          {format(currentDate, 'MMMM')}
-        </h2>
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-1 mr-2" 
+            onClick={goToPreviousWeek}
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-xl font-semibold">
+            {format(displayedWeek, 'MMMM')}
+          </h2>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-1 ml-2" 
+            onClick={goToNextWeek}
+            aria-label="Next week"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
+        </div>
         <UserProfile small={true} />
       </div>
       
@@ -63,11 +113,11 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           return (
             <button
               key={index}
-              onClick={() => onDateSelect(day)}
+              onClick={() => handleDayClick(day)}
               className={cn(
                 "flex flex-col items-center py-2 rounded-lg relative",
                 isSelected ? "bg-[#FF8769]/10" : "hover:bg-gray-100",
-                !isSameMonth(day, currentDate) && "text-gray-400"
+                !isSameMonth(day, displayedWeek) && "text-gray-400"
               )}
             >
               <span className="text-xs uppercase">

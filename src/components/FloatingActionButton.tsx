@@ -29,35 +29,35 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   };
 
   return (
-    <div className="fixed bottom-6 right-6 flex flex-col-reverse items-end space-y-reverse space-y-2 z-40">
+    <div className="fixed bottom-4 right-4 flex flex-col-reverse items-end space-y-reverse space-y-2 z-40">
       {/* Create Task option */}
       <div 
         className={cn(
-          "flex items-center bg-[#2E1813] text-white rounded-full shadow-lg transition-all duration-200 transform",
+          "transition-all duration-200 transform",
           isOpen ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         )}
       >
         <button 
-          className="px-4 py-2 flex items-center space-x-2"
+          className="bg-[#2E1813] text-white rounded-full shadow-lg px-4 py-2 flex items-center space-x-2"
           onClick={handleCreateTask}
         >
           <FileText size={18} />
-          <span>New Task</span>
+          <span>Task</span>
         </button>
       </div>
       
       {/* Main FAB */}
       <button 
         className={cn(
-          "w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
-          isOpen ? "bg-[#FF8769]" : "bg-[#FF8769] hover:bg-[#FF8769]/90"
+          "bg-[#FF8769] rounded-full shadow-lg flex items-center justify-center transition-all duration-200",
+          isOpen ? "px-4 py-2" : "w-14 h-14 hover:bg-[#FF8769]/90"
         )}
-        onClick={toggleOptions}
+        onClick={isOpen ? handleCreateMeeting : toggleOptions}
       >
         {isOpen ? (
-          <div className="flex items-center space-x-2 px-4">
+          <div className="flex items-center space-x-2">
             <Calendar size={18} />
-            <span className="text-white whitespace-nowrap text-sm">New Meeting</span>
+            <span className="text-white whitespace-nowrap text-sm">Meeting</span>
           </div>
         ) : (
           <Plus size={24} className="text-white" />

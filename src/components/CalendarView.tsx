@@ -28,11 +28,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
     }
   }, [selectedDate]);
   
-  const getWeekNumber = (date: Date) => {
-    // Using getWeekOfMonth from date-fns instead of the undefined getWeek function
-    return getWeekOfMonth(date, { weekStartsOn: 1 });
-  };
-  
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -245,8 +240,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           <ChevronLeft className="h-5 w-5" />
         </Button>
         <span className="text-sm font-medium">
-          {format(startOfWeek(currentDate, { weekStartsOn: 1 }), 'MMM d')} - 
-          {format(endOfWeek(currentDate, { weekStartsOn: 1 }), ' MMM d')}
+          {format(currentDate, 'MMM d')}
         </span>
         <Button 
           variant="ghost" 
