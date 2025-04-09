@@ -57,7 +57,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({
       {isApiKeyMissing && (
         <div className="text-sm text-red-500 flex items-center mt-1">
           <AlertCircle className="h-4 w-4 mr-1" />
-          <span>Please replace the API key placeholder in src/utils/hubspotApi.ts</span>
+          <span>Please replace the token placeholder in src/utils/hubspotApi.ts</span>
         </div>
       )}
       

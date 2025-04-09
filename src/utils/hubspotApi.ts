@@ -4,12 +4,12 @@
  */
 
 // Use environment variable or fallback to a placeholder
-const HUBSPOT_API_KEY = "insert your api key here";
-const HUBSPOT_API_BASE_URL = "https://api.hubapi.com";
+const HUBSPOT_PRIVATE_APP_TOKEN = "insert your private app token here";
+const HUBSPOT_API_BASE_URL = "https://api.hubspot.com";
 
-// Check if API key is properly configured
-const isApiKeyConfigured = () => {
-  return HUBSPOT_API_KEY && HUBSPOT_API_KEY !== "insert your api key here";
+// Check if API token is properly configured
+const isTokenConfigured = () => {
+  return HUBSPOT_PRIVATE_APP_TOKEN && HUBSPOT_PRIVATE_APP_TOKEN !== "insert your private app token here";
 };
 
 export interface HubspotCompany {
@@ -35,38 +35,24 @@ export const searchHubspotCompanies = async (searchTerm: string): Promise<Hubspo
     return [];
   }
 
-  // Check if API key is configured
-  if (!isApiKeyConfigured()) {
-    console.error("HubSpot API key is not configured properly. Please replace 'insert your api key here' with your actual API key.");
-    throw new Error("HubSpot API key not configured");
+  // Check if token is configured
+  if (!isTokenConfigured()) {
+    console.error("HubSpot Private App Token is not configured properly. Please replace the placeholder with your actual token.");
+    throw new Error("HubSpot token not configured");
   }
 
   try {
     console.log(`Searching for companies with term: ${searchTerm}`);
     
+    // First try to get all companies (for small accounts this is faster)
     const response = await fetch(
-      `${HUBSPOT_API_BASE_URL}/crm/v3/objects/companies/search`, 
+      `${HUBSPOT_API_BASE_URL}/crm/v3/objects/companies?limit=100`, 
       {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${HUBSPOT_API_KEY}`
-        },
-        body: JSON.stringify({
-          filterGroups: [
-            {
-              filters: [
-                {
-                  propertyName: 'name',
-                  operator: 'CONTAINS_TOKEN',
-                  value: searchTerm
-                }
-              ]
-            }
-          ],
-          properties: ['name', 'address', 'city', 'zip', 'country', 'phone', 'domain', 'industry'],
-          limit: 5
-        })
+          'Authorization': `Bearer ${HUBSPOT_PRIVATE_APP_TOKEN}`
+        }
       }
     );
 
@@ -78,7 +64,13 @@ export const searchHubspotCompanies = async (searchTerm: string): Promise<Hubspo
 
     const data = await response.json();
     console.log("HubSpot companies search results:", data);
-    return data.results || [];
+    
+    // Filter the results on the client side by the search term
+    const filteredResults = data.results.filter((company: HubspotCompany) => 
+      company.properties.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    return filteredResults || [];
   } catch (error) {
     console.error("Error searching HubSpot companies:", error);
     throw error;
@@ -95,10 +87,10 @@ export const createHubspotCompany = async (companyData: {
   country?: string;
   phone?: string;
 }): Promise<HubspotCompany> => {
-  // Check if API key is configured
-  if (!isApiKeyConfigured()) {
-    console.error("HubSpot API key is not configured properly. Please replace 'insert your api key here' with your actual API key.");
-    throw new Error("HubSpot API key not configured");
+  // Check if token is configured
+  if (!isTokenConfigured()) {
+    console.error("HubSpot Private App Token is not configured properly. Please replace the placeholder with your actual token.");
+    throw new Error("HubSpot token not configured");
   }
 
   try {
@@ -110,7 +102,7 @@ export const createHubspotCompany = async (companyData: {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${HUBSPOT_API_KEY}`
+          'Authorization': `Bearer ${HUBSPOT_PRIVATE_APP_TOKEN}`
         },
         body: JSON.stringify({
           properties: {

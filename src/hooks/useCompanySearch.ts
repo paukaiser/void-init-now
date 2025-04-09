@@ -71,10 +71,10 @@ const useCompanySearch = ({ initialValue, onSelect }: UseCompanySearchProps) => 
     } catch (error: any) {
       console.error("Error searching companies:", error);
       
-      if (error.message && error.message.includes("API key not configured")) {
+      if (error.message && error.message.includes("token not configured")) {
         setIsApiKeyMissing(true);
-        setApiError("HubSpot API key is not configured. Please update the API key in src/utils/hubspotApi.ts");
-        toast.error("HubSpot API key not configured");
+        setApiError("HubSpot Private App Token is not configured. Please update the token in src/utils/hubspotApi.ts");
+        toast.error("HubSpot token not configured");
       } else {
         setApiError("Failed to search companies. Please check your network connection and try again.");
         toast.error("Failed to search companies");
@@ -123,9 +123,9 @@ const useCompanySearch = ({ initialValue, onSelect }: UseCompanySearchProps) => 
     } catch (error: any) {
       console.error("Error creating company:", error);
       
-      if (error.message && error.message.includes("API key not configured")) {
+      if (error.message && error.message.includes("token not configured")) {
         setIsApiKeyMissing(true);
-        toast.error("HubSpot API key is not configured");
+        toast.error("HubSpot token is not configured");
       } else {
         toast.warning("Created company locally. API connection failed.");
       }
