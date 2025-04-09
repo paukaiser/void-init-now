@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -6,18 +7,28 @@ import TaskCard from '@/components/TaskCard';
 import FloatingActionButton from '@/components/FloatingActionButton';
 import { Meeting } from '@/components/MeetingCard';
 import { format } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
+import { AlertDialog, AlertDialogContent, AlertDialogAction, AlertDialogCancel, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
 
 const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
+  const [isCancelMeetingDialogOpen, setIsCancelMeetingDialogOpen] = useState(false);
+  const [meetingToCancel, setMeetingToCancel] = useState<string | null>(null);
   const [newTaskName, setNewTaskName] = useState('');
   const [newTaskCompany, setNewTaskCompany] = useState('');
   const [newTaskContact, setNewTaskContact] = useState('');
@@ -142,10 +153,26 @@ const Dashboard: React.FC = () => {
     setNewTaskPhone('');
   };
   
+  // Meeting cancellation handlers
+  const handleMeetingCancel = (meetingId: string) => {
+    setMeetingToCancel(meetingId);
+    setIsCancelMeetingDialogOpen(true);
+  };
+  
+  const confirmMeetingCancel = () => {
+    if (meetingToCancel) {
+      toast.success(`Meeting canceled successfully`);
+      // Here you would handle the actual cancellation logic
+      navigate('/meeting-canceled');
+    }
+    setIsCancelMeetingDialogOpen(false);
+    setMeetingToCancel(null);
+  };
+  
   const incompleteTasks = tasks.filter(task => !task.completed && !task.disqualified);
   
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col bg-white">
       <div className="flex-none">
         <WeeklyOverview 
           currentDate={currentDate}
@@ -177,12 +204,17 @@ const Dashboard: React.FC = () => {
       <div className="flex-grow overflow-hidden">
         <h3 className="text-sm font-medium mb-1 text-muted-foreground">Meetings</h3>
         <div className="h-full overflow-hidden">
-          <CalendarView userId={userId} selectedDate={currentDate} />
+          <CalendarView 
+            userId={userId} 
+            selectedDate={currentDate}
+            onCancelMeeting={handleMeetingCancel}
+          />
         </div>
       </div>
       
       <FloatingActionButton onCreateTask={openCreateTaskDialog} />
       
+      {/* Create Task Dialog */}
       <Dialog open={isCreateTaskDialogOpen} onOpenChange={setIsCreateTaskDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -234,6 +266,22 @@ const Dashboard: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Meeting Cancel Confirmation */}
+      <AlertDialog open={isCancelMeetingDialogOpen} onOpenChange={setIsCancelMeetingDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogTitle>Cancel Meeting?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to cancel this meeting? This action cannot be undone.
+          </AlertDialogDescription>
+          <div className="flex justify-end gap-2 mt-4">
+            <AlertDialogCancel>No, keep it</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmMeetingCancel}>
+              Yes, cancel meeting
+            </AlertDialogAction>
+          </div>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

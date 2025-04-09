@@ -70,34 +70,29 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     const taskCount = dayTasks.length;
     const totalCount = meetingCount + taskCount;
     
-    // Maximum 6 dots total
-    const maxDots = 6;
-    
-    // Prioritize meetings over tasks
-    let meetingDots = Math.min(meetingCount, maxDots);
-    let taskDots = Math.min(taskCount, maxDots - meetingDots);
-    
-    // If we have more than 5 combined items, show + instead of the 6th dot
-    const showPlusIndicator = totalCount > 5;
-    
-    if (showPlusIndicator) {
-      // Adjust dots to show 5 total (prioritizing meetings) plus a + indicator
-      const totalDotsToShow = 5;
-      meetingDots = Math.min(meetingCount, totalDotsToShow);
-      taskDots = Math.min(taskCount, totalDotsToShow - meetingDots);
-    }
-    
-    // If there are no items, return null
     if (totalCount === 0) return null;
     
-    // Better organized dots layout
+    // Single row display logic
+    const maxDotsBeforeShrink = 4;
+    const maxTotalDots = 8;
+    const showPlus = totalCount > maxTotalDots;
+    
+    // Calculate how many dots to show of each type
+    // Prioritize meetings over tasks
+    let dotsToShow = Math.min(totalCount, showPlus ? maxTotalDots - 1 : maxTotalDots);
+    let meetingDots = Math.min(meetingCount, dotsToShow);
+    let taskDots = Math.min(taskCount, dotsToShow - meetingDots);
+    
+    // Determine dot size based on total count
+    const dotSize = totalCount > maxDotsBeforeShrink ? "w-1 h-1" : "w-1.5 h-1.5";
+    
     return (
-      <div className="flex justify-center mt-1 gap-[2px] flex-wrap max-w-[32px] mx-auto">
+      <div className="flex justify-center mt-1 gap-[2px] max-w-[36px] mx-auto">
         {/* Meeting dots (orange) */}
         {Array.from({ length: meetingDots }).map((_, i) => (
           <div 
             key={`meeting-${i}`} 
-            className="w-1.5 h-1.5 rounded-full bg-[#FF8769]" 
+            className={`${dotSize} rounded-full bg-[#FF8769]`} 
             title={`${meetingCount} meetings`}
           />
         ))}
@@ -106,17 +101,17 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
         {Array.from({ length: taskDots }).map((_, i) => (
           <div 
             key={`task-${i}`} 
-            className="w-1.5 h-1.5 rounded-full bg-[#2E1813]" 
+            className={`${dotSize} rounded-full bg-[#2E1813]`} 
             title={`${taskCount} tasks`}
           />
         ))}
         
         {/* Plus indicator if needed */}
-        {showPlusIndicator && (
+        {showPlus && (
           <div 
             key="plus-indicator" 
-            className="text-xs text-gray-600 font-semibold" 
-            title={`${totalCount - 5} more items`}
+            className={`${dotSize} flex items-center justify-center text-[8px] text-gray-600 font-semibold`} 
+            title={`${totalCount - (maxTotalDots - 1)} more items`}
           >
             +
           </div>
@@ -169,7 +164,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
 
   // Create a more Google Calendar like Today button
   const renderTodayButton = () => {
-    if (isCurrentDateToday || !isTodayInCurrentWeek) return null;
+    if (isCurrentDateToday && isTodayInCurrentWeek) return null;
     
     return (
       <button
@@ -180,7 +175,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       >
         <div className="relative">
           <Calendar className="h-5 w-5 text-gray-600 group-hover:text-gray-800" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-[0.5px] translate-y-[1px] w-2 h-2 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-1.5 h-1.5 rounded-full bg-[#FF8769]"></div>
           </div>
         </div>

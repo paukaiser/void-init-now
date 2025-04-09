@@ -7,9 +7,14 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 interface CalendarViewProps {
   userId: string;
   selectedDate?: Date;
+  onCancelMeeting?: (meetingId: string) => void;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ 
+  userId, 
+  selectedDate,
+  onCancelMeeting
+}) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,6 +194,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           isCalendarView={true}
           startHour={START_HOUR}
           endHour={END_HOUR}
+          onCancel={onCancelMeeting ? () => onCancelMeeting(meeting.id) : undefined}
         />
       );
     });
