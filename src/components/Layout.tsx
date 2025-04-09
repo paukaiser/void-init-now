@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Inbox } from 'lucide-react';
+import { Calendar, Inbox, Layout as LayoutIcon } from 'lucide-react';
 import UserProfile from '@/components/UserProfile';
 import { useTasks } from '@/hooks/useTasks';
 import NotificationBadge from '@/components/NotificationBadge';
@@ -12,6 +12,7 @@ const Layout: React.FC = () => {
   const { unreadCount } = useTasks();
   const location = useLocation();
   
+  const isDashboardActive = location.pathname === '/dashboard';
   const isInboxActive = location.pathname === '/inbox';
   const isMeetingsActive = location.pathname === '/meetings';
   
@@ -35,7 +36,18 @@ const Layout: React.FC = () => {
         <div className="flex justify-around items-center">
           <button 
             className={cn(
-              "flex flex-col items-center p-2 text-sm w-1/2 rounded-l-lg transition-colors",
+              "flex flex-col items-center p-2 text-sm w-1/3 rounded-l-lg transition-colors",
+              isDashboardActive ? "bg-[#FF8769]/10 text-[#FF8769]" : ""
+            )}
+            onClick={() => navigate('/dashboard')}
+          >
+            <LayoutIcon size={24} className="mb-1" />
+            <span>Dashboard</span>
+          </button>
+          
+          <button 
+            className={cn(
+              "flex flex-col items-center p-2 text-sm w-1/3 transition-colors",
               isMeetingsActive ? "bg-[#FF8769]/10 text-[#FF8769]" : ""
             )}
             onClick={() => navigate('/meetings')}
@@ -46,7 +58,7 @@ const Layout: React.FC = () => {
           
           <button 
             className={cn(
-              "flex flex-col items-center p-2 text-sm relative w-1/2 rounded-r-lg transition-colors",
+              "flex flex-col items-center p-2 text-sm relative w-1/3 rounded-r-lg transition-colors",
               isInboxActive ? "bg-[#FF8769]/10 text-[#FF8769]" : ""
             )}
             onClick={() => navigate('/inbox')}

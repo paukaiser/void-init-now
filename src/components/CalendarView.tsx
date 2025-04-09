@@ -7,9 +7,10 @@ import MeetingCard, { Meeting } from './MeetingCard';
 
 interface CalendarViewProps {
   userId: string;
+  selectedDate?: Date;
 }
 
-const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
@@ -19,6 +20,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId }) => {
   
   const START_HOUR = 8; // 08:00
   const END_HOUR = 22; // 22:00
+  
+  // Use the selectedDate prop if provided
+  useEffect(() => {
+    if (selectedDate) {
+      setCurrentDate(selectedDate);
+    }
+  }, [selectedDate]);
   
   const getWeekNumber = (date: Date) => {
     const mondayStartWeek = startOfWeek(date, { weekStartsOn: 1 });

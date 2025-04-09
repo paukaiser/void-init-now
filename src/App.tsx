@@ -1,8 +1,10 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
 import Meetings from "./pages/Meetings";
 import AddMeeting from "./pages/AddMeeting";
 import MeetingActions from "./pages/MeetingActions";
@@ -24,10 +26,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Navigate to="/meetings" replace />} />
-          <Route path="/:userSlug" element={<Navigate to="/meetings" replace />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/:userSlug" element={<Navigate to="/dashboard" replace />} />
           
           <Route element={<Layout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/meetings" element={<Meetings />} />
             <Route path="/inbox" element={<Inbox />} />
           </Route>
