@@ -8,6 +8,13 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      '/crm': {
+        target: 'https://api.hubapi.com',
+        changeOrigin: true,
+        secure: false,
+      }
+    },
   },
   plugins: [
     react(),
