@@ -14,7 +14,7 @@ import { cn } from '@/lib/utils';
 import { Meeting } from './MeetingCard';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
@@ -120,6 +120,13 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       onTouchEnd={handleTouchEnd}
     >
       <div className="flex justify-between items-center mb-3">
+        <h2 className="text-xl font-semibold">
+          {format(displayedWeek, 'MMMM')}
+        </h2>
+        <UserProfile small={true} />
+      </div>
+      
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center">
           <Button 
             variant="ghost" 
@@ -130,9 +137,18 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h2 className="text-xl font-semibold">
-            {format(displayedWeek, 'MMMM')}
-          </h2>
+          
+          {/* Only show "Today" button when not on today's date */}
+          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
+            <button
+              onClick={goToToday}
+              className="flex items-center justify-center w-6 h-6 relative"
+              aria-label="Go to today"
+            >
+              <Calendar className="h-5 w-5" />
+            </button>
+          )}
+          
           <Button 
             variant="ghost" 
             size="sm" 
@@ -142,23 +158,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           >
             <ChevronRight className="h-5 w-5" />
           </Button>
-          
-          {/* Only show "Today" button when not on today's date */}
-          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-            <button
-              onClick={goToToday}
-              className="ml-2 flex items-center justify-center w-6 h-6 relative"
-              aria-label="Go to today"
-            >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="3" y="4" width="14" height="14" rx="1" stroke="#333" strokeWidth="1.5"/>
-                <path d="M3 6.5H17" stroke="#333" strokeWidth="1.5"/>
-                <circle cx="10" cy="11" r="2" fill="#FF8769" />
-              </svg>
-            </button>
-          )}
         </div>
-        <UserProfile small={true} />
       </div>
       
       <div className="grid grid-cols-7 gap-1 text-center">

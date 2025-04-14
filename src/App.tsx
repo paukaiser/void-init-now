@@ -14,6 +14,8 @@ import FollowUpOutcome from "./pages/FollowUpOutcome";
 import MeetingCanceled from "./pages/MeetingCanceled";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
+import Inbox from "./pages/Inbox";
+import Meetings from "./pages/Meetings";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +31,8 @@ const App = () => (
           
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/inbox" element={<Inbox />} />
+            <Route path="/meetings" element={<Meetings />} />
           </Route>
           
           <Route path="/add-meeting" element={<AddMeeting />} />

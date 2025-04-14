@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import WeeklyOverview from '@/components/WeeklyOverview';
@@ -12,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { Calendar as CalendarIcon, ChevronDown, ChevronUp, Clock } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp, Clock, ArrowRight } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
@@ -188,6 +189,10 @@ const Dashboard: React.FC = () => {
     setCustomDateMode(false);
   };
   
+  const navigateToTasks = () => {
+    navigate('/inbox');
+  };
+  
   const tasksForSelectedDate = tasks.filter(task => 
     !task.completed && 
     !task.disqualified && 
@@ -212,7 +217,13 @@ const Dashboard: React.FC = () => {
       <div className="flex-none mb-2">
         {tasksForSelectedDate.length > 0 && (
           <div>
-            <h3 className="text-sm font-medium mb-1 text-muted-foreground">Tasks</h3>
+            <div 
+              className="flex items-center cursor-pointer" 
+              onClick={navigateToTasks}
+            >
+              <h3 className="text-sm font-medium mb-1 text-muted-foreground">Tasks</h3>
+              <ArrowRight className="h-4 w-4 ml-1 text-muted-foreground" />
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {displayedTasks.map(task => (
                 <TaskCard 
