@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle } from 'lucide-react';
+import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle, MapPin } from 'lucide-react';
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ export interface Meeting {
   date: string;
   type?: 'sales meeting' | 'sales followup';
   status?: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
+  address?: string;
 }
 
 interface MeetingCardProps {
@@ -51,6 +52,14 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
     e.stopPropagation(); // Prevent triggering the card click
     if (onCancel) {
       onCancel(meeting);
+    }
+  };
+  
+  const handleAddressClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the card click
+    if (meeting.address) {
+      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(meeting.address)}`;
+      window.open(googleMapsUrl, '_blank');
     }
   };
 
@@ -196,6 +205,15 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
             <span>{meeting.companyName}</span>
           </div>
         </div>
+        {meeting.address && (
+          <div 
+            className="flex items-center gap-1.5 text-xs text-allo-muted hover:text-[#FF8769] cursor-pointer"
+            onClick={handleAddressClick}
+          >
+            <MapPin size={14} />
+            <span className="underline">{meeting.address}</span>
+          </div>
+        )}
         <div className="flex justify-between text-xs text-allo-muted mt-2 pt-2 border-t border-gray-100">
           <div className="flex items-center gap-1.5">
             <Calendar size={14} />

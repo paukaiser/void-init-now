@@ -77,7 +77,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(),
           date: format(today, 'dd.MM.yyyy'),
           type: 'sales meeting',
-          status: 'scheduled'
+          status: 'scheduled',
+          address: '123 Main St, San Francisco, CA'
         },
         {
           id: '2',
@@ -88,7 +89,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(),
           date: format(today, 'dd.MM.yyyy'),
           type: 'sales followup',
-          status: 'completed'
+          status: 'completed',
+          address: '456 Market St, San Francisco, CA'
         },
         {
           id: '3',
@@ -99,7 +101,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(),
           date: format(today, 'dd.MM.yyyy'),
           type: 'sales meeting',
-          status: 'scheduled'
+          status: 'scheduled',
+          address: '789 Mission St, San Francisco, CA'
         },
         {
           id: '4',
@@ -110,7 +113,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(),
           date: format(today, 'dd.MM.yyyy'),
           type: 'sales followup',
-          status: 'rescheduled'
+          status: 'rescheduled',
+          address: '101 Howard St, San Francisco, CA'
         }
       ];
       

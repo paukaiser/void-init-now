@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   format, 
@@ -113,9 +114,20 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
       onTouchEnd={handleTouchEnd}
     >
       <div className="flex justify-between items-center mb-3">
-        <h2 className="text-xl font-semibold">
-          {format(displayedWeek, 'MMMM')}
-        </h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-semibold">
+            {format(displayedWeek, 'MMMM')}
+          </h2>
+          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
+            <button
+              onClick={goToToday}
+              className="flex items-center justify-center w-6 h-6 relative"
+              aria-label="Go to today"
+            >
+              <Calendar className="h-5 w-5" />
+            </button>
+          )}
+        </div>
         <UserProfile small={true} />
       </div>
       
@@ -209,18 +221,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           <ChevronRight className="h-5 w-5" />
         </Button>
       </div>
-      
-      {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-        <div className="flex justify-center mt-2">
-          <button
-            onClick={goToToday}
-            className="flex items-center justify-center w-6 h-6 relative"
-            aria-label="Go to today"
-          >
-            <Calendar className="h-5 w-5" />
-          </button>
-        </div>
-      )}
     </div>
   );
 };

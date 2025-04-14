@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Check, X, Clock, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, Check, X, Clock, AlertTriangle, MapPin } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -36,6 +36,11 @@ const MeetingActions: React.FC = () => {
     date: '12.06.2024',
     status: 'scheduled',
     meetingType: 'sales meeting'
+  };
+  
+  const handleAddressClick = () => {
+    const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(meetingDetails.companyAddress)}`;
+    window.open(googleMapsUrl, '_blank');
   };
   
   const handleCancelConfirm = () => {
@@ -101,6 +106,18 @@ const MeetingActions: React.FC = () => {
           <div className="py-2">
             <p className="text-sm text-gray-500">Company</p>
             <p className="font-medium">{meetingDetails.companyName}</p>
+          </div>
+          
+          <div className="py-2">
+            <p className="text-sm text-gray-500">Address</p>
+            <button 
+              className="font-medium flex items-center text-allo-primary hover:underline"
+              onClick={handleAddressClick}
+              aria-label="Open in Google Maps"
+            >
+              <MapPin className="h-4 w-4 mr-1" />
+              {meetingDetails.companyAddress}
+            </button>
           </div>
           
           <div className="py-2">
