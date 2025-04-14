@@ -43,10 +43,10 @@ const MeetingOutcome: React.FC = () => {
         <Button 
           variant="outline" 
           className="self-start mb-6"
-          onClick={() => navigate(`/meeting/${id}`)}
+          onClick={() => navigate('/meetings')}
         >
           <ChevronLeft size={16} className="mr-1" />
-          Back
+          Back to Meetings
         </Button>
         
         <div className="w-full max-w-md mx-auto">
