@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef } from 'react';
 import { 
   format, 
@@ -77,7 +76,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
 
   const handleDayClick = (day: Date) => {
     onDateSelect(day);
-    // Reset week offset when selecting a date
     setWeekOffset(0);
   };
   
@@ -93,10 +91,8 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
-        // Swipe left - go to next week
         goToNextWeek();
       } else {
-        // Swipe right - go to previous week
         goToPreviousWeek();
       }
     }
@@ -104,12 +100,9 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     touchStartX.current = null;
   };
 
-  // Check if current date is today
   const isCurrentDateToday = isToday(currentDate);
-  // Check if any day in the current week is today
   const isTodayInCurrentWeek = weekDays.some(day => isToday(day));
 
-  // Define the max dots to display before showing a plus sign
   const MAX_DOTS = 4;
   const MAX_DOTS_TOTAL = 8;
 
@@ -126,116 +119,108 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
         <UserProfile small={true} />
       </div>
       
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-1 mr-2" 
-            onClick={goToPreviousWeek}
-            aria-label="Previous week"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          
-          {/* Only show "Today" button when not on today's date */}
-          {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
-            <button
-              onClick={goToToday}
-              className="flex items-center justify-center w-6 h-6 relative"
-              aria-label="Go to today"
-            >
-              <Calendar className="h-5 w-5" />
-            </button>
-          )}
-          
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="p-1 ml-2" 
-            onClick={goToNextWeek}
-            aria-label="Next week"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+      <div className="grid grid-cols-9 gap-1 text-center items-center">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-1 col-span-1" 
+          onClick={goToPreviousWeek}
+          aria-label="Previous week"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+
+        <div className="grid grid-cols-7 col-span-7 gap-1 text-center">
+          {weekDays.map((day, index) => {
+            const dayMeetings = getMeetingsForDay(day);
+            const dayTasks = getTasksForDay(day);
+            const isSelected = isSameDay(day, currentDate);
+            
+            const totalItems = dayMeetings.length + dayTasks.length;
+            const showPlus = totalItems > MAX_DOTS_TOTAL;
+            const dotSize = totalItems > MAX_DOTS ? "w-1.5 h-1.5" : "w-2 h-2";
+            
+            let meetingDotsToShow = Math.min(dayMeetings.length, showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS);
+            let taskDotsToShow = Math.min(dayTasks.length, showPlus ? (MAX_DOTS_TOTAL - meetingDotsToShow) : (MAX_DOTS - meetingDotsToShow));
+            
+            if (meetingDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
+              taskDotsToShow = Math.min(dayTasks.length, MAX_DOTS_TOTAL - meetingDotsToShow);
+            }
+            if (taskDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
+              meetingDotsToShow = Math.min(dayMeetings.length, MAX_DOTS_TOTAL - taskDotsToShow);
+            }
+            
+            return (
+              <button
+                key={index}
+                onClick={() => handleDayClick(day)}
+                className={cn(
+                  "flex flex-col items-center py-2 rounded-lg relative",
+                  isSelected ? "bg-[#FF8769]/10" : "hover:bg-gray-100",
+                  !isSameMonth(day, displayedWeek) && "text-gray-400"
+                )}
+              >
+                <span className="text-xs uppercase">
+                  {format(day, 'EEE')}
+                </span>
+                <span className={cn(
+                  "w-8 h-8 flex items-center justify-center rounded-full my-1",
+                  isToday(day) && "font-bold border border-[#FF8769]",
+                  isSelected && "bg-[#FF8769] text-white"
+                )}>
+                  {format(day, 'd')}
+                </span>
+                
+                <div className="flex gap-0.5 mt-1 items-center justify-center h-2">
+                  {Array.from({ length: meetingDotsToShow }).map((_, i) => (
+                    <div 
+                      key={`meeting-${i}`} 
+                      className={`${dotSize} rounded-full bg-[#FF8769]`} 
+                      title={`${dayMeetings.length} meetings`}
+                    />
+                  ))}
+                  
+                  {Array.from({ length: taskDotsToShow }).map((_, i) => (
+                    <div 
+                      key={`task-${i}`} 
+                      className={`${dotSize} rounded-full bg-[#2E1813]`} 
+                      title={`${dayTasks.length} tasks`}
+                    />
+                  ))}
+                  
+                  {showPlus && (
+                    <div className={`${dotSize} flex items-center justify-center ml-0.5 font-bold text-[8px] text-gray-600`} title={`${totalItems} total items`}>
+                      +
+                    </div>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="p-1 col-span-1" 
+          onClick={goToNextWeek}
+          aria-label="Next week"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
       </div>
       
-      <div className="grid grid-cols-7 gap-1 text-center">
-        {weekDays.map((day, index) => {
-          const dayMeetings = getMeetingsForDay(day);
-          const dayTasks = getTasksForDay(day);
-          const isSelected = isSameDay(day, currentDate);
-          
-          // Calculate how many dots to display
-          const totalItems = dayMeetings.length + dayTasks.length;
-          const showPlus = totalItems > MAX_DOTS_TOTAL;
-          const dotSize = totalItems > MAX_DOTS ? "w-1.5 h-1.5" : "w-2 h-2";
-          
-          // Determine how many dots of each type to show
-          let meetingDotsToShow = Math.min(dayMeetings.length, showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS);
-          let taskDotsToShow = Math.min(dayTasks.length, showPlus ? (MAX_DOTS_TOTAL - meetingDotsToShow) : (MAX_DOTS - meetingDotsToShow));
-          
-          // If we have more of one type than the other, allow it to use more dots up to MAX_DOTS_TOTAL
-          if (meetingDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
-            taskDotsToShow = Math.min(dayTasks.length, MAX_DOTS_TOTAL - meetingDotsToShow);
-          }
-          if (taskDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
-            meetingDotsToShow = Math.min(dayMeetings.length, MAX_DOTS_TOTAL - taskDotsToShow);
-          }
-          
-          return (
-            <button
-              key={index}
-              onClick={() => handleDayClick(day)}
-              className={cn(
-                "flex flex-col items-center py-2 rounded-lg relative",
-                isSelected ? "bg-[#FF8769]/10" : "hover:bg-gray-100",
-                !isSameMonth(day, displayedWeek) && "text-gray-400"
-              )}
-            >
-              <span className="text-xs uppercase">
-                {format(day, 'EEE')}
-              </span>
-              <span className={cn(
-                "w-8 h-8 flex items-center justify-center rounded-full my-1",
-                isToday(day) && "font-bold border border-[#FF8769]",
-                isSelected && "bg-[#FF8769] text-white"
-              )}>
-                {format(day, 'd')}
-              </span>
-              
-              {/* Dots for meetings and tasks */}
-              <div className="flex gap-0.5 mt-1 items-center justify-center h-2">
-                {/* Meeting dots (orange) */}
-                {Array.from({ length: meetingDotsToShow }).map((_, i) => (
-                  <div 
-                    key={`meeting-${i}`} 
-                    className={`${dotSize} rounded-full bg-[#FF8769]`} 
-                    title={`${dayMeetings.length} meetings`}
-                  />
-                ))}
-                
-                {/* Task dots (black) */}
-                {Array.from({ length: taskDotsToShow }).map((_, i) => (
-                  <div 
-                    key={`task-${i}`} 
-                    className={`${dotSize} rounded-full bg-[#2E1813]`} 
-                    title={`${dayTasks.length} tasks`}
-                  />
-                ))}
-                
-                {/* Plus indicator if there are more than MAX_DOTS_TOTAL total items */}
-                {showPlus && (
-                  <div className={`${dotSize} flex items-center justify-center ml-0.5 font-bold text-[8px] text-gray-600`} title={`${totalItems} total items`}>
-                    +
-                  </div>
-                )}
-              </div>
-            </button>
-          );
-        })}
-      </div>
+      {(!isCurrentDateToday || !isTodayInCurrentWeek) && (
+        <div className="flex justify-center mt-2">
+          <button
+            onClick={goToToday}
+            className="flex items-center justify-center w-6 h-6 relative"
+            aria-label="Go to today"
+          >
+            <Calendar className="h-5 w-5" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };
