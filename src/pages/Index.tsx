@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, FileText, Inbox } from 'lucide-react';
@@ -24,7 +23,7 @@ const Index: React.FC = () => {
           <div className="mt-12 grid grid-cols-1 gap-6">
             <Button 
               className="allo-button flex items-center justify-center h-16 text-base"
-              onClick={() => navigate('/meetings')}
+              onClick={() => navigate('/dashboard')}
             >
               <CalendarDays size={20} className="mr-2" />
               My Meetings

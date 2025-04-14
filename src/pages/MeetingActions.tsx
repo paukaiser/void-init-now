@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Check, X, Clock, AlertTriangle, MapPin } from 'lucide-react';
@@ -89,7 +88,7 @@ const MeetingActions: React.FC = () => {
         <Button 
           variant="outline" 
           className="self-start mb-6"
-          onClick={() => navigate('/meetings')}
+          onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings

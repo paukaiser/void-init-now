@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,7 +14,7 @@ import MeetingCanceled from "./pages/MeetingCanceled";
 import NotFound from "./pages/NotFound";
 import Layout from "./components/Layout";
 import Inbox from "./pages/Inbox";
-import Meetings from "./pages/Meetings";
+// import Meetings from "./pages/Meetings";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +31,7 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/inbox" element={<Inbox />} />
-            <Route path="/meetings" element={<Meetings />} />
+            <Route path="/meetings" element={<Dashboard />} />
           </Route>
           
           <Route path="/add-meeting" element={<AddMeeting />} />

@@ -122,7 +122,7 @@ const AddMeeting: React.FC = () => {
       }
     }
     
-    navigate('/meetings');
+    navigate('/dashboard');
   };
   
   const generateTimeOptions = () => {
@@ -160,7 +160,7 @@ const AddMeeting: React.FC = () => {
         <Button 
           variant="outline" 
           className="mb-6"
-          onClick={() => navigate('/meetings')}
+          onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings

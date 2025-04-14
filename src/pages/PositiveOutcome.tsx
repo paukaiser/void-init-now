@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
@@ -32,7 +31,7 @@ const PositiveOutcome: React.FC = () => {
   
   const handleComplete = () => {
     toast.success('Meeting updated with positive outcome');
-    navigate('/meetings');
+    navigate('/dashboard');
   };
   
   return (
@@ -41,7 +40,7 @@ const PositiveOutcome: React.FC = () => {
         <Button 
           variant="outline" 
           className="self-start mb-6"
-          onClick={() => navigate('/meetings')}
+          onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings
