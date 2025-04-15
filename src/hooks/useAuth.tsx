@@ -8,7 +8,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -48,13 +48,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, metadata?: Record<string, any>) => {
     try {
       const { error } = await supabase.auth.signUp({ 
         email, 
         password, 
         options: {
           emailRedirectTo: window.location.origin,
+          data: metadata // Store metadata including hubspot_id
         }
       });
       return { error };

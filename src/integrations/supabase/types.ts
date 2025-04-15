@@ -13,6 +13,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           first_name: string | null
+          hubspot_id: string | null
           id: string
           last_name: string | null
           updated_at: string | null
@@ -20,6 +21,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           first_name?: string | null
+          hubspot_id?: string | null
           id: string
           last_name?: string | null
           updated_at?: string | null
@@ -27,6 +29,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           first_name?: string | null
+          hubspot_id?: string | null
           id?: string
           last_name?: string | null
           updated_at?: string | null

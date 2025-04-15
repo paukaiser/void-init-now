@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [hubspotId, setHubspotId] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
@@ -45,7 +46,10 @@ const Login: React.FC = () => {
     
     try {
       if (isSignUp) {
-        const { error } = await signUp(email, password);
+        // Add hubspot_id to user metadata when signing up
+        const { error } = await signUp(email, password, {
+          hubspot_id: hubspotId || null,
+        });
         if (error) throw error;
         toast({
           title: "Check your email",
@@ -97,6 +101,25 @@ const Login: React.FC = () => {
               className="mt-1"
             />
           </div>
+          
+          {/* Only show HubSpot ID field when signing up */}
+          {isSignUp && (
+            <div>
+              <Label htmlFor="hubspotId">HubSpot ID (Optional)</Label>
+              <Input
+                id="hubspotId"
+                name="hubspotId"
+                type="text"
+                value={hubspotId}
+                onChange={(e) => setHubspotId(e.target.value)}
+                placeholder="Your HubSpot ID"
+                className="mt-1"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This will be used to fetch your meetings and tasks from HubSpot
+              </p>
+            </div>
+          )}
         </div>
 
         <div>
