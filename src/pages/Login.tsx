@@ -1,27 +1,40 @@
-
-import React from 'react';
+import React, { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
+declare global {
+  interface Window {
+    handleSignInWithGoogle: (response: any) => Promise<void>;
+  }
+}
+
 const Login: React.FC = () => {
-  const handleGoogleSignIn = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
-      });
-      
-      if (error) {
-        throw error;
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    document.body.appendChild(script);
+
+    window.handleSignInWithGoogle = async (response: any) => {
+      try {
+        const { error } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: response.credential,
+        });
+        
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error signing in with Google:', error);
+        toast.error('Failed to sign in with Google. Please try again.');
       }
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      toast.error('Failed to sign in with Google. Please try again.');
-    }
-  };
+    };
+
+    return () => {
+      document.body.removeChild(script);
+      delete window.handleSignInWithGoogle;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
@@ -32,8 +45,46 @@ const Login: React.FC = () => {
         </div>
         
         <div className="pt-4">
+          <div className="flex justify-center my-4">
+            <div
+              id="g_id_onload"
+              data-client_id="YOUR_GOOGLE_CLIENT_ID"
+              data-context="signin"
+              data-ux_mode="popup"
+              data-callback="handleSignInWithGoogle"
+              data-auto_select="true"
+              data-itp_support="true"
+              data-use_fedcm_for_prompt="true"
+            ></div>
+            <div
+              className="g_id_signin"
+              data-type="standard"
+              data-shape="pill"
+              data-theme="outline"
+              data-text="signin_with"
+              data-size="large"
+              data-logo_alignment="left"
+            ></div>
+          </div>
+          
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">Or</span>
+            </div>
+          </div>
+          
           <Button 
-            onClick={handleGoogleSignIn}
+            onClick={() => {
+              supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                  redirectTo: `${window.location.origin}/dashboard`,
+                },
+              });
+            }}
             className="w-full flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
           >
             <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
