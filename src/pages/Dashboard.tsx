@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { useTasks } from '@/hooks/useTasks';
+import { useMeetings } from '@/hooks/useMeetings';
 import WeeklyOverview from '@/components/WeeklyOverview';
 import CalendarView from '@/components/CalendarView';
 import TaskCard from '@/components/TaskCard';
 import FloatingActionButton from '@/components/FloatingActionButton';
-import { Meeting } from '@/components/MeetingCard';
 import { format, addDays, addWeeks, isPast, isSameDay } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -18,19 +17,20 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAuth } from '@/hooks/useAuth';
 
 const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [meetings, setMeetings] = useState<Meeting[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
   const [newTaskCompany, setNewTaskCompany] = useState('');
   const [moreInfo, setMoreInfo] = useState('');
   const [followUpDate, setFollowUpDate] = useState<Date | undefined>(undefined);
   const [customDateMode, setCustomDateMode] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
-  const userId = "current-user"; // In a real app, you'd get this from auth context
   
+  const { user } = useAuth();
+  const userId = user?.id || 'current-user';
+  const { meetings, isLoading: meetingsLoading } = useMeetings();
   const { tasks, markAsRead, markAsCompleted, disqualifyTask, createTask } = useTasks();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -41,79 +41,6 @@ const Dashboard: React.FC = () => {
       document.body.style.overflow = 'auto';
     };
   }, []);
-  
-  useEffect(() => {
-    const fetchMeetings = async () => {
-      setLoading(true);
-      
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      
-      const meetingTime1 = new Date(today);
-      meetingTime1.setHours(9, 0, 0);
-      
-      const meetingTime2 = new Date(today);
-      meetingTime2.setHours(11, 30, 0);
-      
-      const meetingTime3 = new Date(today);
-      meetingTime3.setHours(13, 45, 0);
-      
-      const meetingTime4 = new Date(today);
-      meetingTime4.setHours(16, 0, 0);
-      
-      const mockMeetings: Meeting[] = [
-        {
-          id: '1',
-          title: 'Product Demo',
-          contactName: 'Sarah Chen',
-          companyName: 'Acme Inc',
-          startTime: meetingTime1.toISOString(),
-          endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(),
-          date: format(today, 'dd.MM.yyyy'),
-          type: 'sales meeting',
-          status: 'scheduled'
-        },
-        {
-          id: '2',
-          title: 'Contract Discussion',
-          contactName: 'Michael Rodriguez',
-          companyName: 'Global Tech',
-          startTime: meetingTime2.toISOString(),
-          endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(),
-          date: format(today, 'dd.MM.yyyy'),
-          type: 'sales followup',
-          status: 'completed'
-        },
-        {
-          id: '3',
-          title: 'Initial Consultation',
-          contactName: 'David Park',
-          companyName: 'Innovate Solutions',
-          startTime: meetingTime3.toISOString(),
-          endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(),
-          date: format(today, 'dd.MM.yyyy'),
-          type: 'sales meeting',
-          status: 'scheduled'
-        },
-        {
-          id: '4',
-          title: 'Product Roadmap',
-          contactName: 'Emma Watson',
-          companyName: 'Tech Forward',
-          startTime: meetingTime4.toISOString(),
-          endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(),
-          date: format(today, 'dd.MM.yyyy'),
-          type: 'sales followup',
-          status: 'rescheduled'
-        }
-      ];
-      
-      setMeetings(mockMeetings);
-      setLoading(false);
-    };
-    
-    fetchMeetings();
-  }, [userId, currentDate]);
   
   const handleDateSelect = (date: Date) => {
     setCurrentDate(date);
