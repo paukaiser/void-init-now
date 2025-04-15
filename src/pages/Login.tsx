@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+
+import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
 
 declare global {
   interface Window {
@@ -10,6 +12,9 @@ declare global {
 }
 
 const Login: React.FC = () => {
+  const [googleClientId, setGoogleClientId] = useState<string>("");
+  const [showClientIdInput, setShowClientIdInput] = useState<boolean>(false);
+
   useEffect(() => {
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -36,6 +41,28 @@ const Login: React.FC = () => {
     };
   }, []);
 
+  const handleSaveClientId = () => {
+    if (!googleClientId) {
+      toast.error('Please enter a valid Google Client ID');
+      return;
+    }
+    
+    localStorage.setItem('googleClientId', googleClientId);
+    setShowClientIdInput(false);
+    toast.success('Google Client ID saved!');
+    
+    // Force reload to initialize Google Sign-In with the new client ID
+    window.location.reload();
+  };
+
+  // Get client ID from localStorage on component mount
+  useEffect(() => {
+    const savedClientId = localStorage.getItem('googleClientId');
+    if (savedClientId) {
+      setGoogleClientId(savedClientId);
+    }
+  }, []);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gray-50">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
@@ -45,27 +72,64 @@ const Login: React.FC = () => {
         </div>
         
         <div className="pt-4">
-          <div className="flex justify-center my-4">
-            <div
-              id="g_id_onload"
-              data-client_id="YOUR_GOOGLE_CLIENT_ID"
-              data-context="signin"
-              data-ux_mode="popup"
-              data-callback="handleSignInWithGoogle"
-              data-auto_select="true"
-              data-itp_support="true"
-              data-use_fedcm_for_prompt="true"
-            ></div>
-            <div
-              className="g_id_signin"
-              data-type="standard"
-              data-shape="pill"
-              data-theme="outline"
-              data-text="signin_with"
-              data-size="large"
-              data-logo_alignment="left"
-            ></div>
-          </div>
+          {showClientIdInput ? (
+            <div className="mb-4 space-y-4">
+              <h3 className="text-sm font-medium">Enter your Google Client ID</h3>
+              <Input
+                type="text"
+                placeholder="Google Client ID"
+                value={googleClientId}
+                onChange={(e) => setGoogleClientId(e.target.value)}
+              />
+              <div className="flex gap-2">
+                <Button 
+                  onClick={handleSaveClientId}
+                  className="w-full"
+                >
+                  Save Client ID
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowClientIdInput(false)}
+                  className="w-full"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : googleClientId ? (
+            // Only render the Google Sign-In button if we have a client ID
+            <div className="flex justify-center my-4">
+              <div
+                id="g_id_onload"
+                data-client_id={googleClientId}
+                data-context="signin"
+                data-ux_mode="popup"
+                data-callback="handleSignInWithGoogle"
+                data-auto_select="true"
+                data-itp_support="true"
+                data-use_fedcm_for_prompt="true"
+              ></div>
+              <div
+                className="g_id_signin"
+                data-type="standard"
+                data-shape="pill"
+                data-theme="outline"
+                data-text="signin_with"
+                data-size="large"
+                data-logo_alignment="left"
+              ></div>
+            </div>
+          ) : (
+            <div className="mb-4">
+              <Button 
+                onClick={() => setShowClientIdInput(true)}
+                className="w-full mb-4"
+              >
+                Configure Google Client ID
+              </Button>
+            </div>
+          )}
           
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
@@ -97,6 +161,17 @@ const Login: React.FC = () => {
             </svg>
             Continue with Google
           </Button>
+
+          {googleClientId && (
+            <div className="mt-4 text-right">
+              <button 
+                onClick={() => setShowClientIdInput(true)} 
+                className="text-xs text-gray-500 hover:text-blue-500"
+              >
+                Change Client ID
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
