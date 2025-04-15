@@ -26,13 +26,13 @@ async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
 }
 
 async function fetchMeetingsFromHubSpot(hubspotId: string): Promise<Meeting[]> {
+  // Get the actual Supabase project URL (not using protected properties)
   const response = await fetch(
-    `${supabase.supabaseUrl}/functions/v1/hubspot-meetings`,
+    `${window.location.origin}/api/hubspot-meetings`,
     {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${supabase.supabaseKey}`
       },
       body: JSON.stringify({ hubspotId })
     }
