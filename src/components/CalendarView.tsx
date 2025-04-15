@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { format, isSameDay, parseISO } from 'date-fns';
 import MeetingCard, { Meeting } from './MeetingCard';
@@ -14,7 +15,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useMeetings } from '@/hooks/useMeetings';
 
 interface CalendarViewProps {
   userId: string;
@@ -23,17 +23,17 @@ interface CalendarViewProps {
 
 const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [meetingToCancel, setMeetingToCancel] = useState<Meeting | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   
-  const { meetings, isLoading, isError } = useMeetings();
-  
   const START_HOUR = 8; // 08:00
   const END_HOUR = 22; // 22:00
   
+  // Use the selectedDate prop if provided
   useEffect(() => {
     if (selectedDate) {
       setCurrentDate(selectedDate);
@@ -49,8 +49,81 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   }, []);
   
   useEffect(() => {
-    setLoading(isLoading);
-  }, [isLoading]);
+    const fetchMeetings = async () => {
+      setLoading(true);
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const meetingTime1 = new Date(today);
+      meetingTime1.setHours(9, 0, 0);
+      
+      const meetingTime2 = new Date(today);
+      meetingTime2.setHours(11, 30, 0);
+      
+      const meetingTime3 = new Date(today);
+      meetingTime3.setHours(13, 45, 0);
+      
+      const meetingTime4 = new Date(today);
+      meetingTime4.setHours(16, 0, 0);
+      
+      const mockMeetings: Meeting[] = [
+        {
+          id: '1',
+          title: 'Product Demo',
+          contactName: 'Sarah Chen',
+          companyName: 'Acme Inc',
+          startTime: meetingTime1.toISOString(),
+          endTime: new Date(meetingTime1.getTime() + 60 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales meeting',
+          status: 'scheduled',
+          address: '123 Main St, San Francisco, CA'
+        },
+        {
+          id: '2',
+          title: 'Contract Discussion',
+          contactName: 'Michael Rodriguez',
+          companyName: 'Global Tech',
+          startTime: meetingTime2.toISOString(),
+          endTime: new Date(meetingTime2.getTime() + 40 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales followup',
+          status: 'completed',
+          address: '456 Market St, San Francisco, CA'
+        },
+        {
+          id: '3',
+          title: 'Initial Consultation',
+          contactName: 'David Park',
+          companyName: 'Innovate Solutions',
+          startTime: meetingTime3.toISOString(),
+          endTime: new Date(meetingTime3.getTime() + 2 * 60 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales meeting',
+          status: 'scheduled',
+          address: '789 Mission St, San Francisco, CA'
+        },
+        {
+          id: '4',
+          title: 'Product Roadmap',
+          contactName: 'Emma Watson',
+          companyName: 'Tech Forward',
+          startTime: meetingTime4.toISOString(),
+          endTime: new Date(meetingTime4.getTime() + 75 * 60 * 1000).toISOString(),
+          date: format(today, 'dd.MM.yyyy'),
+          type: 'sales followup',
+          status: 'rescheduled',
+          address: '101 Howard St, San Francisco, CA'
+        }
+      ];
+      
+      setMeetings(mockMeetings);
+      setLoading(false);
+    };
+    
+    fetchMeetings();
+  }, [userId, currentDate]);
   
   const timeToY = (time: Date): number => {
     const hours = time.getHours();
@@ -96,7 +169,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
           meetingDetails: {
             companyId: 'company-123', // Mock ID
             companyName: meetingToCancel.companyName,
-            companyAddress: meetingToCancel.address || '123 Main St, San Francisco, CA', // Use real address if available
+            companyAddress: '123 Main St, San Francisco, CA', // Mock address
             contactId: 'contact-123', // Mock ID
             contactName: meetingToCancel.contactName
           }
@@ -165,12 +238,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
   
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      {isError && (
-        <div className="p-2 bg-red-100 text-red-800 rounded mb-2">
-          Error loading meetings. Please try again later.
-        </div>
-      )}
-      
       <ScrollArea className="flex-grow h-full">
         <div 
           className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative"
@@ -187,13 +254,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate }) => 
               className="flex-1 relative"
               ref={calendarRef}
             >
-              {loading ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="animate-pulse text-gray-400">Loading meetings...</div>
-                </div>
-              ) : (
-                generateCalendarGrid()
-              )}
+              {generateCalendarGrid()}
             </div>
           </div>
         </div>
