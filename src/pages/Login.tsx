@@ -19,7 +19,9 @@ const Login: React.FC = () => {
   };
 
   const validateEmail = (email: string) => {
-    if (!email.endsWith('@allo.restaurant')) {
+    const allowedEmails = ['paul@allo.restaurant'];
+    
+    if (!email.endsWith('@allo.restaurant') && !allowedEmails.includes(email)) {
       return 'Only @allo.restaurant emails are allowed';
     }
     return null;
