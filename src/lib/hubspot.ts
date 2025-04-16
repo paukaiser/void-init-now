@@ -1,7 +1,13 @@
-import { supabase } from '@/integrations/supabase/client';
+
+import { createClient } from '@supabase/supabase-js';
 
 // Constants for Hubspot OAuth - these will now come from the edge function
 export const HUBSPOT_REDIRECT_URI = import.meta.env.VITE_HUBSPOT_REDIRECT_URI || `${window.location.origin}/oauth-callback`;
+
+// Create a Supabase client for API calls
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Get authorization URL for Hubspot OAuth
 export async function getAuthUrl(): Promise<string> {
