@@ -16,13 +16,17 @@ const LoginPage = () => {
     console.log('Login page effect running, loading:', loading, 'isAuthenticated:', isAuthenticated);
     
     // Wait until auth is loaded before making decisions
-    if (!loading && isAuthenticated) {
-      console.log('User already authenticated, redirecting from login to dashboard');
-      navigate('/dashboard', { replace: true });
+    if (!loading) {
+      if (isAuthenticated) {
+        console.log('User already authenticated, redirecting from login to dashboard');
+        navigate('/dashboard', { replace: true });
+      }
     }
   }, [isAuthenticated, loading, navigate]);
   
   const handleLogin = async () => {
+    if (isLoggingIn) return; // Prevent multiple clicks
+    
     try {
       setIsLoggingIn(true);
       console.log('Initiating login process');

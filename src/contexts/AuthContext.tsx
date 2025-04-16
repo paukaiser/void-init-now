@@ -34,33 +34,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Initialize auth state from localStorage on mount
   useEffect(() => {
     const loadAuth = async () => {
+      console.log('AuthContext: Loading authentication state');
       const storedAuth = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (!storedAuth) {
+        console.log('AuthContext: No stored auth found');
         setLoading(false);
         return;
       }
       
       try {
         const authData = JSON.parse(storedAuth) as AuthUser;
+        console.log('AuthContext: Found stored auth, token expires at:', new Date(authData.expiresAt).toISOString());
         
         // Check if token is about to expire (within 5 minutes)
         if (authData.expiresAt - Date.now() < 5 * 60 * 1000) {
           // Token is about to expire, refresh it
-          console.log('Token is about to expire, attempting to refresh');
+          console.log('AuthContext: Token is about to expire, attempting to refresh');
           try {
             await refreshAuthToken(authData.refreshToken);
           } catch (error) {
-            console.error('Failed to refresh token on init:', error);
+            console.error('AuthContext: Failed to refresh token on init:', error);
+            console.log('AuthContext: Clearing invalid auth data');
             localStorage.removeItem(LOCAL_STORAGE_KEY);
             setLoading(false);
             return;
           }
         } else {
-          console.log('Token is still valid, setting user data');
+          console.log('AuthContext: Token is still valid, setting user data');
           setUser(authData);
         }
       } catch (error) {
-        console.error('Failed to load auth state:', error);
+        console.error('AuthContext: Failed to load auth state:', error);
         localStorage.removeItem(LOCAL_STORAGE_KEY);
       }
       
@@ -74,12 +78,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const refreshTokenToUse = tokenToRefresh || user?.refreshToken;
     
     if (!refreshTokenToUse) {
-      console.error('No refresh token available');
+      console.error('AuthContext: No refresh token available');
       return null;
     }
     
     try {
-      console.log('Refreshing auth token...');
+      console.log('AuthContext: Refreshing auth token...');
       const data = await refreshToken(refreshTokenToUse);
       
       const updatedUser = {
@@ -89,13 +93,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         expiresAt: Date.now() + data.expires_in * 1000,
       } as AuthUser;
       
-      console.log('Token refreshed successfully');
+      console.log('AuthContext: Token refreshed successfully, expires:', new Date(updatedUser.expiresAt).toISOString());
       setUser(updatedUser);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedUser));
       
       return data.access_token;
     } catch (error) {
-      console.error('Failed to refresh token:', error);
+      console.error('AuthContext: Failed to refresh token:', error);
       // Only clear auth and redirect if this wasn't an initial load attempt
       if (!tokenToRefresh || tokenToRefresh === user?.refreshToken) {
         logout();
@@ -107,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const login = async (tokens: any) => {
     try {
-      console.log('Login process started with tokens', tokens);
+      console.log('AuthContext: Login process started with tokens', tokens);
       const userInfo = await getUserInfo(tokens.access_token);
       
       const authUser: AuthUser = {
@@ -121,19 +125,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         expiresAt: Date.now() + tokens.expires_in * 1000,
       };
       
-      console.log('Setting user data after successful login', authUser);
+      console.log('AuthContext: Setting user data after successful login', authUser);
       setUser(authUser);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(authUser));
       toast.success('Successfully logged in!');
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('AuthContext: Login error:', error);
       toast.error('Failed to login. Please try again.');
       throw error;
     }
   };
   
   const logout = () => {
-    console.log('Logging out user');
+    console.log('AuthContext: Logging out user');
     setUser(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     toast.info('You have been logged out.');

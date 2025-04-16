@@ -1,7 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-// Constants for Hubspot OAuth - these will now come from the edge function
+// Constants for Hubspot OAuth
 export const HUBSPOT_REDIRECT_URI = import.meta.env.VITE_HUBSPOT_REDIRECT_URI || `${window.location.origin}/oauth-callback`;
 
 // Create a Supabase client for API calls
@@ -37,7 +37,7 @@ export async function getAuthUrl(): Promise<string> {
 // Exchange authorization code for access token
 export async function getAccessToken(code: string): Promise<any> {
   try {
-    console.log('Exchanging code for token...');
+    console.log('Exchanging code for token through the edge function...');
     const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
       body: { code }
     });

@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { getAccessToken } from '@/lib/hubspot';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
+import { supabase } from '@/lib/hubspot';
 
 const OAuthCallbackPage = () => {
   const [error, setError] = useState<string | null>(null);
@@ -38,17 +38,29 @@ const OAuthCallbackPage = () => {
       }
       
       try {
-        console.log('Authorization code received, exchanging for token');
-        const tokens = await getAccessToken(code);
+        console.log('Authorization code received:', code);
+        // Exchange code for token using the Edge Function
+        const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
+          body: { code }
+        });
+        
+        if (error) {
+          throw new Error(`Token exchange error: ${error.message}`);
+        }
+        
+        if (!data || !data.access_token) {
+          throw new Error('Invalid token response received');
+        }
+        
         console.log('Token received, logging in user');
         
-        await login(tokens);
+        await login(data);
         
         console.log('Login successful, redirecting to dashboard');
         navigate('/dashboard', { replace: true });
       } catch (err) {
         console.error('Error during OAuth callback:', err);
-        setError('Failed to complete authentication');
+        setError(err instanceof Error ? err.message : 'Failed to complete authentication');
         toast.error('Failed to complete authentication. Please try again.');
         setProcessingAuth(false);
         setTimeout(() => navigate('/login'), 3000);
