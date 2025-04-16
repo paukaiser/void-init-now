@@ -7,7 +7,16 @@ export const HUBSPOT_REDIRECT_URI = import.meta.env.VITE_HUBSPOT_REDIRECT_URI ||
 // Create a Supabase client for API calls
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// Check if the required environment variables are defined
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Make sure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY are defined.');
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://migsumagxwcavneegjtz.supabase.co',
+  supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pZ3N1bWFneHdjYXZuZWVnanR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ3OTIwNjcsImV4cCI6MjA2MDM2ODA2N30.Ta4MX6VtyBg6r8hLm4ckHDroTnzJ-NAUjlGi0w03gPI'
+);
 
 // Get authorization URL for Hubspot OAuth
 export async function getAuthUrl(): Promise<string> {
