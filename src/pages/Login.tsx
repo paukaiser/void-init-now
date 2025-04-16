@@ -1,5 +1,5 @@
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getAuthUrl } from '@/lib/hubspot';
@@ -10,6 +10,7 @@ const LoginPage = () => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   useEffect(() => {
     console.log('Login page effect running, loading:', loading, 'isAuthenticated:', isAuthenticated);
@@ -23,13 +24,19 @@ const LoginPage = () => {
   
   const handleLogin = async () => {
     try {
+      setIsLoggingIn(true);
       console.log('Initiating login process');
       const authUrl = await getAuthUrl();
       console.log('Redirecting to auth URL:', authUrl);
-      window.location.href = authUrl;
+      
+      // Add a small delay to allow logs to be sent before redirecting
+      setTimeout(() => {
+        window.location.href = authUrl;
+      }, 100);
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Failed to initiate login. Please try again.');
+      setIsLoggingIn(false);
     }
   };
   
@@ -53,16 +60,26 @@ const LoginPage = () => {
         <div className="flex flex-col gap-4">
           <Button 
             onClick={handleLogin}
+            disabled={isLoggingIn}
             className="w-full py-6 bg-[#FF7A59] hover:bg-[#FF8F73] text-white"
           >
-            <svg 
-              className="w-5 h-5 mr-2" 
-              viewBox="0 0 512 512" 
-              fill="currentColor"
-            >
-              <path d="M93.667 152.777h61.731v206.446h-61.731zM214.942 152.777h59.87v30.499c10.88-16.359 38.03-34.922 78.885-34.922 55.195 0 88.32 36.329 88.32 114.005v96.864h-62.172v-88.594c0-46.755-16.359-65.583-49.078-65.583-27.739 0-54.557 19.093-54.557 65.92v88.257h-61.268zM256 0C114.615 0 0 114.615 0 256s114.615 256 256 256 256-114.615 256-256S397.385 0 256 0z" />
-            </svg>
-            Sign in with HubSpot
+            {isLoggingIn ? (
+              <>
+                <div className="w-5 h-5 mr-2 border-t-2 border-b-2 border-white rounded-full animate-spin"></div>
+                Connecting...
+              </>
+            ) : (
+              <>
+                <svg 
+                  className="w-5 h-5 mr-2" 
+                  viewBox="0 0 512 512" 
+                  fill="currentColor"
+                >
+                  <path d="M93.667 152.777h61.731v206.446h-61.731zM214.942 152.777h59.87v30.499c10.88-16.359 38.03-34.922 78.885-34.922 55.195 0 88.32 36.329 88.32 114.005v96.864h-62.172v-88.594c0-46.755-16.359-65.583-49.078-65.583-27.739 0-54.557 19.093-54.557 65.92v88.257h-61.268zM256 0C114.615 0 0 114.615 0 256s114.615 256 256 256 256-114.615 256-256S397.385 0 256 0z" />
+                </svg>
+                Sign in with HubSpot
+              </>
+            )}
           </Button>
         </div>
       </div>

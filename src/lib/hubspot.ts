@@ -13,13 +13,20 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 // Get authorization URL for Hubspot OAuth
 export async function getAuthUrl(): Promise<string> {
   try {
+    console.log('Getting HubSpot auth URL from Edge Function');
     const { data, error } = await supabase.functions.invoke('hubspot-auth/get-auth-url');
     
     if (error) {
       console.error('Error getting auth URL:', error);
-      throw new Error('Failed to get authentication URL');
+      throw new Error('Failed to get authentication URL: ' + error.message);
     }
     
+    if (!data || !data.url) {
+      console.error('Invalid auth URL response:', data);
+      throw new Error('Invalid authentication URL response');
+    }
+    
+    console.log('Auth URL received:', data.url);
     return data.url;
   } catch (error) {
     console.error('Error calling auth URL function:', error);
@@ -30,6 +37,7 @@ export async function getAuthUrl(): Promise<string> {
 // Exchange authorization code for access token
 export async function getAccessToken(code: string): Promise<any> {
   try {
+    console.log('Exchanging code for token...');
     const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
       body: { code }
     });
@@ -39,6 +47,12 @@ export async function getAccessToken(code: string): Promise<any> {
       throw error;
     }
     
+    if (!data) {
+      console.error('No data returned when exchanging code for token');
+      throw new Error('No data returned when exchanging code for token');
+    }
+    
+    console.log('Token exchange successful');
     return data;
   } catch (error) {
     console.error('Error exchanging code for token:', error);
