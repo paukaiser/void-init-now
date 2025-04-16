@@ -12,17 +12,20 @@ const LoginPage = () => {
   const location = useLocation();
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   
+  // Get the intended destination from location state, or default to dashboard
+  const from = location.state?.from || '/dashboard';
+  
   useEffect(() => {
-    console.log('Login page effect running, loading:', loading, 'isAuthenticated:', isAuthenticated);
+    console.log('Login page effect running, loading:', loading, 'isAuthenticated:', isAuthenticated, 'redirect to:', from);
     
     // Wait until auth is loaded before making decisions
     if (!loading) {
       if (isAuthenticated) {
-        console.log('User already authenticated, redirecting from login to dashboard');
-        navigate('/dashboard', { replace: true });
+        console.log('User already authenticated, redirecting from login to:', from);
+        navigate(from, { replace: true });
       }
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, from]);
   
   const handleLogin = async () => {
     if (isLoggingIn) return; // Prevent multiple clicks

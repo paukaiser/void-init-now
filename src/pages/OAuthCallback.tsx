@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
 import { getAccessToken } from '@/lib/hubspot';
@@ -10,12 +10,11 @@ const OAuthCallbackPage = () => {
   const [processingAuth, setProcessingAuth] = useState(true);
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   useEffect(() => {
     const handleCallback = async () => {
       console.log('OAuthCallback: Loaded, processing authentication');
-      const searchParams = new URLSearchParams(location.search);
+      const searchParams = new URLSearchParams(window.location.search);
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
       
@@ -61,7 +60,8 @@ const OAuthCallbackPage = () => {
         await login(tokenData);
         
         console.log('OAuthCallback: Login complete, redirecting to dashboard');
-        navigate('/dashboard', { replace: true });
+        // Use window.location for a full page navigation
+        window.location.href = '/dashboard';
       } catch (err) {
         console.error('OAuthCallback: Exception occurred during authentication:', err);
         setError(err instanceof Error ? err.message : 'Failed to complete authentication');
@@ -72,7 +72,7 @@ const OAuthCallbackPage = () => {
     };
     
     handleCallback();
-  }, [login, navigate, location.search]);
+  }, [login, navigate]);
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">

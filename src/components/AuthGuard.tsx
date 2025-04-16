@@ -20,19 +20,21 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     if (!loading) {
       if (!isAuthenticated) {
         console.log('User not authenticated, redirecting to login from:', location.pathname);
+        // Store the current location so we can redirect back after login
         navigate('/login', { 
           replace: true,
           state: { from: location.pathname } 
         });
+      } else {
+        setAuthChecked(true);
       }
-      setAuthChecked(true);
     } else {
       console.log('Auth still loading, waiting before making auth decisions');
     }
   }, [isAuthenticated, loading, navigate, location.pathname]);
   
   // Show loading spinner while auth is loading or being checked
-  if (loading || !authChecked) {
+  if (loading || (!authChecked && !isAuthenticated)) {
     console.log('Showing loading spinner while checking auth');
     return (
       <div className="flex items-center justify-center h-screen">
@@ -43,17 +45,5 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   }
   
   // For authenticated users, render children
-  if (isAuthenticated) {
-    console.log('User authenticated, rendering protected content');
-    return <>{children}</>;
-  }
-  
-  // This should not be visible as we redirect in the useEffect
-  console.log('Showing fallback loading (should rarely happen)');
-  return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2E1813]"></div>
-      <p className="ml-2 text-gray-700">Redirecting...</p>
-    </div>
-  );
+  return <>{children}</>;
 };
