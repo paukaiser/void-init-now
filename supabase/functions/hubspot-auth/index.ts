@@ -1,3 +1,4 @@
+
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -34,6 +35,8 @@ Deno.serve(async (req) => {
 
       const authUrl =
         `https://app.hubspot.com/oauth/authorize?${params.toString()}`;
+      
+      console.log("Generated auth URL:", authUrl);
 
       return new Response(
         JSON.stringify({
@@ -48,6 +51,8 @@ Deno.serve(async (req) => {
       );
     } else if (path === "exchange-token") {
       const { code } = await req.json();
+      
+      console.log("Exchanging code for token:", code ? "Code received" : "No code");
 
       if (!code) {
         return new Response(JSON.stringify({ error: "No code provided" }), {
@@ -63,6 +68,8 @@ Deno.serve(async (req) => {
         grant_type: "authorization_code",
         code,
       });
+      
+      console.log("Token exchange params prepared");
 
       const response = await fetch("https://api.hubapi.com/oauth/v1/token", {
         method: "POST",
@@ -71,6 +78,8 @@ Deno.serve(async (req) => {
         },
         body: params.toString(),
       });
+      
+      console.log("Token exchange response status:", response.status);
 
       const tokenData = await response.json();
 
@@ -87,8 +96,10 @@ Deno.serve(async (req) => {
           },
         );
       }
+      
+      console.log("Token exchange successful, fetching user info");
 
-      // ✅ NEW: Fetch user info using the access token
+      // ✅ Fetch user info using the access token
       const userInfoRes = await fetch(
         "https://api.hubapi.com/oauth/v1/access-tokens/" +
           tokenData.access_token,
@@ -98,6 +109,8 @@ Deno.serve(async (req) => {
           },
         },
       );
+      
+      console.log("User info response status:", userInfoRes.status);
 
       const userInfo = await userInfoRes.json();
 
@@ -114,6 +127,8 @@ Deno.serve(async (req) => {
           },
         );
       }
+      
+      console.log("User info fetched successfully, returning complete response");
 
       // ✅ Combine token + user info into one response
       return new Response(
@@ -128,10 +143,18 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
       );
+    } else {
+      return new Response(
+        JSON.stringify({ error: "Invalid endpoint" }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
   } catch (error) {
     console.error("Error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    return new Response(JSON.stringify({ error: "Internal server error", details: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

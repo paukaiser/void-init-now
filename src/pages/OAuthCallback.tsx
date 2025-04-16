@@ -14,13 +14,13 @@ const OAuthCallbackPage = () => {
   
   useEffect(() => {
     const handleCallback = async () => {
-      console.log('OAuth callback page loaded, processing authentication');
+      console.log('OAuthCallback: Loaded, processing authentication');
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
       
       if (errorParam) {
-        console.error('Auth error from HubSpot:', errorParam);
+        console.error('OAuthCallback: HubSpot error param:', errorParam);
         setError(`Authorization error: ${errorParam}`);
         toast.error('Authorization failed. Please try again.');
         setProcessingAuth(false);
@@ -29,7 +29,7 @@ const OAuthCallbackPage = () => {
       }
       
       if (!code) {
-        console.error('No authorization code received');
+        console.error('OAuthCallback: No code param received');
         setError('No authorization code received');
         toast.error('No authorization code received. Please try again.');
         setProcessingAuth(false);
@@ -37,29 +37,32 @@ const OAuthCallbackPage = () => {
         return;
       }
       
+      console.log('OAuthCallback: Received code:', code);
+      
       try {
-        console.log('Authorization code received:', code);
         // Exchange code for token using the Edge Function
-        const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
+        const { data, error: functionError } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
           body: { code }
         });
         
-        if (error) {
-          throw new Error(`Token exchange error: ${error.message}`);
+        console.log("OAuthCallback: Token response", { data, error: functionError });
+        
+        if (functionError) {
+          throw new Error(`Token exchange error: ${functionError.message}`);
         }
         
         if (!data || !data.access_token) {
           throw new Error('Invalid token response received');
         }
         
-        console.log('Token received, logging in user');
+        console.log('OAuthCallback: Login with tokens');
         
         await login(data);
         
-        console.log('Login successful, redirecting to dashboard');
+        console.log('OAuthCallback: Login complete, redirecting to dashboard');
         navigate('/dashboard', { replace: true });
       } catch (err) {
-        console.error('Error during OAuth callback:', err);
+        console.error('OAuthCallback: Exception occurred during authentication:', err);
         setError(err instanceof Error ? err.message : 'Failed to complete authentication');
         toast.error('Failed to complete authentication. Please try again.');
         setProcessingAuth(false);
