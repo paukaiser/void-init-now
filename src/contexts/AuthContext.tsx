@@ -110,22 +110,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const login = async (tokens: any) => {
-  console.log("AuthContext: Logging in user with tokens:", tokens);
-
-  const user: AuthUser = {
-    id: tokens.user_id || '',
-    email: tokens.user_email || '',
-    name: tokens.user_name || '',
-    hub_id: tokens.hub_id || '',
-    hub_domain: tokens.hub_domain || '',
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-    expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-  };
-
-  localStorage.setItem("hubspot_auth", JSON.stringify(user)); // 🔥 This is key
-  setUser(user);
-};
+    try {
+      console.log("AuthContext: Logging in user with tokens:", tokens);
+      
+      const authUser: AuthUser = {
+        id: tokens.user_id || '',
+        email: tokens.user_email || '',
+        name: tokens.user_name || '',
+        hub_id: tokens.hub_id || '',
+        hub_domain: tokens.hub_domain || '',
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+      };
       
       console.log('AuthContext: Setting user data after successful login', authUser);
       setUser(authUser);
