@@ -12,6 +12,8 @@ const LoginPage = () => {
   const location = useLocation();
   
   useEffect(() => {
+    console.log('Login page effect running, loading:', loading, 'isAuthenticated:', isAuthenticated);
+    
     // Wait until auth is loaded before making decisions
     if (!loading && isAuthenticated) {
       console.log('User already authenticated, redirecting from login to dashboard');

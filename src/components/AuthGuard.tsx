@@ -14,7 +14,9 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   const [authChecked, setAuthChecked] = useState(false);
   
   useEffect(() => {
-    // Only redirect after loading is complete
+    console.log('AuthGuard effect running, loading:', loading, 'isAuthenticated:', isAuthenticated, 'path:', location.pathname);
+    
+    // Only make auth decisions after the auth state is fully loaded
     if (!loading) {
       if (!isAuthenticated) {
         console.log('User not authenticated, redirecting to login from:', location.pathname);
@@ -29,7 +31,7 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     }
   }, [isAuthenticated, loading, navigate, location.pathname]);
   
-  // Show loading spinner during auth check
+  // Show loading spinner while auth is loading or being checked
   if (loading || !authChecked) {
     console.log('Showing loading spinner while checking auth');
     return (
