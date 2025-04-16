@@ -1,0 +1,142 @@
+
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { toast } from "sonner";
+import { refreshToken, getUserInfo } from '@/lib/hubspot';
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  name?: string;
+  hub_id?: string;
+  hub_domain?: string;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
+interface AuthContextType {
+  user: AuthUser | null;
+  loading: boolean;
+  isAuthenticated: boolean;
+  login: (tokens: any) => Promise<void>;
+  logout: () => void;
+  refreshAuthToken: () => Promise<string | null>;
+}
+
+const LOCAL_STORAGE_KEY = 'hubspot_auth';
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Initialize auth state from localStorage on mount
+  useEffect(() => {
+    const loadAuth = async () => {
+      const storedAuth = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!storedAuth) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const authData = JSON.parse(storedAuth) as AuthUser;
+        
+        // Check if token is about to expire (within 5 minutes)
+        if (authData.expiresAt - Date.now() < 5 * 60 * 1000) {
+          // Token is about to expire, refresh it
+          await refreshAuthToken();
+        } else {
+          setUser(authData);
+        }
+      } catch (error) {
+        console.error('Failed to load auth state:', error);
+        localStorage.removeItem(LOCAL_STORAGE_KEY);
+      }
+      
+      setLoading(false);
+    };
+    
+    loadAuth();
+  }, []);
+  
+  const refreshAuthToken = async (): Promise<string | null> => {
+    if (!user?.refreshToken) return null;
+    
+    try {
+      const data = await refreshToken(user.refreshToken);
+      
+      const updatedUser = {
+        ...user,
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token || user.refreshToken,
+        expiresAt: Date.now() + data.expires_in * 1000,
+      };
+      
+      setUser(updatedUser);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedUser));
+      
+      return data.access_token;
+    } catch (error) {
+      console.error('Failed to refresh token:', error);
+      logout();
+      toast.error('Your session has expired. Please log in again.');
+      return null;
+    }
+  };
+  
+  const login = async (tokens: any) => {
+    try {
+      const userInfo = await getUserInfo(tokens.access_token);
+      
+      const authUser: AuthUser = {
+        id: userInfo.user_id.toString(),
+        email: userInfo.user,
+        name: userInfo.user_name,
+        hub_id: userInfo.hub_id.toString(),
+        hub_domain: userInfo.hub_domain,
+        accessToken: tokens.access_token,
+        refreshToken: tokens.refresh_token,
+        expiresAt: Date.now() + tokens.expires_in * 1000,
+      };
+      
+      setUser(authUser);
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(authUser));
+      toast.success('Successfully logged in!');
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Failed to login. Please try again.');
+      throw error;
+    }
+  };
+  
+  const logout = () => {
+    setUser(null);
+    localStorage.removeItem(LOCAL_STORAGE_KEY);
+    toast.info('You have been logged out.');
+  };
+  
+  return (
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        loading, 
+        isAuthenticated: !!user, 
+        login, 
+        logout,
+        refreshAuthToken
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
