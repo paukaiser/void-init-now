@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
-import { supabase } from '@/lib/hubspot';
+import { getAccessToken } from '@/lib/hubspot';
 
 const OAuthCallbackPage = () => {
   const [error, setError] = useState<string | null>(null);
@@ -18,6 +18,9 @@ const OAuthCallbackPage = () => {
       const searchParams = new URLSearchParams(location.search);
       const code = searchParams.get('code');
       const errorParam = searchParams.get('error');
+      
+      // Log all URL parameters for debugging
+      console.log('OAuthCallback: URL parameters:', Object.fromEntries(searchParams.entries()));
       
       if (errorParam) {
         console.error('OAuthCallback: HubSpot error param:', errorParam);
@@ -37,27 +40,25 @@ const OAuthCallbackPage = () => {
         return;
       }
       
-      console.log('OAuthCallback: Received code:', code);
+      console.log('OAuthCallback: Received code:', code.substring(0, 5) + '...');
       
       try {
-        // Exchange code for token using the Edge Function
-        const { data, error: functionError } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
-          body: { code }
-        });
+        // Exchange code for token using the token exchange function
+        console.log('OAuthCallback: Exchanging code for token...');
+        const tokenData = await getAccessToken(code);
         
-        console.log("OAuthCallback: Token response", { data, error: functionError });
+        console.log('OAuthCallback: Token exchange successful');
         
-        if (functionError) {
-          throw new Error(`Token exchange error: ${functionError.message}`);
-        }
-        
-        if (!data || !data.access_token) {
+        // Check if we have the required token data
+        if (!tokenData || !tokenData.access_token) {
+          console.error('OAuthCallback: Invalid token data received', tokenData);
           throw new Error('Invalid token response received');
         }
         
         console.log('OAuthCallback: Login with tokens');
         
-        await login(data);
+        // Login with the token data
+        await login(tokenData);
         
         console.log('OAuthCallback: Login complete, redirecting to dashboard');
         navigate('/dashboard', { replace: true });

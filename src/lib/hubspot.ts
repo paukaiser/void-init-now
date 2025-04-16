@@ -37,10 +37,14 @@ export async function getAuthUrl(): Promise<string> {
 // Exchange authorization code for access token
 export async function getAccessToken(code: string): Promise<any> {
   try {
-    console.log('Exchanging code for token through the edge function...');
+    console.log('Exchanging authorization code for token...');
+    console.log('Code parameter received:', code ? `${code.substring(0, 5)}...` : 'missing'); // Show just the start for security
+    
     const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
       body: { code }
     });
+    
+    console.log('Edge function response received:', error ? 'Error' : 'Success');
     
     if (error) {
       console.error('Error exchanging code for token:', error);
@@ -52,7 +56,15 @@ export async function getAccessToken(code: string): Promise<any> {
       throw new Error('No data returned when exchanging code for token');
     }
     
-    console.log('Token exchange successful');
+    // Log what we received but redact sensitive data
+    const tokenInfo = {
+      has_access_token: !!data.access_token,
+      has_refresh_token: !!data.refresh_token,
+      expires_in: data.expires_in,
+      user_info_included: !!(data.user_id && data.user_email)
+    };
+    console.log('Token exchange successful, received:', tokenInfo);
+    
     return data;
   } catch (error) {
     console.error('Error exchanging code for token:', error);
@@ -110,6 +122,7 @@ export async function getUserInfo(accessToken: string): Promise<any> {
 // Fetch user's meetings from Hubspot
 export async function fetchUserMeetings(accessToken: string): Promise<any> {
   try {
+    console.log('Fetching meetings from HubSpot API...');
     const response = await fetch('https://api.hubapi.com/calendar/v1/events', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -117,10 +130,13 @@ export async function fetchUserMeetings(accessToken: string): Promise<any> {
     });
     
     if (!response.ok) {
+      console.error('Failed to fetch meetings:', response.status, response.statusText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log('Meetings fetched successfully:', data ? `Found ${data.length || 0} meetings` : 'No data');
+    return data;
   } catch (error) {
     console.error('Error fetching meetings:', error);
     throw error;
