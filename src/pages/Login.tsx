@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getAuthUrl } from '@/lib/hubspot';
 import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
 
 const LoginPage = () => {
   const { isAuthenticated } = useAuth();
@@ -15,8 +16,14 @@ const LoginPage = () => {
     }
   }, [isAuthenticated, navigate]);
   
-  const handleLogin = () => {
-    window.location.href = getAuthUrl();
+  const handleLogin = async () => {
+    try {
+      const authUrl = await getAuthUrl();
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Failed to initiate login. Please try again.');
+    }
   };
   
   return (

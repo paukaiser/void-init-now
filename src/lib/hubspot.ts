@@ -1,52 +1,38 @@
+import { supabase } from '@/integrations/supabase/client';
 
-// Constants for Hubspot OAuth
-export const HUBSPOT_CLIENT_ID = import.meta.env.VITE_HUBSPOT_CLIENT_ID || '';
-export const HUBSPOT_CLIENT_SECRET = import.meta.env.VITE_HUBSPOT_CLIENT_SECRET || '';
+// Constants for Hubspot OAuth - these will now come from the edge function
 export const HUBSPOT_REDIRECT_URI = import.meta.env.VITE_HUBSPOT_REDIRECT_URI || `${window.location.origin}/oauth-callback`;
-export const HUBSPOT_SCOPES = [
-  'crm.objects.contacts.read',
-  'crm.objects.companies.read',
-  'meetings',
-  'timeline'
-];
 
 // Get authorization URL for Hubspot OAuth
-export function getAuthUrl(): string {
-  const params = new URLSearchParams({
-    client_id: HUBSPOT_CLIENT_ID,
-    redirect_uri: HUBSPOT_REDIRECT_URI,
-    scope: HUBSPOT_SCOPES.join(' '),
-  });
-  
-  return `https://app.hubspot.com/oauth/authorize?${params.toString()}`;
+export async function getAuthUrl(): Promise<string> {
+  try {
+    const { data, error } = await supabase.functions.invoke('hubspot-auth/get-auth-url');
+    
+    if (error) {
+      console.error('Error getting auth URL:', error);
+      throw new Error('Failed to get authentication URL');
+    }
+    
+    return data.url;
+  } catch (error) {
+    console.error('Error calling auth URL function:', error);
+    throw error;
+  }
 }
 
 // Exchange authorization code for access token
 export async function getAccessToken(code: string): Promise<any> {
   try {
-    // In a production app, this should be done server-side to protect client_secret
-    // For demo purposes only, we're doing this in the browser
-    const params = new URLSearchParams({
-      client_id: HUBSPOT_CLIENT_ID,
-      client_secret: HUBSPOT_CLIENT_SECRET,
-      redirect_uri: HUBSPOT_REDIRECT_URI,
-      grant_type: 'authorization_code',
-      code,
+    const { data, error } = await supabase.functions.invoke('hubspot-auth/exchange-token', {
+      body: { code }
     });
     
-    const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      console.error('Error exchanging code for token:', error);
+      throw error;
     }
     
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error exchanging code for token:', error);
     throw error;
@@ -56,26 +42,16 @@ export async function getAccessToken(code: string): Promise<any> {
 // Refresh access token
 export async function refreshToken(refresh_token: string): Promise<any> {
   try {
-    const params = new URLSearchParams({
-      client_id: HUBSPOT_CLIENT_ID,
-      client_secret: HUBSPOT_CLIENT_SECRET,
-      grant_type: 'refresh_token',
-      refresh_token,
+    const { data, error } = await supabase.functions.invoke('hubspot-auth/refresh-token', {
+      body: { refresh_token }
     });
     
-    const response = await fetch('https://api.hubapi.com/oauth/v1/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: params.toString(),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      console.error('Error refreshing token:', error);
+      throw error;
     }
     
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error refreshing token:', error);
     throw error;
@@ -85,17 +61,16 @@ export async function refreshToken(refresh_token: string): Promise<any> {
 // Get user info from Hubspot
 export async function getUserInfo(accessToken: string): Promise<any> {
   try {
-    const response = await fetch('https://api.hubapi.com/integrations/v1/me', {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+    const { data, error } = await supabase.functions.invoke('hubspot-auth/user-info', {
+      body: { accessToken }
     });
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (error) {
+      console.error('Error getting user info:', error);
+      throw error;
     }
     
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error getting user info:', error);
     throw error;
@@ -105,7 +80,6 @@ export async function getUserInfo(accessToken: string): Promise<any> {
 // Fetch user's meetings from Hubspot
 export async function fetchUserMeetings(accessToken: string): Promise<any> {
   try {
-    // This is a placeholder - the actual Hubspot API endpoint for meetings may be different
     const response = await fetch('https://api.hubapi.com/calendar/v1/events', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
