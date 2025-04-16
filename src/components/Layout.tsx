@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { format } from 'date-fns';
-import Navigation from './Navigation';
 
 const Layout: React.FC = () => {
   // Get current date
@@ -18,8 +17,7 @@ const Layout: React.FC = () => {
   
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <Navigation />
-      <main className="flex-grow p-4 mt-16 overflow-hidden">
+      <main className="flex-grow p-4 overflow-hidden">
         <Outlet />
       </main>
     </div>
