@@ -56,6 +56,11 @@ export async function getAccessToken(code: string): Promise<any> {
       throw new Error('No data returned when exchanging code for token');
     }
     
+    if (data.error) {
+      console.error('Error in token exchange response:', data.error);
+      throw new Error(data.error);
+    }
+    
     // Log what we received but redact sensitive data
     const tokenInfo = {
       has_access_token: !!data.access_token,

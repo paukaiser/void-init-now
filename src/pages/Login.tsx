@@ -35,6 +35,7 @@ const LoginPage = () => {
       
       // Add a small delay to allow logs to be sent before redirecting
       setTimeout(() => {
+        // Use window.location.href for a full page navigation to avoid React Router issues
         window.location.href = authUrl;
       }, 100);
     } catch (error) {

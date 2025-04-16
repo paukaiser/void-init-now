@@ -111,7 +111,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const login = async (tokens: any) => {
     try {
-      console.log("AuthContext: Logging in user with tokens:", tokens);
+      console.log("AuthContext: Logging in user with tokens", {
+        has_access_token: !!tokens.access_token,
+        has_refresh_token: !!tokens.refresh_token,
+        has_user_info: !!(tokens.user_id && tokens.user_email),
+      });
+      
+      // Validate token data
+      if (!tokens.access_token || !tokens.refresh_token) {
+        throw new Error("Invalid token data - missing required tokens");
+      }
       
       const authUser: AuthUser = {
         id: tokens.user_id || '',
@@ -124,7 +133,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         expiresAt: Date.now() + (tokens.expires_in ?? 3600) * 1000,
       };
       
-      console.log('AuthContext: Setting user data after successful login', authUser);
+      console.log('AuthContext: Setting user data after successful login', {
+        userId: authUser.id,
+        email: authUser.email,
+        hubId: authUser.hub_id,
+        expiresAt: new Date(authUser.expiresAt).toISOString()
+      });
+      
       setUser(authUser);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(authUser));
       toast.success('Successfully logged in!');
