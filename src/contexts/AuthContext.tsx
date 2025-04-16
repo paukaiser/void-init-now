@@ -46,8 +46,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Check if token is about to expire (within 5 minutes)
         if (authData.expiresAt - Date.now() < 5 * 60 * 1000) {
           // Token is about to expire, refresh it
-          await refreshAuthToken();
+          console.log('Token is about to expire, attempting to refresh');
+          try {
+            await refreshAuthToken(authData.refreshToken);
+          } catch (error) {
+            console.error('Failed to refresh token on init:', error);
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+            setLoading(false);
+            return;
+          }
         } else {
+          console.log('Token is still valid, setting user data');
           setUser(authData);
         }
       } catch (error) {
@@ -61,33 +70,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     loadAuth();
   }, []);
   
-  const refreshAuthToken = async (): Promise<string | null> => {
-    if (!user?.refreshToken) return null;
+  const refreshAuthToken = async (tokenToRefresh?: string): Promise<string | null> => {
+    const refreshTokenToUse = tokenToRefresh || user?.refreshToken;
+    
+    if (!refreshTokenToUse) {
+      console.error('No refresh token available');
+      return null;
+    }
     
     try {
-      const data = await refreshToken(user.refreshToken);
+      console.log('Refreshing auth token...');
+      const data = await refreshToken(refreshTokenToUse);
       
       const updatedUser = {
-        ...user,
+        ...(user || {}),
         accessToken: data.access_token,
-        refreshToken: data.refresh_token || user.refreshToken,
+        refreshToken: data.refresh_token || refreshTokenToUse,
         expiresAt: Date.now() + data.expires_in * 1000,
-      };
+      } as AuthUser;
       
+      console.log('Token refreshed successfully');
       setUser(updatedUser);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedUser));
       
       return data.access_token;
     } catch (error) {
       console.error('Failed to refresh token:', error);
-      logout();
-      toast.error('Your session has expired. Please log in again.');
+      // Only clear auth and redirect if this wasn't an initial load attempt
+      if (!tokenToRefresh || tokenToRefresh === user?.refreshToken) {
+        logout();
+        toast.error('Your session has expired. Please log in again.');
+      }
       return null;
     }
   };
   
   const login = async (tokens: any) => {
     try {
+      console.log('Login process started with tokens', tokens);
       const userInfo = await getUserInfo(tokens.access_token);
       
       const authUser: AuthUser = {
@@ -101,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         expiresAt: Date.now() + tokens.expires_in * 1000,
       };
       
+      console.log('Setting user data after successful login', authUser);
       setUser(authUser);
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(authUser));
       toast.success('Successfully logged in!');
@@ -112,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
   
   const logout = () => {
+    console.log('Logging out user');
     setUser(null);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
     toast.info('You have been logged out.');

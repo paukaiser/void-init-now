@@ -1,30 +1,44 @@
 
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { getAuthUrl } from '@/lib/hubspot';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 const LoginPage = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate('/dashboard');
+    // Wait until auth is loaded before making decisions
+    if (!loading && isAuthenticated) {
+      console.log('User already authenticated, redirecting from login to dashboard');
+      navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, loading, navigate]);
   
   const handleLogin = async () => {
     try {
+      console.log('Initiating login process');
       const authUrl = await getAuthUrl();
+      console.log('Redirecting to auth URL:', authUrl);
       window.location.href = authUrl;
     } catch (error) {
       console.error('Login error:', error);
       toast.error('Failed to initiate login. Please try again.');
     }
   };
+  
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2E1813]"></div>
+      </div>
+    );
+  }
   
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">

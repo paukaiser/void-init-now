@@ -1,5 +1,5 @@
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -10,16 +10,28 @@ interface AuthGuardProps {
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [authChecked, setAuthChecked] = useState(false);
   
   useEffect(() => {
     // Only redirect after loading is complete
-    if (!loading && !isAuthenticated) {
-      navigate('/login', { replace: true });
+    if (!loading) {
+      if (!isAuthenticated) {
+        console.log('User not authenticated, redirecting to login from:', location.pathname);
+        navigate('/login', { 
+          replace: true,
+          state: { from: location.pathname } 
+        });
+      }
+      setAuthChecked(true);
+    } else {
+      console.log('Auth still loading, waiting before making auth decisions');
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, loading, navigate, location.pathname]);
   
-  // Show nothing during the initial loading
-  if (loading) {
+  // Show loading spinner during auth check
+  if (loading || !authChecked) {
+    console.log('Showing loading spinner while checking auth');
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2E1813]"></div>
@@ -29,10 +41,12 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
   
   // For authenticated users, render children
   if (isAuthenticated) {
+    console.log('User authenticated, rendering protected content');
     return <>{children}</>;
   }
   
-  // This should not be visible, but just in case
+  // This should not be visible as we redirect in the useEffect
+  console.log('Showing fallback loading (should rarely happen)');
   return (
     <div className="flex items-center justify-center h-screen">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2E1813]"></div>
