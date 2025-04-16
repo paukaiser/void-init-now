@@ -63,6 +63,7 @@ export async function getAccessToken(code: string): Promise<any> {
 // Refresh access token
 export async function refreshToken(refresh_token: string): Promise<any> {
   try {
+    console.log('Refreshing token through the edge function...');
     const { data, error } = await supabase.functions.invoke('hubspot-auth/refresh-token', {
       body: { refresh_token }
     });
@@ -72,6 +73,12 @@ export async function refreshToken(refresh_token: string): Promise<any> {
       throw error;
     }
     
+    if (!data) {
+      console.error('No data returned when refreshing token');
+      throw new Error('No data returned when refreshing token');
+    }
+    
+    console.log('Token refresh successful:', data);
     return data;
   } catch (error) {
     console.error('Error refreshing token:', error);
@@ -82,6 +89,7 @@ export async function refreshToken(refresh_token: string): Promise<any> {
 // Get user info from Hubspot
 export async function getUserInfo(accessToken: string): Promise<any> {
   try {
+    console.log('Getting user info from edge function...');
     const { data, error } = await supabase.functions.invoke('hubspot-auth/user-info', {
       body: { accessToken }
     });
@@ -91,6 +99,7 @@ export async function getUserInfo(accessToken: string): Promise<any> {
       throw error;
     }
     
+    console.log('User info retrieved successfully');
     return data;
   } catch (error) {
     console.error('Error getting user info:', error);

@@ -1,4 +1,3 @@
-
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.7";
 import { corsHeaders } from "../_shared/cors.ts";
 
@@ -139,6 +138,109 @@ Deno.serve(async (req) => {
           hub_id: userInfo.hub_id,
           hub_domain: userInfo.hub_domain,
         }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    } else if (path === "refresh-token") {
+      const { refresh_token } = await req.json();
+      
+      console.log("Refreshing token:", refresh_token ? "Refresh token received" : "No refresh token");
+
+      if (!refresh_token) {
+        return new Response(JSON.stringify({ error: "No refresh token provided" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const params = new URLSearchParams({
+        client_id: HUBSPOT_CLIENT_ID,
+        client_secret: HUBSPOT_CLIENT_SECRET,
+        grant_type: "refresh_token",
+        refresh_token,
+      });
+      
+      console.log("Token refresh params prepared");
+
+      const response = await fetch("https://api.hubapi.com/oauth/v1/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+      
+      console.log("Token refresh response status:", response.status);
+
+      const tokenData = await response.json();
+
+      if (!response.ok) {
+        console.error("Error refreshing token:", tokenData);
+        return new Response(
+          JSON.stringify({
+            error: "Error refreshing token",
+            details: tokenData,
+          }),
+          {
+            status: response.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      
+      console.log("Token refresh successful, returning response");
+
+      // For refresh tokens, we don't need to fetch user info again
+      return new Response(
+        JSON.stringify(tokenData),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    } else if (path === "user-info") {
+      const { accessToken } = await req.json();
+      
+      console.log("Fetching user info:", accessToken ? "Access token received" : "No access token");
+
+      if (!accessToken) {
+        return new Response(JSON.stringify({ error: "No access token provided" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const userInfoRes = await fetch(
+        `https://api.hubapi.com/oauth/v1/access-tokens/${accessToken}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        },
+      );
+      
+      console.log("User info response status:", userInfoRes.status);
+
+      const userInfo = await userInfoRes.json();
+
+      if (!userInfoRes.ok) {
+        console.error("Error fetching user info:", userInfo);
+        return new Response(
+          JSON.stringify({
+            error: "Error fetching user info",
+            details: userInfo,
+          }),
+          {
+            status: userInfoRes.status,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      
+      console.log("User info fetched successfully, returning response");
+
+      return new Response(
+        JSON.stringify(userInfo),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         },
