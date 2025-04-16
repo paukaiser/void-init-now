@@ -7,24 +7,16 @@ interface AuthGuardProps {
   children: ReactNode;
 }
 
-const PUBLIC_PATHS = ['/login', '/oauth-callback'];
-
 export const AuthGuard = ({ children }: AuthGuardProps) => {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   
   useEffect(() => {
-    // Skip redirect for public paths
-    if (PUBLIC_PATHS.includes(location.pathname)) {
-      return;
-    }
-    
     // Only redirect after loading is complete
     if (!loading && !isAuthenticated) {
       navigate('/login', { replace: true });
     }
-  }, [isAuthenticated, loading, navigate, location.pathname]);
+  }, [isAuthenticated, loading, navigate]);
   
   // Show nothing during the initial loading
   if (loading) {
@@ -35,11 +27,15 @@ export const AuthGuard = ({ children }: AuthGuardProps) => {
     );
   }
   
-  // For public routes or authenticated users, render children
-  if (PUBLIC_PATHS.includes(location.pathname) || isAuthenticated) {
+  // For authenticated users, render children
+  if (isAuthenticated) {
     return <>{children}</>;
   }
   
   // This should not be visible, but just in case
-  return null;
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#2E1813]"></div>
+    </div>
+  );
 };
