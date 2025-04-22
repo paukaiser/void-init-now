@@ -1,51 +1,61 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Dashboard from "./pages/Dashboard";
-import AddMeeting from "./pages/AddMeeting";
-import MeetingActions from "./pages/MeetingActions";
-import MeetingOutcome from "./pages/MeetingOutcome";
-import PositiveOutcome from "./pages/PositiveOutcome";
-import NegativeOutcome from "./pages/NegativeOutcome";
-import FollowUpOutcome from "./pages/FollowUpOutcome";
-import MeetingCanceled from "./pages/MeetingCanceled";
-import NotFound from "./pages/NotFound";
-import Layout from "./components/Layout";
-import Inbox from "./pages/Inbox";
-// import Meetings from "./pages/Meetings";
+import React, { useEffect, useState } from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate
+} from 'react-router-dom';
 
-const queryClient = new QueryClient();
+import LoginButton from './components/LoginButton.tsx';
+import Dashboard from './pages/Dashboard.tsx';
+import MeetingActions from './pages/MeetingActions.tsx';
+import { MeetingProvider } from './context/MeetingContext.tsx'; // ✅ Correct
+import './App.css';
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    fetch('http://localhost:3000/api/hubspot-data', {
+      credentials: 'include'
+    })
+      .then(res => {
+        if (res.status === 200) {
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      })
+      .catch(() => setIsAuthenticated(false));
+  }, []);
+
+  return (
+    <MeetingProvider> {/* ✅ Wrap EVERYTHING including Router */}
+      <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/:userSlug" element={<Navigate to="/dashboard" replace />} />
-          
-          <Route element={<Layout />}>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/inbox" element={<Inbox />} />
-            <Route path="/meetings" element={<Dashboard />} />
-          </Route>
-          
-          <Route path="/add-meeting" element={<AddMeeting />} />
-          <Route path="/meeting/:id" element={<MeetingActions />} />
-          <Route path="/meeting/:id/outcome" element={<MeetingOutcome />} />
-          <Route path="/meeting/:id/positive" element={<PositiveOutcome />} />
-          <Route path="/meeting/:id/negative" element={<NegativeOutcome />} />
-          <Route path="/meeting/:id/follow-up" element={<FollowUpOutcome />} />
-          <Route path="/meeting-canceled" element={<MeetingCanceled />} />
-          <Route path="*" element={<NotFound />} />
+          <Route
+            path="/"
+            element={
+              isAuthenticated ? <Navigate to="/dashboard" /> : <LoginButton />
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              isAuthenticated ? <Dashboard /> : <Navigate to="/" />
+            }
+          />
+          <Route
+            path="/meeting/:id"
+            element={
+              isAuthenticated ? <MeetingActions /> : <Navigate to="/" />
+            }
+          />
+          <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </Router>
+    </MeetingProvider>
+  );
+}
 
 export default App;

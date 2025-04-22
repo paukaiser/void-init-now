@@ -2,10 +2,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle, MapPin } from 'lucide-react';
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "../components/ui/hover-card.tsx";
+import { Popover, PopoverTrigger, PopoverContent } from "./ui/popover.tsx";
+import { cn } from "../lib/utils.ts";
+import { useIsMobile } from "../hooks/use-mobile.tsx";
 
 export interface Meeting {
   id: string;
@@ -18,6 +18,7 @@ export interface Meeting {
   type?: 'sales meeting' | 'sales followup';
   status?: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
   address?: string;
+  onSelect?: (meeting: Meeting) => void;
 }
 
 interface MeetingCardProps {
@@ -25,10 +26,18 @@ interface MeetingCardProps {
   isCalendarView?: boolean;
   startHour?: number;
   endHour?: number;
+  onSelect?: (meeting: Meeting) => void;
   onCancel?: (meeting: Meeting) => void;
 }
 
-const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = false, startHour, endHour, onCancel }) => {
+const MeetingCard: React.FC<MeetingCardProps> = ({
+  meeting,
+  isCalendarView = false,
+  startHour,
+  endHour,
+  onCancel,
+  onSelect
+}) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
@@ -42,11 +51,11 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
   };
   
   const dayOfWeek = getDayOfWeek(meeting.date);
-  
   const handleClick = () => {
-    if (isCompleted) return; // Prevent clicking on completed meetings
-    navigate(`/meeting/${meeting.id}`);
+    if (meeting.status === 'completed') return;
+    navigate(`/meeting/${meeting.id}`); // ✅ Navigate to the meeting page
   };
+  
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the card click
@@ -54,7 +63,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({ meeting, isCalendarView = fal
       onCancel(meeting);
     }
   };
-  
   const handleAddressClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the card click
     if (meeting.address) {

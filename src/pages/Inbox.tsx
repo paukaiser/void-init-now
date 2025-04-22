@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import TaskCard from '@/components/TaskCard';
-import { useTasks } from '@/hooks/useTasks';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
+import TaskCard from '../components/TaskCard.tsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.tsx";
+import { Badge } from "../components/ui/badge.tsx";
 
 const Inbox: React.FC = () => {
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
