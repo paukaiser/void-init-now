@@ -1,6 +1,12 @@
 // index.js
 import dotenv from 'dotenv';
 dotenv.config();
+console.log('CLIENT_ID:', process.env.CLIENT_ID);
+console.log('CLIENT_SECRET:', process.env.CLIENT_SECRET);
+console.log('REDIRECT_URI:', process.env.REDIRECT_URI);
+console.log('SCOPES:', process.env.SCOPES);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('PORT:', process.env.PORT);
 
 import express from 'express';
 import session from 'express-session';
@@ -105,10 +111,11 @@ app.post('/api/meetings', async (req, res) => {
   if (!token) return res.status(401).send('Not authenticated');
 
   const { ownerId, startTime, endTime } = req.body;
-  console.log("📩 Incoming body:", req.body);
+  const hubspotClient = new Client({ accessToken: token });
 
   try {
-    const response = await axios.post('https://api.hubapi.com/crm/v3/objects/meetings/search', {
+    // Step 1: Fetch all meetings for user
+    const response = await hubspotClient.crm.objects.meetings.searchApi.doSearch({
       filterGroups: [{
         filters: [
           { propertyName: "hubspot_owner_id", operator: "EQ", value: ownerId },
@@ -117,28 +124,62 @@ app.post('/api/meetings', async (req, res) => {
         ]
       }],
       properties: [
-        "hs_object_id",
-        "hs_timestamp",
         "hs_meeting_title",
-        "hubspot_owner_id",
-        "hs_internal_meeting_notes",
-        "hs_meeting_location",
         "hs_meeting_start_time",
         "hs_meeting_end_time",
+        "hs_meeting_location",
         "hs_meeting_outcome",
         "hs_activity_type"
       ],
-      limit: 100
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
+      limit: 50
     });
 
-    res.json(response.data);
+    const results = await Promise.all(
+      response.results.map(async (meeting) => {
+        const meetingId = meeting.id;
+
+        // Fetch associations
+        const assocRes = await hubspotClient.crm.objects.meetings.associationsApi.getAll(meetingId, 'contacts');
+        const companyRes = await hubspotClient.crm.objects.meetings.associationsApi.getAll(meetingId, 'companies');
+
+        const contactId = assocRes.results[0]?.id;
+        const companyId = companyRes.results[0]?.id;
+
+        let contactName = "Unknown";
+        let companyName = "Unknown";
+
+        if (contactId) {
+          const contact = await hubspotClient.crm.contacts.basicApi.getById(contactId, ["firstname", "lastname"]);
+          contactName = `${contact.properties.firstname} ${contact.properties.lastname}`;
+        }
+
+        if (companyId) {
+          const company = await hubspotClient.crm.companies.basicApi.getById(companyId, ["name"]);
+          companyName = company.properties.name;
+        }
+
+        return {
+          id: meetingId,
+          title: meeting.properties.hs_meeting_title,
+          startTime: meeting.properties.hs_meeting_start_time,
+          endTime: meeting.properties.hs_meeting_end_time,
+          date: new Date(Number(meeting.properties.hs_meeting_start_time)).toLocaleDateString("de-DE"),
+          address: meeting.properties.hs_meeting_location,
+          status: meeting.properties.hs_meeting_outcome,
+          type: meeting.properties.hs_activity_type,
+          contactName,
+          companyName
+        };
+      })
+    );
+
+    res.json({ results });
   } catch (err) {
-    console.error("❌ HubSpot API error:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch meetings' });
+    console.error("❌ Failed to fetch enhanced meetings:", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to fetch meetings" });
   }
 });
+
 
 // ✅ Get one meeting by ID
 app.get('/api/meeting/:id', async (req, res) => {

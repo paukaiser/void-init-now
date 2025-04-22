@@ -86,15 +86,15 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
         const data = await res.json();
         const hubspotMeetings = (data.results || []).map((item: any) => ({
           id: item.id,
-          title: item.properties.hs_meeting_title || "Untitled",
-          contactName: "Contact",
-          companyName: "Company",
-          startTime: item.properties.hs_meeting_start_time,
-          endTime: item.properties.hs_meeting_end_time,
-          date: format(parseInt(item.properties.hs_meeting_start_time), 'dd.MM.yyyy'),
-          type: item.properties.hs_activity_type || "meeting",
-          status: item.properties.hs_meeting_outcome || "scheduled",
-          address: item.properties.hs_meeting_location || "No location"
+          title: item.title,
+          contactName: item.contactName,
+          companyName: item.companyName,
+          startTime: item.startTime,
+          endTime: item.endTime,
+          date: item.date,
+          type: item.type,
+          status: item.status,
+          address: item.address
         }));
 
         setMeetings(hubspotMeetings);
