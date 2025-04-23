@@ -1,5 +1,6 @@
+
 import { useEffect, useState } from "react";
-import { Task } from "../types/task";
+import { Task } from "../types"; // Changed from "../types/task" to "../types"
 import { v4 as uuidv4 } from "uuid";
 import { isPast, isSameDay } from "date-fns";
 

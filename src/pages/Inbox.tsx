@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import TaskCard from '../components/TaskCard.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.tsx";
 import { Badge } from "../components/ui/badge.tsx";
+import { useTasks } from '@/hooks/useTasks'; // Added missing import
 
 const Inbox: React.FC = () => {
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
