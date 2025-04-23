@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, FileText, Inbox } from 'lucide-react';
@@ -11,15 +12,17 @@ const Index: React.FC = () => {
   const { unreadCount } = useTasks();
   
   return (
-    <div className="allo-page">
+    <div className="allo-page relative">
+      <div className="absolute top-4 right-4">
+        <UserProfile small />
+      </div>
+      
       <div className="allo-container transition-slide-up">
         <div className="flex items-center justify-center w-full mb-8">
           <h1 className="text-3xl font-bold tracking-tight">allO Field Sales App</h1>
         </div>
         
         <div className="w-full max-w-md mx-auto">
-          <UserProfile />
-          
           <div className="mt-12 grid grid-cols-1 gap-6">
             <Button 
               className="allo-button flex items-center justify-center h-16 text-base"
