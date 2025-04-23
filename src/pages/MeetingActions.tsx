@@ -45,20 +45,29 @@ const MeetingActions: React.FC = () => {
     globalThis.open(googleMapsUrl, '_blank');
   };
 
-  const handleCancelConfirm = () => {
+  const handleCancelConfirm = async () => {
     setCancelDialogOpen(false);
-    navigate('/meeting-canceled', {
-      state: {
-        meetingDetails: {
-          companyId: meetingDetails.companyId,
-          companyName: meetingDetails.companyName,
-          companyAddress: meetingDetails.address,
-          contactId: meetingDetails.contactId,
-          contactName: meetingDetails.contactName
+    try {
+      const res = await fetch(`http://localhost:3000/api/meeting/${meetingDetails.id}/cancel`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!res.ok) throw new Error('Failed to cancel meeting');
+      navigate('/meeting-canceled', {
+        state: {
+          meetingDetails: {
+            companyId: meetingDetails.companyId,
+            companyName: meetingDetails.companyName,
+            companyAddress: meetingDetails.address,
+            contactId: meetingDetails.contactId,
+            contactName: meetingDetails.contactName
+          }
         }
-      }
-    });
-  };
+      });
+    } catch (err) {
+      alert('Failed to cancel meeting. Please try again.');
+    }
+  };  
 
   const handleComplete = () => {
     navigate(`/meeting/${id}/outcome`);
