@@ -8,9 +8,12 @@ import {
 
 import LoginButton from './components/LoginButton.tsx';
 import Dashboard from './pages/Dashboard.tsx';
+import Inbox from './pages/Inbox.tsx'; // <-- ADD THIS LINE
 import MeetingActions from './pages/MeetingActions.tsx';
-import { MeetingProvider } from './context/MeetingContext.tsx'; // ✅ Correct
+import MeetingCanceled from './pages/MeetingCanceled.tsx';
+import { MeetingProvider } from './context/MeetingContext.tsx';
 import './App.css';
+import AddMeeting from './pages/AddMeeting.tsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,7 +33,7 @@ function App() {
   }, []);
 
   return (
-    <MeetingProvider> {/* ✅ Wrap EVERYTHING including Router */}
+    <MeetingProvider>
       <Router>
         <Routes>
           <Route
@@ -45,11 +48,26 @@ function App() {
               isAuthenticated ? <Dashboard /> : <Navigate to="/" />
             }
           />
+          {/* 📨 Inbox/Tasks route */}
+          <Route
+            path="/inbox"
+            element={
+              isAuthenticated ? <Inbox /> : <Navigate to="/" />
+            }
+          />
           <Route
             path="/meeting/:id"
             element={
               isAuthenticated ? <MeetingActions /> : <Navigate to="/" />
             }
+          />
+          <Route
+            path="/add-meeting"
+            element={isAuthenticated ? <AddMeeting /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/meeting-canceled"
+            element={<MeetingCanceled />}
           />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>

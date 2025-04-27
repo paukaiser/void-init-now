@@ -1,49 +1,47 @@
-
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Check, Home, Calendar } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from '../components/ui/button.tsx';
 
 const MeetingCanceled: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [meetingDetails, setMeetingDetails] = useState<any>(null);
-  
-  useEffect(() => {
-    // In a real app, this would fetch the meeting details from the state or API
-    if (location.state && location.state.meetingDetails) {
-      setMeetingDetails(location.state.meetingDetails);
-    } else {
-      // Mock data for demonstration purposes
-      setMeetingDetails({
-        companyId: 'mock-company-id',
-        companyName: 'Acme Inc',
-        companyAddress: '123 Main St, San Francisco, CA',
-        contactId: 'mock-contact-id',
-        contactName: 'John Doe'
-      });
-    }
-  }, [location]);
-  
+
+  // Get meeting details from location.state
+  const meetingDetails = location.state?.meetingDetails;
+
+  // Optionally handle missing details
+  if (!meetingDetails) {
+    return (
+      <div className="allo-page">
+        <div className="allo-container">
+          <div className="w-full max-w-md mx-auto text-center">
+            <h2 className="text-2xl font-semibold mb-4">Meeting Canceled</h2>
+            <p className="mb-8 text-red-500">Could not load meeting details.</p>
+            <Button variant="outline" onClick={() => navigate('/')}>
+              <Home size={16} className="mr-2" />
+              Go to Homepage
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Handler for scheduling a new meeting with the same company/contact
   const handleScheduleNewMeeting = () => {
-    if (meetingDetails) {
-      // Navigate to add meeting page with company and contact details pre-filled
-      navigate('/add-meeting', {
-        state: {
-          companyId: meetingDetails.companyId,
-          companyName: meetingDetails.companyName,
-          companyAddress: meetingDetails.companyAddress,
-          contactId: meetingDetails.contactId,
-          contactName: meetingDetails.contactName,
-          // Force company selection to be disabled
-          forceCompany: true
-        }
-      });
-    } else {
-      navigate('/add-meeting');
-    }
+    navigate('/add-meeting', {
+      state: {
+        companyId: meetingDetails.companyId,
+        companyName: meetingDetails.companyName,
+        companyAddress: meetingDetails.companyAddress,
+        contactId: meetingDetails.contactId,
+        contactName: meetingDetails.contactName,
+        forceCompany: true
+      }
+    });
   };
-  
+
   return (
     <div className="allo-page">
       <div className="allo-container">
@@ -53,23 +51,28 @@ const MeetingCanceled: React.FC = () => {
               <Check size={32} className="text-green-600" />
             </div>
           </div>
-          
           <h2 className="text-2xl font-semibold mb-4">Meeting Canceled</h2>
-          <p className="mb-8">The meeting has been canceled successfully.</p>
-          
+          <p className="mb-2">The meeting has been canceled successfully.</p>
+
+          {/* Optionally show info about the canceled meeting */}
+          <div className="mb-6 text-sm text-muted-foreground">
+            {meetingDetails.companyName && (
+              <div><strong>Company:</strong> {meetingDetails.companyName}</div>
+            )}
+            {meetingDetails.contactName && (
+              <div><strong>Contact:</strong> {meetingDetails.contactName}</div>
+            )}
+            {meetingDetails.companyAddress && (
+              <div><strong>Address:</strong> {meetingDetails.companyAddress}</div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 gap-4">
-            <Button 
-              className="allo-button"
-              onClick={handleScheduleNewMeeting}
-            >
+            <Button className="allo-button" onClick={handleScheduleNewMeeting}>
               <Calendar size={16} className="mr-2" />
               Schedule New Meeting
             </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/')}
-            >
+            <Button variant="outline" onClick={() => navigate('/')}>
               <Home size={16} className="mr-2" />
               Go to Homepage
             </Button>

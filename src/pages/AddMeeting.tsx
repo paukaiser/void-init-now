@@ -2,141 +2,175 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { cn } from "@/lib/utils";
+import { Button } from "../components/ui/button.tsx";
+import { Label } from "../components/ui/label.tsx";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.tsx";
+import { Calendar } from "../components/ui/calendar.tsx";
+import { Textarea } from "../components/ui/textarea.tsx";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group.tsx";
+import { cn } from "../lib/utils.ts";
 import { toast } from "sonner";
-import CompanySearch, { Company } from '@/components/CompanySearch';
+import CompanySearch, { Company } from '../components/CompanySearch.tsx';
+
+console.log("AddMeeting mounted");
 
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
-  // Check if we're rescheduling or following up
+
+  // Detect reschedule/followup
   const isRescheduling = location.pathname.includes('reschedule') || 
                         (location.state && location.state.isRescheduling);
   const isFollowUp = location.state && location.state.isFollowUp;
-  
+
   // Get prefilled data if any
   const prefilledData = location.state || {};
-  
+
   const [date, setDate] = useState<Date | undefined>(
     prefilledData.preselectedDate 
       ? new Date(prefilledData.preselectedDate) 
       : undefined
   );
-  
   const [startTime, setStartTime] = useState("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
     isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
   );
   const [notes, setNotes] = useState(prefilledData.notes || "");
-  
-  // Check if company selection is forced (from task or canceled meeting)
+
+  // Check if company selection is forced
   const forceCompany = prefilledData.forceCompany || false;
-  
-  // For follow-up, canceled meeting, or rescheduling we use prefilled company data
+
+  // Prefill company data if needed
   useEffect(() => {
     if ((isFollowUp || forceCompany || isRescheduling) && prefilledData.companyName) {
-      // Create a company object from the prefilled data
       const company: Company = {
         id: prefilledData.companyId || 'temp-id',
         name: prefilledData.companyName,
         address: prefilledData.companyAddress || 'Unknown Address'
       };
-      
       setSelectedCompany(company);
     }
   }, [isFollowUp, forceCompany, isRescheduling, prefilledData]);
-  
-  // Process preselected times if provided
+
+  // Process preselected times
   useEffect(() => {
     if (prefilledData.preselectedStartTime) {
       const startDate = new Date(prefilledData.preselectedStartTime);
       setStartTime(`${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`);
     }
   }, [prefilledData]);
-  
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form
+    console.log("Form submit triggered");
+  
     if (!date || !startTime) {
       toast.error("Please select date and time");
       return;
     }
-    
     if (!forceCompany && !isFollowUp && !selectedCompany) {
       toast.error("Please select a company");
       return;
     }
-    
-    // Generate meeting title based on company name and meeting type
+  
     const company = selectedCompany?.name || prefilledData.companyName || "Unknown Company";
     const meetingTypeLabel = meetingType === "sales meeting" ? "Meeting" : "Followup";
     const title = `allO x ${company} - ${meetingTypeLabel}`;
-    
-    // Calculate end time (1 hour after start time)
+  
+    // Calculate start/end
     const meetingDate = new Date(date);
     const [startHour, startMinute] = startTime.split(':').map(Number);
     meetingDate.setHours(startHour, startMinute, 0, 0);
-    
+  
     const endDate = new Date(meetingDate);
     endDate.setHours(endDate.getHours() + 1);
-    const endTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
-    
+  
+    // UNIX milliseconds
+    const startMillis = meetingDate.getTime();
+    const endMillis = endDate.getTime();
+  
     const isInPast = meetingDate < new Date();
-    
-    // In a real app, this would send data to Hubspot API
-    console.log("Meeting data:", {
-      title,
-      company: selectedCompany || { name: prefilledData.companyName, id: prefilledData.companyId },
-      meetingType,
-      date: format(date, 'dd.MM.yyyy'),
-      startTime,
-      endTime,
-      notes
-    });
-    
-    // The API call would differ based on whether the meeting is in the past or future
-    if (isInPast) {
-      // For past meetings, log as completed
-      console.log("Logging completed meeting to Hubspot");
-      toast.success("Past meeting logged as completed");
-    } else {
-      // For future meetings, schedule as normal
-      if (isRescheduling) {
-        console.log("Rescheduling meeting in Hubspot");
-        toast.success("Meeting rescheduled successfully");
-      } else if (isFollowUp) {
-        console.log("Scheduling follow-up meeting");
-        toast.success("Follow-up meeting scheduled");
-      } else {
-        console.log("Scheduling new meeting in Hubspot");
-        toast.success("Meeting scheduled successfully");
+  
+    if (isRescheduling) {
+      // PATCH logic for rescheduling
+      
+      const meetingId = prefilledData.meetingId;
+      if (!meetingId) {
+        toast.error("Missing meeting ID for reschedule!");
+        return;
       }
+      const patchPayload = {
+        startTime: meetingDate.toISOString(),
+        endTime: endDate.toISOString(),
+        notes: notes || ""
+      };
+      
+      
+      
+      try {
+        const res = await fetch(`http://localhost:3000/api/meetings/${meetingId}/reschedule`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patchPayload),
+        });
+        console.log("Reschedule PATCH server responded", res.status);
+  
+        if (!res.ok) throw new Error("Failed to reschedule meeting");
+  
+        toast.success("Meeting rescheduled!");
+        navigate('/dashboard');
+      } catch (err) {
+        console.error("❌ Meeting reschedule failed", err);
+        toast.error("Failed to reschedule meeting");
+      }
+      return;
     }
-    
-    navigate('/dashboard');
+  
+    // Normal POST (new or follow-up) — FIXED
+    const payload = {
+      title,
+      companyId: selectedCompany?.id || prefilledData.companyId,
+      meetingType,
+      startTime: startMillis,  // ✔️
+      endTime: endMillis,      // ✔️
+      notes,
+    };
+    console.log("Submitting meeting", payload);
+  
+    try {
+      const res = await fetch('http://localhost:3000/api/meetings/create', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      console.log("Server responded", res.status);
+  
+      if (!res.ok) throw new Error('Failed to create meeting');
+      if (isInPast) {
+        toast.success("Past meeting logged as completed");
+      } else {
+        toast.success(isFollowUp ? "Follow-up scheduled" : "Meeting scheduled");
+      }
+      navigate('/dashboard');
+    } catch (err) {
+      console.error("❌ Meeting creation failed", err);
+      toast.error("Failed to schedule meeting");
+    }
   };
   
+
   const generateTimeOptions = () => {
     const options = [];
     const startHour = 7; // 7 AM
     const endHour = 21; // 9 PM
-    
     for (let hour = startHour; hour < endHour; hour++) {
-      // For half-hour increments (0 and 30 minutes)
       for (let minute of [0, 30]) {
         const formattedHour = hour.toString().padStart(2, '0');
         const formattedMinute = minute.toString().padStart(2, '0');
         const timeValue = `${formattedHour}:${formattedMinute}`;
-        
         options.push(
           <option key={timeValue} value={timeValue}>
             {timeValue}
@@ -144,16 +178,15 @@ const AddMeeting: React.FC = () => {
         );
       }
     }
-    
     return options;
   };
-  
-  // Determine what form elements to show based on context
+
+  // UI logic
   const showCompanySelection = !forceCompany && !isFollowUp && !isRescheduling;
   const showMeetingTypeSelection = !isFollowUp && !forceCompany && !isRescheduling;
   const showMeetingTypeDisplay = isFollowUp;
   const showCompanyDetails = (forceCompany || isFollowUp || isRescheduling) && (selectedCompany || prefilledData.companyName);
-  
+
   return (
     <div className="allo-page">
       <div className="w-full max-w-3xl mx-auto py-4">
@@ -199,7 +232,6 @@ const AddMeeting: React.FC = () => {
                 </div>
               )}
               
-              {/* Only show meeting type radio selection for new meetings */}
               {showMeetingTypeSelection && (
                 <div className="md:col-span-2 space-y-2">
                   <Label>Meeting Type <span className="text-red-500">*</span></Label>

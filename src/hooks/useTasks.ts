@@ -1,6 +1,5 @@
-
 import { useEffect, useState } from "react";
-import { Task } from "../types"; // Changed from "../types/task" to "../types"
+import { Task } from "../types/index.ts"; // Changed from "../types/task" to "../types"
 import { v4 as uuidv4 } from "uuid";
 import { isPast, isSameDay } from "date-fns";
 
@@ -61,7 +60,28 @@ export const useTasks = () => {
     // Get unread tasks count
     const unreadCount = tasks.filter((task) => !task.isRead).length;
 
-    // Function to mark a task as read
+    // Fetch tasks from backend on mount
+    useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const res = await fetch("http://localhost:3000/api/tasks", {
+                    credentials: "include",
+                });
+                if (!res.ok) throw new Error("Failed to fetch tasks");
+                const data = await res.json();
+                // Optionally map fields if needed to match your Task type
+                setTasks(data.tasks);
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTasks();
+    }, []);
+
+    // Function to mark a task as read (client side only for now)
     const markAsRead = (taskId: string) => {
         setTasks((prev) =>
             prev.map((task) =>
@@ -75,16 +95,17 @@ export const useTasks = () => {
         setTasks((prev) => prev.map((task) => ({ ...task, isRead: true })));
     };
 
-    // Function to mark a task as completed
+    // Function to mark a task as completed (client side only for now)
     const markAsCompleted = (taskId: string) => {
         setTasks((prev) =>
             prev.map((task) =>
                 task.id === taskId ? { ...task, completed: true } : task
             )
         );
+        // Optionally: send to backend with fetch if you want real completion!
     };
 
-    // Function to disqualify a task
+    // Function to disqualify a task (client side only for now)
     const disqualifyTask = (
         taskId: string,
         reason: string,
@@ -102,19 +123,19 @@ export const useTasks = () => {
                     : task
             )
         );
+        // Optionally: send to backend with fetch if you want real disqualification!
     };
 
-    // Function to create a new task
+    // Function to create a new task (client side only for now)
     const createTask = (taskInput: Partial<CreateTaskInput>) => {
-        // In a real app, this would call Hubspot API to get additional contact info
-        // For now, we'll simulate this with placeholder data
+        // This is for demo, in a real app you'd POST to your backend here
         const newTask: Task = {
-            id: uuidv4(),
-            contactName: "New Contact", // In real app, this would come from Hubspot
-            phoneNumber: "", // In real app, this would come from Hubspot
-            email: "", // In real app, this would come from Hubspot
+            id: Math.random().toString(36).slice(2), // use uuid in real apps
+            contactName: "New Contact",
+            phoneNumber: "",
+            email: "",
             restaurantName: taskInput.restaurantName || "",
-            cuisine: "", // In real app, this would come from Hubspot
+            cuisine: "",
             createdAt: new Date().toISOString(),
             dueDate: taskInput.dueDate || new Date().toISOString(),
             isRead: false,
@@ -122,53 +143,9 @@ export const useTasks = () => {
             disqualified: false,
             moreInfo: taskInput.moreInfo,
         };
-
         setTasks((prev) => [newTask, ...prev]);
         return newTask;
     };
-
-    // Helper function to sort tasks with past due dates first
-    const sortTasksByDueDate = (tasks: Task[]) => {
-        return [...tasks].sort((a, b) => {
-            const aDate = new Date(a.dueDate);
-            const bDate = new Date(b.dueDate);
-
-            // Check if either date is in the past and not today
-            const aIsPastDue = isPast(aDate) && !isSameDay(aDate, new Date());
-            const bIsPastDue = isPast(bDate) && !isSameDay(bDate, new Date());
-
-            // If one is past due and the other isn't, the past due one comes first
-            if (aIsPastDue && !bIsPastDue) return -1;
-            if (!aIsPastDue && bIsPastDue) return 1;
-
-            // Otherwise sort by creation date (newest first)
-            return new Date(b.createdAt).getTime() -
-                new Date(a.createdAt).getTime();
-        });
-    };
-
-    // Fetch tasks (mock implementation)
-    useEffect(() => {
-        const fetchTasks = async () => {
-            try {
-                // Simulate API call
-                await new Promise((resolve) => setTimeout(resolve, 500));
-
-                // Sort tasks with past due first, then by createdAt (newest first)
-                const sortedTasks = sortTasksByDueDate(mockTasks);
-
-                setTasks(sortedTasks);
-            } catch (error) {
-                console.error("Error fetching tasks:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTasks();
-
-        // In a real implementation, you would set up a webhook or polling mechanism here
-    }, []);
 
     return {
         tasks,

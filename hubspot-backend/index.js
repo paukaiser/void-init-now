@@ -37,7 +37,7 @@ app.use(session({
 }));
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:8080'],
+  origin: ['http://localhost:3000', 'http://localhost:8080'],
   credentials: true
 }));
 
@@ -224,4 +224,212 @@ app.get('/api/meeting/:id', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+});
+
+
+//Company Search
+app.get('/api/companies/search', async (req, res) => {
+  const token = req.session.accessToken;
+  const query = req.query.q;
+
+  if (!token) return res.status(401).send('Not authenticated');
+  if (!query) return res.status(400).send('Missing query');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    const result = await hubspotClient.crm.companies.searchApi.doSearch({
+      filterGroups: [{
+        filters: [{
+          propertyName: 'name',
+          operator: 'CONTAINS_TOKEN',
+          value: query
+        }]
+      }],
+      properties: ['name', 'address', 'city', 'state', 'zip'],
+      limit: 10
+    });
+
+    const companies = result.results.map(c => ({
+      id: c.id,
+      name: c.properties.name || 'Unnamed Company',
+      address: `${c.properties.address || ''} ${c.properties.city || ''} ${c.properties.state || ''} ${c.properties.zip || ''}`.trim()
+    }));
+
+    res.json({ results: companies });
+  } catch (err) {
+    console.error("❌ Failed to search companies:", err.message);
+    res.status(500).send("Search failed");
+  }
+});
+
+
+// Add Meeting
+app.post('/api/meetings/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  const {
+    title,
+    companyId,
+    contactId, // optional
+    meetingType,
+    startTime, // ISO format
+    endTime,   // ISO format
+    notes
+  } = req.body;
+
+  // Log everything you’re about to send!
+  console.log("Creating meeting:", {
+    title, companyId, contactId, meetingType, startTime, endTime, notes
+  });
+
+  // REQUIRED: hs_timestamp must be set and should match start time!
+  const associations = [];
+  if (companyId) {
+    associations.push({
+      to: { id: companyId },
+      types: [
+        {
+          associationCategory: "HUBSPOT_DEFINED",
+          associationTypeId: 200 // 200 is default for Meeting->Company
+        }
+      ]
+    });
+  }
+  if (contactId) {
+    associations.push({
+      to: { id: contactId },
+      types: [
+        {
+          associationCategory: "HUBSPOT_DEFINED",
+          associationTypeId: 200 // 200 is default for Meeting->Contact
+        }
+      ]
+    });
+  }
+
+  try {
+    const meetingRes = await hubspotClient.crm.objects.meetings.basicApi.create({
+      properties: {
+        hs_meeting_title: title,
+        hs_meeting_start_time: startTime,
+        hs_meeting_end_time: endTime,
+        hs_timestamp: startTime,
+        hs_internal_meeting_notes: notes || '',
+        hs_activity_type: meetingType,
+        hs_meeting_outcome: 'SCHEDULED',
+      },
+      associations
+    });
+
+    console.log("Meeting created successfully:", meetingRes);
+    res.json({ success: true, meetingId: meetingRes.id });
+  } catch (err) {
+    console.error("❌ Failed to create meeting:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to create meeting', details: err.response?.data || err.message });
+  }
+});
+
+
+
+
+// Cancel a meeting (set outcome to CANCELED)
+app.post('/api/meeting/:id/cancel', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+  const meetingId = req.params.id;
+
+  try {
+    await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
+      properties: {
+        hs_meeting_outcome: "CANCELED"
+      }
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to cancel meeting:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to cancel meeting' });
+  }
+});
+
+
+// Fetch all tasks for the logged-in user (salesperson)
+app.get('/api/tasks', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    const response = await hubspotClient.crm.objects.tasks.basicApi.getPage(
+      100, // limit (adjust as needed)
+      undefined, // after (for pagination, leave undefined for first page)
+      [
+        "hs_task_body",
+        "hs_timestamp",
+        "hs_task_status",
+        "hubspot_owner_id",
+        "hs_task_priority",
+        "hs_task_subject",
+        "hs_task_due_date"
+      ]
+    );
+
+    // Optionally, map/format the response as you wish
+    const tasks = response.results.map(task => ({
+      id: task.id,
+      subject: task.properties.hs_task_subject,
+      status: task.properties.hs_task_status,
+      body: task.properties.hs_task_body,
+      dueDate: task.properties.hs_task_due_date,
+      ownerId: task.properties.hubspot_owner_id,
+      createdAt: task.properties.hs_timestamp,
+      // Add more fields or associations as needed
+    }));
+
+    res.json({ tasks });
+  } catch (err) {
+    console.error("❌ Failed to fetch tasks:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+// Reschedule a meeting
+app.patch('/api/meetings/:id/reschedule', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+  const meetingId = req.params.id;
+  const { startTime, endTime, notes } = req.body;
+  console.log("About to PATCH with properties:", {
+    hs_meeting_start_time: startTime,
+    hs_meeting_end_time: endTime,
+    // etc.
+  });
+  
+  try {
+    // Send timestamps as strings
+    const result = await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
+      properties: {
+        hs_meeting_start_time: startTime,
+        hs_meeting_end_time: endTime,
+        hs_timestamp: startTime,
+        hs_meeting_outcome: "RESCHEDULED",
+        hs_internal_meeting_notes: notes || '',
+      }
+    });
+    // Log the FULL response from HubSpot!
+    console.log('HubSpot PATCH response:', JSON.stringify(result, null, 2));
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to reschedule meeting:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to reschedule meeting' });
+  }
 });

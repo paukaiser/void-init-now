@@ -2,10 +2,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, FileText, Inbox } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import UserProfile from '@/components/UserProfile';
-import NotificationBadge from '@/components/NotificationBadge';
-import { useTasks } from '@/hooks/useTasks';
+import { Button } from "../components/ui/button.tsx";
+import UserProfile from '../components/UserProfile.tsx';
+import NotificationBadge from '../components/NotificationBadge.tsx';
+import { useTasks } from '../hooks/useTasks.ts';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
@@ -18,8 +18,9 @@ const Index: React.FC = () => {
       </div>
       
       <div className="allo-container transition-slide-up">
-        <div className="flex items-center justify-center w-full mb-8">
+        <div className="flex items-center justify-between w-full mb-8">
           <h1 className="text-3xl font-bold tracking-tight">allO Field Sales App</h1>
+          <UserProfile />
         </div>
         
         <div className="w-full max-w-md mx-auto">
