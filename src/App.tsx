@@ -8,12 +8,17 @@ import {
 
 import LoginButton from './components/LoginButton.tsx';
 import Dashboard from './pages/Dashboard.tsx';
-import Inbox from './pages/Inbox.tsx'; // <-- ADD THIS LINE
+import Inbox from './pages/Inbox.tsx';
 import MeetingActions from './pages/MeetingActions.tsx';
 import MeetingCanceled from './pages/MeetingCanceled.tsx';
+import AddMeeting from './pages/AddMeeting.tsx';
+import MeetingOutcome from './pages/MeetingOutcome.tsx';
+import PositiveOutcome from './pages/PositiveOutcome.tsx';      // <--- Import
+import NegativeOutcome from './pages/NegativeOutcome.tsx';      // <--- Import
+// import FollowUpComponent from './pages/FollowUpComponent.tsx'; // <-- if you have this
+
 import { MeetingProvider } from './context/MeetingContext.tsx';
 import './App.css';
-import AddMeeting from './pages/AddMeeting.tsx';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -69,6 +74,24 @@ function App() {
             path="/meeting-canceled"
             element={<MeetingCanceled />}
           />
+          <Route
+            path="/meeting/:id/outcome"
+            element={isAuthenticated ? <MeetingOutcome /> : <Navigate to="/" />}
+          />
+          {/* Outcome-specific routes */}
+          <Route
+            path="/meeting/:id/positive"
+            element={isAuthenticated ? <PositiveOutcome /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/meeting/:id/negative"
+            element={isAuthenticated ? <NegativeOutcome /> : <Navigate to="/" />}
+          />
+          {/* Optional: Follow-up route if needed */}
+          {/* <Route
+            path="/meeting/:id/follow-up"
+            element={isAuthenticated ? <FollowUpComponent /> : <Navigate to="/" />}
+          /> */}
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
       </Router>

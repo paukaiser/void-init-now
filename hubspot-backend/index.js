@@ -14,6 +14,12 @@ import cors from 'cors';
 import axios from 'axios';
 import { Client } from '@hubspot/api-client';
 import process from "node:process";
+import multer from 'multer';
+import fetch from 'node-fetch';
+import FormData from 'form-data';
+
+
+
 
 const app = express();
 
@@ -106,6 +112,7 @@ app.get('/api/me', async (req, res) => {
 });
 
 // ✅ Get meetings by user
+// ✅ Get meetings by user WITH DEAL ID
 app.post('/api/meetings', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
@@ -139,14 +146,14 @@ app.post('/api/meetings', async (req, res) => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    // 🧠 Add company association fetching per meeting
     const meetingsWithDetails = await Promise.all(
       response.data.results.map(async (meeting) => {
         const { id, properties } = meeting;
 
         let companyName = 'Unknown Company';
-        
+        let dealId = null;
 
+        // Fetch company name
         try {
           const assocRes = await axios.get(
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/companies`,
@@ -154,7 +161,6 @@ app.post('/api/meetings', async (req, res) => {
           );
 
           const companyId = assocRes.data.results?.[0]?.id;
-
           if (companyId) {
             const companyRes = await axios.get(
               `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name`,
@@ -165,8 +171,19 @@ app.post('/api/meetings', async (req, res) => {
         } catch (e) {
           console.warn(`⚠️ Could not fetch company for meeting ${id}`);
         }
-        const date = new Date(properties.hs_meeting_start_time).toLocaleDateString('de-DE');
 
+        // Fetch associated dealId
+        try {
+          const dealsRes = await axios.get(
+            `https://api.hubapi.com/crm/v4/objects/meetings/${id}/associations/deals`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          dealId = dealsRes.data.results?.[0]?.toObjectId || null;
+        } catch (e) {
+          console.warn(`⚠️ Could not fetch deal for meeting ${id}`);
+        }
+
+        const date = new Date(properties.hs_meeting_start_time).toLocaleDateString('de-DE');
 
         return {
           id,
@@ -177,9 +194,9 @@ app.post('/api/meetings', async (req, res) => {
           address: properties.hs_meeting_location || 'No location',
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
-          companyName
+          companyName,
+          dealId    // <--- THIS IS NEW!
         };
-      
       })
     );
 
@@ -189,6 +206,7 @@ app.post('/api/meetings', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch meetings' });
   }
 });
+
 
 // ✅ Get one meeting by ID
 app.get('/api/meeting/:id', async (req, res) => {
@@ -433,3 +451,38 @@ app.patch('/api/meetings/:id/reschedule', async (req, res) => {
     res.status(500).json({ error: 'Failed to reschedule meeting' });
   }
 });
+const upload = multer(); // memory storage
+
+app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No audio file received' });
+    }
+
+    // Use form-data (Node, not web) for file upload
+    const formData = new FormData();
+    formData.append('audio', req.file.buffer, {
+      filename: req.file.originalname || 'voice-note.webm',
+      contentType: req.file.mimetype,
+      knownLength: req.file.size,
+    });
+
+    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/20yekoc/', {
+      method: 'POST',
+      body: formData,
+      headers: formData.getHeaders(),
+    });
+
+    if (!zapierResponse.ok) {
+      const txt = await zapierResponse.text();
+      console.error('Zapier responded with', zapierResponse.status, txt);
+      return res.status(500).json({ error: 'Zapier webhook failed', zapierStatus: zapierResponse.status, zapierBody: txt });
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Failed to forward audio to Zapier:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+

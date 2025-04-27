@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ArrowRight } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import AudioRecorder from '@/components/AudioRecorder';
-import FileUploader from '@/components/FileUploader';
+import { Button } from "../components/ui/button.tsx";
+import AudioRecorder from '../components/AudioRecorder.tsx';
+import FileUploader from '../components/FileUploader.tsx';
 import { toast } from "sonner";
-import ClosedWonReasonForm from '@/components/ClosedWonReasonForm';
+import ClosedWonReasonForm from '../components/ClosedWonReasonForm.tsx';
 
 const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -19,11 +19,28 @@ const PositiveOutcome: React.FC = () => {
     setStep('reason');
   };
   
-  const handleFileUpload = (file: File) => {
-    // In a real app, you would upload the file to your server
-    console.log('Uploaded file:', file);
-    setContractUploaded(true);
+  const handleFileUpload = async (file: File) => {
+    // Step 1: POST file to your backend
+    const formData = new FormData();
+    formData.append('contract', file);
+  
+    try {
+      const res = await fetch(`http://localhost:3000/api/meeting/${id}/upload-contract`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+  
+      toast.success("Contract uploaded and attached to HubSpot deal");
+      setContractUploaded(true);
+    } catch (err) {
+      toast.error("Failed to upload contract");
+      console.error("Upload error:", err);
+    }
   };
+  
   
   const handleNextStep = () => {
     setStep('voice');
