@@ -17,16 +17,16 @@ const FollowUpOutcome: React.FC = () => {
   const [showTaskOptions, setShowTaskOptions] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showDateSelector, setShowDateSelector] = useState(false);
-  
+
   const handleAudioSend = (blob: Blob) => {
     setAudioBlob(blob);
-    
+
     // In a real app, this would send the recording to Zapier via webhook
     console.log('Sending voice note to Zapier webhook');
-    
+
     toast.success("Voice note recorded successfully");
   };
-  
+
   const handleScheduleFollowUp = () => {
     // In a real app, you would fetch meeting details from the API
     // For demonstration purposes, we're using mock data
@@ -38,10 +38,10 @@ const FollowUpOutcome: React.FC = () => {
       contactName: 'John Doe',
       meetingType: 'sales followup'
     };
-    
+
     // Navigate to add meeting page with follow-up data
-    navigate('/add-meeting', { 
-      state: { 
+    navigate('/add-meeting', {
+      state: {
         isFollowUp: true,
         meetingId: id,
         companyId: mockMeetingDetails.companyId,
@@ -50,15 +50,15 @@ const FollowUpOutcome: React.FC = () => {
         contactId: mockMeetingDetails.contactId,
         contactName: mockMeetingDetails.contactName,
         forceCompany: true // Force company selection to be disabled
-      } 
+      }
     });
   };
-  
+
   const handleTaskSchedule = (timeframe: string) => {
     let taskDate: Date;
     const today = new Date();
-    
-    switch(timeframe) {
+
+    switch (timeframe) {
       case '3days':
         taskDate = new Date(today);
         taskDate.setDate(today.getDate() + 3);
@@ -82,86 +82,92 @@ const FollowUpOutcome: React.FC = () => {
         taskDate = new Date(today);
         taskDate.setDate(today.getDate() + 7);
     }
-    
+
     scheduleTask(taskDate);
   };
-  
+
   const scheduleTask = (taskDate: Date) => {
     // In a real app, this would create a task in your API
     console.log(`Scheduling follow-up task for ${format(taskDate, 'dd.MM.yyyy')}`);
-    
+
     // Simulate API call success
     toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
-    
+
     // Close the task options and reset
     setShowTaskOptions(false);
     setShowDateSelector(false);
-    
+
     // Navigate to home page
     navigate('/');
   };
-  
-  const handleComplete = () => {
-    // In a real app, this would call the Hubspot API to mark the meeting as completed
-    console.log(`Marking meeting ${id} as completed with follow-up outcome`);
-    
-    // Simulate API call success
-    toast.success("Meeting marked as follow-up needed");
-    
-    // Navigate to home page
-    navigate('/');
+
+  const handleComplete = async () => {
+    // Step 1: Mark meeting as completed in backend (and HubSpot)
+    try {
+      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to mark meeting as completed");
+      toast.success("Meeting marked as negative outcome and completed!");
+    } catch (err) {
+      toast.error("Failed to mark meeting as completed");
+      console.error("Error marking meeting as completed:", err);
+    }
+    // Step 2: Navigate away
+    navigate('/dashboard');
   };
-  
+
   const handleScheduleFollowUpTask = () => {
     setShowTaskOptions(true);
   };
-  
+
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);
       scheduleTask(selectedDate);
     }
   };
-  
+
   return (
     <div className="allo-page">
       <div className="allo-container">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="self-start mb-6"
           onClick={() => navigate(`/meeting/${id}/outcome`)}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back
         </Button>
-        
+
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-8 text-center">Follow-Up</h2>
-          
+
           {!showTaskOptions ? (
             <>
               <div className="allo-card mb-6">
                 <AudioRecorder onSend={handleAudioSend} />
               </div>
-              
+
               <div className="flex flex-col space-y-4">
-                <Button 
+                <Button
                   className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
                   onClick={handleScheduleFollowUp}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Meeting
                 </Button>
-                
-                <Button 
+
+                <Button
                   className="flex items-center justify-center py-4 bg-amber-500 hover:bg-amber-600 text-white"
                   onClick={handleScheduleFollowUpTask}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Task
                 </Button>
-                
-                <Button 
+
+                <Button
                   className="flex items-center justify-center"
                   onClick={handleComplete}
                 >
@@ -173,7 +179,7 @@ const FollowUpOutcome: React.FC = () => {
           ) : (
             <div className="allo-card">
               <h3 className="text-lg font-medium mb-4">When to follow up?</h3>
-              
+
               {showDateSelector ? (
                 <div className="mb-4">
                   <Popover open={true}>
@@ -197,16 +203,16 @@ const FollowUpOutcome: React.FC = () => {
                   <Button onClick={() => handleTaskSchedule('1week')}>In 1 week</Button>
                   <Button onClick={() => handleTaskSchedule('2weeks')}>In 2 weeks</Button>
                   <Button onClick={() => handleTaskSchedule('3weeks')}>In 3 weeks</Button>
-                  <Button 
+                  <Button
                     className="bg-gray-100 text-gray-800 hover:bg-gray-200"
                     onClick={() => handleTaskSchedule('custom')}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     Select a date
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
+
+                  <Button
+                    variant="outline"
                     className="mt-2"
                     onClick={() => setShowTaskOptions(false)}
                   >

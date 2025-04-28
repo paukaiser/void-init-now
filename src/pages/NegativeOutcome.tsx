@@ -73,10 +73,23 @@ const NegativeOutcome: React.FC = () => {
     }
   };
 
-  const handleComplete = () => {
-    toast.success("Meeting marked as negative outcome");
+  const handleComplete = async () => {
+    // Step 1: Mark meeting as completed in backend (and HubSpot)
+    try {
+      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to mark meeting as completed");
+      toast.success("Meeting marked as negative outcome and completed!");
+    } catch (err) {
+      toast.error("Failed to mark meeting as completed");
+      console.error("Error marking meeting as completed:", err);
+    }
+    // Step 2: Navigate away
     navigate('/dashboard');
   };
+
 
   return (
     <div className="allo-page">

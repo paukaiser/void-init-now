@@ -6,7 +6,7 @@ import AudioRecorder from '../components/AudioRecorder.tsx';
 import FileUploader from '../components/FileUploader.tsx';
 import { toast } from "sonner";
 import ClosedWonReasonForm from '../components/ClosedWonReasonForm.tsx';
-import { useMeetingContext } from '../context/MeetingContext.tsx'; // If you have context
+import { useMeetingContext } from '../context/MeetingContext.tsx';
 
 const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -52,12 +52,8 @@ const PositiveOutcome: React.FC = () => {
 
   // New state for additional notes
   const [additionalNotes, setAdditionalNotes] = useState("");
-
-  const handleAudioSend = (audioBlob: Blob) => {
-    // In a real app, you would upload the audio to your server
-    console.log('Audio blob:', audioBlob);
-    setStep('reason');
-  };
+  // For audio
+  const [audioUploading, setAudioUploading] = useState(false);
 
   // Pass file and notes to backend!
   const handleFileUpload = async (file: File, notes?: string) => {
@@ -87,12 +83,54 @@ const PositiveOutcome: React.FC = () => {
     }
   };
 
+  // Audio upload like NegativeOutcome
+  const handleAudioSend = async (audioBlob: Blob) => {
+    if (!dealId) {
+      toast.error("No associated deal found for this meeting.");
+      return;
+    }
+
+    setAudioUploading(true);
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'voice-note.webm');
+    formData.append('dealId', dealId);
+
+    try {
+      const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) throw new Error('Failed to send audio to backend');
+      toast.success("Voice note recorded and sent successfully");
+      setStep('reason');
+    } catch (err) {
+      toast.error("Failed to send voice note");
+      console.error("Backend error:", err);
+    } finally {
+      setAudioUploading(false);
+    }
+  };
+
   const handleNextStep = () => {
     setStep('voice');
   };
 
-  const handleComplete = () => {
-    toast.success('Meeting updated with positive outcome');
+  const handleComplete = async () => {
+    // Step 1: Mark meeting as completed in backend (and HubSpot)
+    try {
+      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to mark meeting as completed");
+      toast.success("Meeting marked as negative outcome and completed!");
+    } catch (err) {
+      toast.error("Failed to mark meeting as completed");
+      console.error("Error marking meeting as completed:", err);
+    }
+    // Step 2: Navigate away
     navigate('/dashboard');
   };
 
@@ -154,8 +192,13 @@ const PositiveOutcome: React.FC = () => {
           )}
 
           {step === 'voice' && (
-            <div className="space-y-6">
-              <AudioRecorder onSend={handleAudioSend} />
+            <div className="allo-card mb-6">
+              <AudioRecorder onSend={handleAudioSend} disabled={audioUploading} />
+              {audioUploading && (
+                <div className="text-center text-allo-muted mt-2">
+                  Uploading audio note…
+                </div>
+              )}
             </div>
           )}
 

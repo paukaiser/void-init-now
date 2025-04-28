@@ -651,3 +651,25 @@ app.patch('/api/deal/:dealId/close-won', async (req, res) => {
     });
   }
 });
+
+// Set Completed Meeting
+app.post('/api/meeting/:id/mark-completed', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+  const meetingId = req.params.id;
+
+  try {
+    await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
+      properties: {
+        hs_meeting_outcome: "COMPLETED"
+      }
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to cancel meeting:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to complete meeting' });
+  }
+});
