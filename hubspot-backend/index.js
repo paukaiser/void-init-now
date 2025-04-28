@@ -607,3 +607,44 @@ app.patch('/api/deal/:dealId/close-lost', async (req, res) => {
   }
 });
 
+// Closed Won Reason Form
+// PATCH /api/deal/:dealId/close-won
+
+app.patch('/api/deal/:dealId/close-won', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+  
+  const { dealId } = req.params;
+  const { deal_stage, closed_won_reason, pos_competitor, payment_competitor } = req.body;
+
+  // Required fields
+  if (!deal_stage || !closed_won_reason) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    // Build properties object for HubSpot
+    const properties = {
+      dealstage: "closedwon", // Use HubSpot internal name (often "closedwon")
+      closed_won_reason: closed_won_reason,
+    };
+    // Optional competitor fields if present
+    if (pos_competitor) properties.pos_competitor = pos_competitor;
+    if (payment_competitor) properties.payment_competitor = payment_competitor;
+
+    // HubSpot PATCH update
+    const updateRes = await axios.patch(
+      `https://api.hubapi.com/crm/v3/objects/deals/${dealId}`,
+      { properties },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    res.json({ success: true, updated: updateRes.data });
+  } catch (err) {
+    console.error("Failed to update deal as closed won:", err.response?.data || err.message);
+    res.status(500).json({
+      error: 'Failed to update deal',
+      details: err.response?.data || err.message,
+    });
+  }
+});

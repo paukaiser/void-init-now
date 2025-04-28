@@ -6,7 +6,7 @@ import AudioRecorder from '../components/AudioRecorder.tsx';
 import FileUploader from '../components/FileUploader.tsx';
 import { toast } from "sonner";
 import ClosedWonReasonForm from '../components/ClosedWonReasonForm.tsx';
-import { useMeetingContext } from '../context/MeetingContext.tsx';
+import { useMeetingContext } from '../context/MeetingContext.tsx'; // <- if you have context
 
 const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -94,18 +94,18 @@ const PositiveOutcome: React.FC = () => {
   return (
     <div className="allo-page">
       <div className="allo-container">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="self-start mb-6"
           onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings
         </Button>
-        
+
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-6 text-center">Positive Outcome</h2>
-          
+
           {step === 'contract' && loadingDealId && (
             <div className="p-4 text-center">Loading deal info…</div>
           )}
@@ -118,12 +118,12 @@ const PositiveOutcome: React.FC = () => {
 
           {step === 'contract' && !loadingDealId && dealId && (
             <div className="space-y-6">
-              <FileUploader 
-                onUpload={handleFileUpload} 
+              <FileUploader
+                onUpload={handleFileUpload}
                 title="Upload Signed Contract"
               />
-              
-              <Button 
+
+              <Button
                 className="allo-button w-full mt-6"
                 onClick={handleNextStep}
                 disabled={!contractUploaded}
@@ -139,12 +139,20 @@ const PositiveOutcome: React.FC = () => {
               <AudioRecorder onSend={handleAudioSend} />
             </div>
           )}
-          
-          {step === 'reason' && (
-            <ClosedWonReasonForm 
-              meetingId={id || ''}
+
+          {step === 'reason' && loadingDealId && (
+            <div className="p-4 text-center">Loading deal info…</div>
+          )}
+          {step === 'reason' && !loadingDealId && dealId && (
+            <ClosedWonReasonForm
+              dealId={dealId}
               onComplete={handleComplete}
             />
+          )}
+          {step === 'reason' && !loadingDealId && !dealId && (
+            <div className="text-red-500 p-4 text-center">
+              No associated deal found for this meeting.
+            </div>
           )}
         </div>
       </div>

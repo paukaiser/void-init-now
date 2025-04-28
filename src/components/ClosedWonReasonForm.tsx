@@ -1,66 +1,88 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from "./ui/button.tsx";
+import { Label } from "./ui/label.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx";
+import { Input } from "./ui/input.tsx";
 import { toast } from "sonner";
 
+
 interface ClosedWonReasonFormProps {
-  meetingId: string;
+  dealId: string; // Make sure you pass the correct dealId!
   onComplete: () => void;
 }
 
-const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ meetingId, onComplete }) => {
+const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ dealId, onComplete }) => {
   const [reason, setReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
   const [posCompetitor, setPosCompetitor] = useState<string>("");
   const [paymentCompetitor, setPaymentCompetitor] = useState<string>("");
-  const navigate = useNavigate();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!dealId) {
+      toast.error("No Deal ID found! Cannot update deal.");
+      return;
+    }
+
     if (!reason) {
       toast.error("Please select a reason");
       return;
     }
-    
+
     if (reason === "Other" && !otherReason) {
       toast.error("Please provide details for the other reason");
       return;
     }
-    
-    // In a real app, you would submit this data to your API
-    console.log("Closed Won Reason:", {
-      meetingId,
-      reason,
-      otherReason: reason === "Other" ? otherReason : undefined,
-      posCompetitor,
-      paymentCompetitor
-    });
-    
-    toast.success("Meeting outcome recorded successfully");
-    onComplete();
+
+    setLoading(true);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-won`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          deal_stage: "closedwon",
+          closed_won_reason: reason === "Other" ? otherReason : reason,
+          pos_competitor: posCompetitor,
+          payment_competitor: paymentCompetitor,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update deal");
+
+      toast.success("Deal marked as won with reason!");
+      setLoading(false);
+      onComplete();
+    } catch (err) {
+      toast.error("Failed to update deal");
+      setLoading(false);
+      console.error(err);
+    }
   };
-  
+
+  // ...rest of your form UI is the same, just make sure the form uses handleSubmit!
   return (
     <div className="allo-card w-full">
       <h2 className="text-xl font-semibold mb-6">Closed Won Reason</h2>
-      
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ... all your inputs/selects ... */}
         <div className="space-y-4">
+          {/* Reason select */}
           <div className="space-y-2">
             <Label htmlFor="closed-won-reason">Reason <span className="text-red-500">*</span></Label>
-            <Select 
+            <Select
               onValueChange={setReason}
               value={reason}
+              disabled={loading}
             >
               <SelectTrigger id="closed-won-reason">
                 <SelectValue placeholder="Select a reason" />
               </SelectTrigger>
               <SelectContent>
+                {/* ... all your SelectItems ... */}
                 <SelectItem value="Specific Features">Specific Features</SelectItem>
                 <SelectItem value="Attractive Pricing">Attractive Pricing</SelectItem>
                 <SelectItem value="Sales Manager Skills">Sales Manager Skills</SelectItem>
@@ -73,74 +95,59 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ meetingId, on
               </SelectContent>
             </Select>
           </div>
-          
+          {/* Other reason input */}
           {reason === "Other" && (
             <div className="space-y-2">
               <Label htmlFor="other-reason">Other Reason <span className="text-red-500">*</span></Label>
-              <Input 
+              <Input
                 id="other-reason"
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
                 placeholder="Please specify"
+                disabled={loading}
               />
             </div>
           )}
-          
+          {/* POS Competitor */}
           <div className="space-y-2">
             <Label htmlFor="pos-competitor">POS Competitor</Label>
-            <Select 
+            <Select
               onValueChange={setPosCompetitor}
               value={posCompetitor}
+              disabled={loading}
             >
               <SelectTrigger id="pos-competitor">
                 <SelectValue placeholder="Select a POS competitor" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Lightspeed">Lightspeed</SelectItem>
-                <SelectItem value="Toast">Toast</SelectItem>
-                <SelectItem value="Square">Square</SelectItem>
-                <SelectItem value="Clover">Clover</SelectItem>
-                <SelectItem value="TouchBistro">TouchBistro</SelectItem>
+                <SelectItem value="Aaden">Aaden</SelectItem>
+                <SelectItem value="Acomtec">Acomtec</SelectItem>
+                <SelectItem value="Flatpay">Flatpay</SelectItem>
+                <SelectItem value="Flysoft">Flysoft</SelectItem>
                 <SelectItem value="Revel">Revel</SelectItem>
-                <SelectItem value="Aloha">Aloha</SelectItem>
-                <SelectItem value="Lavu">Lavu</SelectItem>
-                <SelectItem value="Loyverse">Loyverse</SelectItem>
-                <SelectItem value="Custom Solution">Custom Solution</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-                <SelectItem value="None">None</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="payment-competitor">Payment Competitor</Label>
-            <Select 
-              onValueChange={setPaymentCompetitor}
-              value={paymentCompetitor}
-            >
-              <SelectTrigger id="payment-competitor">
-                <SelectValue placeholder="Select a payment competitor" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Stripe">Stripe</SelectItem>
-                <SelectItem value="Square">Square</SelectItem>
-                <SelectItem value="PayPal">PayPal</SelectItem>
-                <SelectItem value="Adyen">Adyen</SelectItem>
-                <SelectItem value="WorldPay">WorldPay</SelectItem>
-                <SelectItem value="Braintree">Braintree</SelectItem>
-                <SelectItem value="Authorize.net">Authorize.net</SelectItem>
-                <SelectItem value="Shopify Payments">Shopify Payments</SelectItem>
-                <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                <SelectItem value="Gastronovi">Gastronovi</SelectItem>
+                <SelectItem value="Hello Tess">Hello Tess</SelectItem>
+                <SelectItem value="Hypersoft">Hypersoft</SelectItem>
+                <SelectItem value="Luca">Luca</SelectItem>
+                <SelectItem value="Orderbird">Orderbird</SelectItem>
+                <SelectItem value="Procomsys">Procomsys</SelectItem>
+                <SelectItem value="Ready 2 Order">Ready 2 Order</SelectItem>
+                <SelectItem value="RPOS">RPOS</SelectItem>
+                <SelectItem value="Sides (Simple Delivery)">Sides (Simple Delivery)</SelectItem>
+                <SelectItem value="Star">Star</SelectItem>
+                <SelectItem value="SumUp">SumUp</SelectItem>
+                <SelectItem value="ThomasBui">ThomasBui</SelectItem>
+                <SelectItem value="Vectron">Hypersoft</SelectItem>
+                <SelectItem value="WinOrder">WinOrder</SelectItem>
                 <SelectItem value="Other">Other</SelectItem>
                 <SelectItem value="None">None</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
-        
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="allo-button">
-            Submit
+          <Button type="submit" className="allo-button" disabled={loading}>
+            {loading ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </form>
