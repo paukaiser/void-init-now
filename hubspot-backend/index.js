@@ -152,6 +152,7 @@ app.post('/api/meetings', async (req, res) => {
         const { id, properties } = meeting;
 
         let companyName = 'Unknown Company';
+        let companyAddress = 'Unknown Address';
         let dealId = null;
 
         // Fetch company name
@@ -164,10 +165,16 @@ app.post('/api/meetings', async (req, res) => {
           const companyId = assocRes.data.results?.[0]?.id;
           if (companyId) {
             const companyRes = await axios.get(
-              `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name`,
+              `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name,address,address1,address_street`,
               { headers: { Authorization: `Bearer ${token}` } }
             );
             companyName = companyRes.data.properties.name || 'Unnamed Company';
+            // Try all likely address fields:
+            companyAddress =
+              companyRes.data.properties.address ||
+              companyRes.data.properties.address1 ||
+              companyRes.data.properties.address_street ||
+              null;
           }
         } catch (e) {
           console.warn(`⚠️ Could not fetch company for meeting ${id}`);
@@ -192,11 +199,11 @@ app.post('/api/meetings', async (req, res) => {
           startTime: properties.hs_meeting_start_time,
           endTime: properties.hs_meeting_end_time,
           date,
-          address: properties.hs_meeting_location || 'No location',
+          address: companyAddress || 'No location', // <<<<<<
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
           companyName,
-          dealId // <--- THIS IS NEW!
+          dealId
         };
       })
     );
@@ -433,7 +440,7 @@ app.patch('/api/meetings/:id/reschedule', async (req, res) => {
     hs_meeting_end_time: endTime,
     // etc.
   });
-  
+
   try {
     // Send timestamps as strings
     const result = await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
@@ -616,7 +623,7 @@ app.patch('/api/deal/:dealId/close-lost', async (req, res) => {
 app.patch('/api/deal/:dealId/close-won', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
-  
+
   const { dealId } = req.params;
   const { deal_stage, closed_won_reason, pos_competitor, payment_competitor } = req.body;
 
