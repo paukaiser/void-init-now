@@ -6,7 +6,7 @@ import AudioRecorder from '../components/AudioRecorder.tsx';
 import FileUploader from '../components/FileUploader.tsx';
 import { toast } from "sonner";
 import ClosedWonReasonForm from '../components/ClosedWonReasonForm.tsx';
-import { useMeetingContext } from '../context/MeetingContext.tsx'; // <- if you have context
+import { useMeetingContext } from '../context/MeetingContext.tsx'; // If you have context
 
 const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,13 +50,17 @@ const PositiveOutcome: React.FC = () => {
   const [step, setStep] = useState<'contract' | 'voice' | 'reason'>('contract');
   const [contractUploaded, setContractUploaded] = useState(false);
 
+  // New state for additional notes
+  const [additionalNotes, setAdditionalNotes] = useState("");
+
   const handleAudioSend = (audioBlob: Blob) => {
     // In a real app, you would upload the audio to your server
     console.log('Audio blob:', audioBlob);
     setStep('reason');
   };
 
-  const handleFileUpload = async (file: File) => {
+  // Pass file and notes to backend!
+  const handleFileUpload = async (file: File, notes?: string) => {
     if (!dealId) {
       toast.error("Cannot upload: Deal not found.");
       return;
@@ -65,6 +69,7 @@ const PositiveOutcome: React.FC = () => {
     const formData = new FormData();
     formData.append('contract', file, file.name);
     formData.append('dealId', dealId);
+    if (notes) formData.append('note', notes);
 
     try {
       const res = await fetch(`http://localhost:3000/api/meeting/${id}/upload-contract`, {
@@ -118,10 +123,24 @@ const PositiveOutcome: React.FC = () => {
 
           {step === 'contract' && !loadingDealId && dealId && (
             <div className="space-y-6">
+              {/* FileUploader now takes a custom handler to pass notes */}
               <FileUploader
-                onUpload={handleFileUpload}
+                onUpload={file => handleFileUpload(file, additionalNotes)}
                 title="Upload Signed Contract"
               />
+
+              <div className="mt-4">
+                <label className="block mb-1 font-medium" htmlFor="additional-notes">Additional Contract Notes</label>
+                <textarea
+                  id="additional-notes"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  rows={3}
+                  value={additionalNotes}
+                  onChange={e => setAdditionalNotes(e.target.value)}
+                  placeholder="Add any relevant comments for the note…"
+                  disabled={contractUploaded}
+                />
+              </div>
 
               <Button
                 className="allo-button w-full mt-6"

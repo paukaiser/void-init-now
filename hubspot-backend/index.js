@@ -301,7 +301,7 @@ app.post('/api/meetings/create', async (req, res) => {
     notes
   } = req.body;
 
-  // Log everything you’re about to send!
+  // Log everything you're about to send!
   console.log("Creating meeting:", {
     title, companyId, contactId, meetingType, startTime, endTime, notes
   });
@@ -504,7 +504,9 @@ app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('cont
   if (!req.file) return res.status(400).json({ error: 'No contract uploaded' });
 
   let dealId = req.body.dealId; // Try from frontend first
-  console.log("dealId:", dealId);
+  const additionalNote = req.body.note?.trim();
+  console.log("dealId:", dealId, "additionalNote:", additionalNote);
+
   if (!dealId) {
     try {
       const dealsRes = await axios.get(
@@ -521,7 +523,7 @@ app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('cont
   }
 
   try {
-    // Prepare form-data
+    // Prepare form-data for HubSpot file upload
     const fileFormData = new FormData();
     fileFormData.append('file', req.file.buffer, {
       filename: req.file.originalname || 'contract.pdf',
@@ -548,12 +550,15 @@ app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('cont
     );
     const fileId = fileRes.data.id;
 
+    // Compose note body with additional notes (if any)
+    let noteBody = additionalNote ? additionalNote : 'Signed contract uploaded.';
+
     // Create a note and associate with the deal
     const noteRes = await axios.post(
       'https://api.hubapi.com/crm/v3/objects/notes',
       {
         properties: {
-          hs_note_body: 'Signed contract uploaded.',
+          hs_note_body: noteBody,
           hs_attachment_ids: fileId,
           hs_timestamp: Date.now()
         },
@@ -608,8 +613,6 @@ app.patch('/api/deal/:dealId/close-lost', async (req, res) => {
 });
 
 // Closed Won Reason Form
-// PATCH /api/deal/:dealId/close-won
-
 app.patch('/api/deal/:dealId/close-won', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
