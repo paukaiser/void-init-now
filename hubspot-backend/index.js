@@ -29,6 +29,7 @@ const REDIRECT_URI = process.env.REDIRECT_URI;
 const SCOPES = process.env.SCOPES;
 const FRONTEND_URL = process.env.FRONTEND_URL;
 
+
 app.use(express.json());
 
 app.use(session({
@@ -195,7 +196,7 @@ app.post('/api/meetings', async (req, res) => {
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
           companyName,
-          dealId    // <--- THIS IS NEW!
+          dealId // <--- THIS IS NEW!
         };
       })
     );
@@ -225,7 +226,8 @@ app.get('/api/meeting/:id', async (req, res) => {
       "hs_meeting_end_time",
       "hs_meeting_location",
       "hs_meeting_outcome",
-      "hs_activity_type"
+      "hs_activity_type",
+      "dealId"
     ]);
 
     res.json({
@@ -451,9 +453,12 @@ app.patch('/api/meetings/:id/reschedule', async (req, res) => {
     res.status(500).json({ error: 'Failed to reschedule meeting' });
   }
 });
+
+// Send Voice Note to Zapier
 const upload = multer(); // memory storage
 
 app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => {
+  console.log('req.file:', req.file); // Log the file details
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No audio file received' });
@@ -467,7 +472,7 @@ app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => 
       knownLength: req.file.size,
     });
 
-    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/20yekoc/', {
+    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pdsjyw/', {
       method: 'POST',
       body: formData,
       headers: formData.getHeaders(),
@@ -483,6 +488,122 @@ app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => 
   } catch (err) {
     console.error('Failed to forward audio to Zapier:', err);
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+const upload_contract = multer(); // In-memory storage
+
+
+
+// Upload Contract
+app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('contract'), async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const { meetingId } = req.params;
+  if (!req.file) return res.status(400).json({ error: 'No contract uploaded' });
+
+  let dealId = req.body.dealId; // Try from frontend first
+  console.log("dealId:", dealId);
+  if (!dealId) {
+    try {
+      const dealsRes = await axios.get(
+        `https://api.hubapi.com/crm/v4/objects/meetings/${meetingId}/associations/deals`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      dealId = dealsRes.data.results?.[0]?.toObjectId;
+      if (!dealId) {
+        return res.status(400).json({ error: 'No associated deal found for this meeting.' });
+      }
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to find deal associated with this meeting.' });
+    }
+  }
+
+  try {
+    // Prepare form-data
+    const fileFormData = new FormData();
+    fileFormData.append('file', req.file.buffer, {
+      filename: req.file.originalname || 'contract.pdf',
+      contentType: req.file.mimetype,
+    });
+    fileFormData.append('options', JSON.stringify({
+      access: "PRIVATE",
+      name: req.file.originalname || "Contract",
+    }));
+    fileFormData.append('folderId', "189440789850");
+
+    // Upload file to HubSpot
+    const fileRes = await axios.post(
+      'https://api.hubapi.com/files/v3/files',
+      fileFormData,
+      {
+        headers: {
+          ...fileFormData.getHeaders(),
+          'Authorization': `Bearer ${token}`,
+        },
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity
+      }
+    );
+    const fileId = fileRes.data.id;
+
+    // Create a note and associate with the deal
+    const noteRes = await axios.post(
+      'https://api.hubapi.com/crm/v3/objects/notes',
+      {
+        properties: {
+          hs_note_body: 'Signed contract uploaded.',
+          hs_attachment_ids: fileId,
+          hs_timestamp: Date.now()
+        },
+        associations: [
+          {
+            to: { id: dealId },
+            types: [
+              {
+                associationCategory: "HUBSPOT_DEFINED",
+                associationTypeId: 214
+              }
+            ]
+          }
+        ]
+      },
+      {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }
+    );
+
+    res.json({ success: true, noteId: noteRes.data.id, fileId });
+  } catch (err) {
+    console.error("❌ Failed to upload contract and create note:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to upload contract', details: err.response?.data || err.message });
+  }
+});
+
+
+
+
+// Closed Lost Reason Form
+app.patch('/api/deal/:dealId/close-lost', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+  const { dealId } = req.params;
+  const { deal_stage, closed_lost_reason } = req.body;
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    await hubspotClient.crm.deals.basicApi.update(dealId, {
+      properties: {
+        dealstage: deal_stage, // Use 'dealstage' (HubSpot internal property)
+        closed_lost_reason,    // Make sure this property exists in your HubSpot portal!
+      },
+    });
+    res.json({ success: true });
+  } catch (err) {
+    // Add more detailed error logging:
+    console.error("❌ Failed to update deal:", err.response?.data || err.message, err.stack);
+    res.status(500).json({ error: 'Failed to update deal', details: err.response?.data || err.message });
   }
 });
 

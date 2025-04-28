@@ -1,8 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { Upload, File, X, Check } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { Button } from "../components/ui/button.tsx";
+import { useToast } from "../components/ui/use-toast.ts";
 
 interface FileUploaderProps {
   onUpload?: (file: File) => void;

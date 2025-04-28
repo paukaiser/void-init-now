@@ -1,57 +1,76 @@
-
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Button } from "./ui/button.tsx";
+import { Label } from "./ui/label.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select.tsx";
+import { Input } from "./ui/input.tsx";
 import { toast } from "sonner";
 
 interface ClosedLostReasonFormProps {
-  meetingId: string;
+  dealId: string;           // 🚨 Make sure this is a string and not undefined!
   onComplete: () => void;
 }
 
-const ClosedLostReasonForm: React.FC<ClosedLostReasonFormProps> = ({ meetingId, onComplete }) => {
+const ClosedLostReasonForm: React.FC<ClosedLostReasonFormProps> = ({ dealId, onComplete }) => {
   const [reason, setReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
-  const navigate = useNavigate();
-  
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  console.log("dealId being passed to form:", dealId);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!dealId) {
+      toast.error("No Deal ID found! Cannot update deal.");
+      return;
+    }
+
     if (!reason) {
       toast.error("Please select a reason");
       return;
     }
-    
     if (reason === "Other" && !otherReason) {
       toast.error("Please provide details for the other reason");
       return;
     }
-    
-    // In a real app, you would submit this data to your API
-    console.log("Closed Lost Reason:", {
-      meetingId,
-      reason,
-      otherReason: reason === "Other" ? otherReason : undefined
-    });
-    
-    toast.success("Meeting outcome recorded successfully");
-    onComplete();
+
+    const reasonText = reason === "Other" ? otherReason : reason;
+    setLoading(true);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-lost`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          deal_stage: "closedlost",
+          closed_lost_reason: reasonText,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to update deal");
+
+      toast.success("Deal marked as lost with reason!");
+      setLoading(false);
+      onComplete();
+    } catch (err) {
+      toast.error("Failed to update deal");
+      setLoading(false);
+      console.error(err);
+    }
   };
-  
+
   return (
     <div className="allo-card w-full">
       <h2 className="text-xl font-semibold mb-6">Closed Lost Reason</h2>
-      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="closed-lost-reason">Reason <span className="text-red-500">*</span></Label>
-            <Select 
+            <Select
               onValueChange={setReason}
               value={reason}
+              disabled={loading}
             >
               <SelectTrigger id="closed-lost-reason">
                 <SelectValue placeholder="Select a reason" />
@@ -69,23 +88,22 @@ const ClosedLostReasonForm: React.FC<ClosedLostReasonFormProps> = ({ meetingId, 
               </SelectContent>
             </Select>
           </div>
-          
           {reason === "Other" && (
             <div className="space-y-2">
               <Label htmlFor="other-reason">Other Reason <span className="text-red-500">*</span></Label>
-              <Input 
+              <Input
                 id="other-reason"
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
                 placeholder="Please specify"
+                disabled={loading}
               />
             </div>
           )}
         </div>
-        
         <div className="flex justify-end pt-4">
-          <Button type="submit" className="allo-button">
-            Submit
+          <Button type="submit" className="allo-button" disabled={loading}>
+            {loading ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </form>

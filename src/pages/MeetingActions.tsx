@@ -21,6 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '../components/ui/alert-dialog.tsx';
+import { data } from '@remix-run/router';
 
 const MeetingActions: React.FC = () => {
   
@@ -30,6 +31,7 @@ const MeetingActions: React.FC = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { meetings } = useMeetingContext(); // ✅ use context
   const [meetingDetails, setMeetingDetails] = useState<any | null>(null);
+  console.log("Fetched meetings from backend:", data.results);
 
   useEffect(() => {
     const foundMeeting = meetings.find(m => m.id === id);
@@ -60,7 +62,8 @@ const MeetingActions: React.FC = () => {
             companyName: meetingDetails.companyName,
             companyAddress: meetingDetails.address,
             contactId: meetingDetails.contactId,
-            contactName: meetingDetails.contactName
+            contactName: meetingDetails.contactName,
+            dealId: meetingDetails.dealId
           }
         }
       });
@@ -70,8 +73,14 @@ const MeetingActions: React.FC = () => {
   };  
 
   const handleComplete = () => {
-    navigate(`/meeting/${id}/outcome`);
+    navigate(`/meeting/${id}/outcome`, {
+      state: {
+        dealId: meetingDetails.dealId, // <-- Pass the dealId!
+      }
+    });
   };
+  console.log("Meeting details:", meetingDetails);
+  console.log("Deal ID from context:", meetingDetails?.dealId);
 
   const handleReschedule = () => {
     navigate('/add-meeting', {
@@ -85,7 +94,8 @@ const MeetingActions: React.FC = () => {
         contactId: meetingDetails.contactId,
         contactName: meetingDetails.contactName,
         meetingType: meetingDetails.type,
-        forceCompany: true
+        forceCompany: true,
+        dealId: meetingDetails.dealId
       }
     });
   };

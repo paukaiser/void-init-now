@@ -1,14 +1,51 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { Button } from "../components/ui/button.tsx";
 import { toast } from "sonner";
 import AudioRecorder from '../components/AudioRecorder.tsx';
 import ClosedLostReasonForm from '../components/ClosedLostReasonForm.tsx';
+import { useMeetingContext } from '../context/MeetingContext.tsx'; // if using context
 
 const NegativeOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // 1. Try navigation state
+  const navDealId = location.state?.dealId;
+  // 2. Try context
+  const { meetings } = useMeetingContext?.() || { meetings: [] }; // context may be optional
+  const contextDealId = meetings.find(m => m.id === id)?.dealId;
+
+  // 3. Local state, preferring nav > context
+  const [dealId, setDealId] = useState<string | null>(navDealId || contextDealId || null);
+  const [loadingDealId, setLoadingDealId] = useState<boolean>(!dealId);
+
+  // Only fetch if missing from nav/context
+  useEffect(() => {
+    if (!dealId && id) {
+      const fetchDealId = async () => {
+        setLoadingDealId(true);
+        try {
+          const res = await fetch(`http://localhost:3000/api/meeting/${id}/deal`, {
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to fetch dealId");
+          const data = await res.json();
+          if (data.dealId) setDealId(data.dealId);
+          else setDealId(null);
+        } catch (err) {
+          toast.error("Could not find associated deal.");
+          setDealId(null);
+        } finally {
+          setLoadingDealId(false);
+        }
+      };
+      fetchDealId();
+    }
+  }, [id, dealId]);
+
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [step, setStep] = useState<'voice' | 'reason'>('voice');
 
@@ -17,10 +54,10 @@ const NegativeOutcome: React.FC = () => {
 
     // Build FormData for file upload
     const formData = new FormData();
-    formData.append('audio', blob, 'voice-note.webm'); // Use the correct extension for your recorder
-
+    formData.append('audio', blob, 'voice-note.webm'); // Use the correct extension
+    console.log('Audio blob:', blob); // Log the blob instead of undefined req.file
+    console.log('Forwarding audio to Zapier...');
     try {
-      // Send to your backend instead of Zapier!
       const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
         method: 'POST',
         body: formData,
@@ -37,8 +74,6 @@ const NegativeOutcome: React.FC = () => {
   };
 
   const handleComplete = () => {
-    // In a real app, this would call the Hubspot API to mark the meeting as completed
-    console.log(`Marking meeting ${id} as completed with negative outcome`);
     toast.success("Meeting marked as negative outcome");
     navigate('/dashboard');
   };
@@ -64,11 +99,21 @@ const NegativeOutcome: React.FC = () => {
             </div>
           )}
 
-          {step === 'reason' && (
+          {step === 'reason' && loadingDealId && (
+            <div className="p-4 text-center">Loading deal info…</div>
+          )}
+
+          {step === 'reason' && !loadingDealId && dealId && (
             <ClosedLostReasonForm
-              meetingId={id || ''}
+              dealId={dealId}
               onComplete={handleComplete}
             />
+          )}
+
+          {step === 'reason' && !loadingDealId && !dealId && (
+            <div className="text-red-500 p-4 text-center">
+              No associated deal found for this meeting.
+            </div>
           )}
         </div>
       </div>

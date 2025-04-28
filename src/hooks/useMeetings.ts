@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 
-export interface HubspotMeeting {
+// 🟢 Flat shape matches your backend response
+export interface Meeting {
     id: string;
-    properties: {
-        hs_meeting_title: string;
-        hs_meeting_start_time: string;
-        hs_meeting_end_time: string;
-        hs_meeting_location: string;
-        hs_internal_meeting_notes: string;
-    };
+    title: string;
+    startTime: string;
+    endTime: string;
+    address?: string;
+    companyName?: string;
+    status?: string;
+    type?: string;
+    date?: string;
+    dealId?: string | number; // (number in backend, but sometimes string in FE)
+    // add other fields as needed
 }
 
 export function useMeetings(
@@ -16,7 +20,7 @@ export function useMeetings(
     startTime: number,
     endTime: number,
 ) {
-    const [meetings, setMeetings] = useState<HubspotMeeting[]>([]);
+    const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {

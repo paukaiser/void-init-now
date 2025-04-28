@@ -94,7 +94,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
           date: item.date,
           type: item.type,
           status: item.status,
-          address: item.address
+          address: item.address,
+          dealId: item.dealId
         }));
 
         setMeetings(hubspotMeetings);

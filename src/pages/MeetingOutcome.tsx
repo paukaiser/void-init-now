@@ -1,74 +1,74 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ThumbsUp, ThumbsDown, Clock } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Button } from "../components/ui/button.tsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
+import { useIsMobile } from "../hooks/use-mobile.tsx";
+import { useMeetingContext } from "../context/MeetingContext.tsx";
 
 const MeetingOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [showHotDealDialog, setShowHotDealDialog] = useState(false);
   const isMobile = useIsMobile();
-  
+
+  // Get the meeting details and dealId from context
+  const { meetings } = useMeetingContext();
+  const meetingDetails = meetings.find(m => m.id === id);
+  const dealId = meetingDetails?.dealId;
+
+  // Handler for outcome selection
   const handleOutcome = (outcome: 'positive' | 'negative' | 'follow-up') => {
-    // In a real app, this would call the Hubspot API to update the meeting outcome
-    
     if (outcome === 'positive') {
-      // Navigate to positive outcome page
-      navigate(`/meeting/${id}/positive`);
+      navigate(`/meeting/${id}/positive`, { state: { dealId } });
     } else if (outcome === 'negative') {
-      // Navigate to negative outcome page
-      navigate(`/meeting/${id}/negative`);
+      navigate(`/meeting/${id}/negative`, { state: { dealId } });
     } else if (outcome === 'follow-up') {
-      // Show "hot deal" dialog for follow-up
       setShowHotDealDialog(true);
     }
   };
-  
+
+  // Handler for hot deal dialog
   const handleHotDealResponse = (isHotDeal: boolean) => {
-    // Close the dialog
     setShowHotDealDialog(false);
-    
-    // Navigate to follow-up page, potentially passing the hot deal status
     navigate(`/meeting/${id}/follow-up`, {
-      state: { isHotDeal }
+      state: { isHotDeal, dealId }
     });
   };
-  
+
   return (
     <div className="allo-page">
       <div className="allo-container">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="self-start mb-6"
           onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings
         </Button>
-        
+
         <div className="w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-8 text-center">Meeting Outcome</h2>
-          
+
           <div className="grid grid-cols-1 gap-4">
-            <Button 
+            <Button
               className="flex items-center justify-center py-6 bg-green-600 hover:bg-green-700 text-white"
               onClick={() => handleOutcome('positive')}
             >
               <ThumbsUp size={18} className="mr-2" />
               Positive
             </Button>
-            
-            <Button 
+
+            <Button
               className="flex items-center justify-center py-6 bg-red-600 hover:bg-red-700 text-white"
               onClick={() => handleOutcome('negative')}
             >
               <ThumbsDown size={18} className="mr-2" />
               Negative
             </Button>
-            
-            <Button 
+
+            <Button
               className="flex items-center justify-center py-6 bg-blue-500 hover:bg-blue-600 text-white"
               onClick={() => handleOutcome('follow-up')}
             >
@@ -78,22 +78,22 @@ const MeetingOutcome: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <Dialog open={showHotDealDialog} onOpenChange={setShowHotDealDialog}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Is this a hot deal?</DialogTitle>
           </DialogHeader>
-          
+
           <DialogFooter className="mt-6 flex space-x-2 justify-center sm:justify-between">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => handleHotDealResponse(false)}
               className="flex-1"
             >
               No
             </Button>
-            <Button 
+            <Button
               variant="default"
               onClick={() => handleHotDealResponse(true)}
               className="flex-1 bg-[#2E1813] hover:bg-[#2E1813]/90"
