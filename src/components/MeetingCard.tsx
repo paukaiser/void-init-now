@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle, MapPin } from 'lucide-react';
@@ -148,27 +147,54 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-    const meetingBgColor = 'bg-[#FF8769]/100';
+    
+    // Set meeting background color based on status
+    let meetingBgColor;
+    let hoverBgColor;
+    
+    switch (meeting.status) {
+      case 'canceled':
+        meetingBgColor = 'bg-red-500/90';
+        hoverBgColor = 'hover:bg-red-600/90';
+        break;
+      case 'rescheduled':
+        meetingBgColor = 'bg-amber-500/90';
+        hoverBgColor = 'hover:bg-amber-600/90';
+        break;
+      case 'completed':
+        meetingBgColor = 'bg-green-500/90';
+        hoverBgColor = 'hover:bg-green-600/90';
+        break;
+      default:
+        meetingBgColor = 'bg-[#FF8769]/90';
+        hoverBgColor = 'hover:bg-[#FF8769]/100';
+    }
+    
+    // Ensure minimum width and height for readability
+    const minHeight = Math.max(durationPercentage, 5);
+    const minWidth = '150px';
     
     return (
       <div 
-        className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardCursor}`}
+        className={`meeting-card ${meetingBgColor} ${hoverBgColor} transition-all duration-200 ${cardCursor} text-white`}
         style={{ 
           top: `${startPercentage}%`, 
           height: `${durationPercentage}%`,
-          minHeight: '40px',
-          maxHeight: `${durationPercentage > 100 ? 100 : durationPercentage}%`
+          minHeight: minHeight < 5 ? '40px' : `${minHeight}%`,
+          minWidth: minWidth,
+          maxHeight: `${durationPercentage > 100 ? 100 : durationPercentage}%`,
+          zIndex: meeting.status ? 10 : 5 // Higher z-index for meetings with status
         }}
         onClick={handleClick}
       >
         <div className="p-2 flex flex-col h-full overflow-hidden">
           <div className="flex justify-between items-start mb-1">
-            <div className="text-xs font-bold truncate">{meeting.title}</div>
+            <div className="text-xs font-bold truncate max-w-[70%]">{meeting.title}</div>
             <div>
               {renderStatusBadge()}
             </div>
           </div>
-          <div className="mt-auto text-xs text-allo-muted flex flex-wrap gap-2">
+          <div className="mt-auto text-xs flex flex-wrap gap-2">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
               <span className="truncate">{meeting.companyName}</span>
