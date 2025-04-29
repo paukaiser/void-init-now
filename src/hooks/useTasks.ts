@@ -3,7 +3,6 @@ import { Task } from "../types/index.ts";
 import { v4 as uuidv4 } from "uuid";
 import { isPast, isSameDay } from "date-fns";
 import { useUser } from "./useUser.ts"; // ✅ Correct import!
-import TaskCard from "./TaskCard";
 
 interface CreateTaskInput {
     restaurantName: string;

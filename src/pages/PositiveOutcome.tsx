@@ -193,7 +193,7 @@ const PositiveOutcome: React.FC = () => {
 
           {step === 'voice' && (
             <div className="allo-card mb-6">
-              <AudioRecorder onSend={handleAudioSend} />
+              <AudioRecorder onSend={handleAudioSend} disabled={audioUploading} />
               {audioUploading && (
                 <div className="text-center text-allo-muted mt-2">
                   Uploading audio note…
