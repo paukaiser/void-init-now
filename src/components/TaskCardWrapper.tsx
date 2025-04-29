@@ -1,7 +1,6 @@
 
 import React from 'react';
-import TaskCard from './TaskCard';
-import { Task } from '../types';
+import { Task } from '../types/index.ts';
 import { isPast, isToday } from 'date-fns';
 
 interface TaskCardWrapperProps {
@@ -28,7 +27,7 @@ const TaskCardWrapper: React.FC<TaskCardWrapperProps> = ({
         <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full z-10 animate-pulse" />
       )}
       <div className={isOverdue() ? 'border-l-2 border-red-500' : ''}>
-        <TaskCard
+        <TaskCardWrapper
           task={task}
           onClick={onClick}
           onComplete={onComplete}
