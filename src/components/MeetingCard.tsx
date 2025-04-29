@@ -41,22 +41,22 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
 }) => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const isCompleted = meeting.status === 'completed';
   const isPastScheduled = meeting.status === 'scheduled' && new Date(meeting.startTime) < new Date();
-  
+
   const getDayOfWeek = (dateString: string) => {
     const [day, month, year] = dateString.split('.').map(Number);
     const date = new Date(year, month - 1, day);
     return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
-  
+
   const dayOfWeek = getDayOfWeek(meeting.date);
   const handleClick = () => {
     if (meeting.status === 'completed') return;
     navigate(`/meeting/${meeting.id}`); // ✅ Navigate to the meeting page
   };
-  
+
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the card click
@@ -76,7 +76,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const status = meeting.status || 'scheduled';
     let icon, bgColor, textColor;
 
-    switch(status) {
+    switch (status) {
       case 'completed':
         icon = <CheckCircle size={isCalendarView ? 12 : 14} />;
         bgColor = 'bg-green-100';
@@ -96,7 +96,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
         if (isPastScheduled) {
           bgColor = 'bg-yellow-100';
           textColor = 'text-yellow-800';
-          
+
           return (
             <div className={`flex items-center gap-1 text-xs rounded-full px-2 py-0.5 ${bgColor} ${textColor} whitespace-nowrap`}>
               {isMobile ? (
@@ -135,26 +135,26 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
       </div>
     );
   };
-  
+
   if (isCalendarView && startHour !== undefined && endHour !== undefined) {
     const startDate = new Date(meeting.startTime);
     const endDate = new Date(meeting.endTime);
-    
+
     const startMinutes = startDate.getHours() * 60 + startDate.getMinutes();
     const endMinutes = endDate.getHours() * 60 + endDate.getMinutes();
-    
+
     const totalMinutes = (endHour - startHour) * 60;
     const startPercentage = ((startMinutes - startHour * 60) / totalMinutes) * 100;
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
-    
+
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
     const meetingBgColor = 'bg-[#FF8769]/100';
-    
+
     return (
-      <div 
+      <div
         className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardCursor}`}
-        style={{ 
-          top: `${startPercentage}%`, 
+        style={{
+          top: `${startPercentage}%`,
           height: `${durationPercentage}%`,
           minHeight: '40px',
           maxHeight: `${durationPercentage > 100 ? 100 : durationPercentage}%`
@@ -182,13 +182,13 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
       </div>
     );
   }
-  
+
   return (
-    <div 
+    <div
       className={cn(
         "allo-card hover-lift",
         isCompleted ? "cursor-default" : "cursor-pointer"
-      )} 
+      )}
       onClick={handleClick}
     >
       <div className="flex flex-col space-y-2">
@@ -215,7 +215,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
           </div>
         </div>
         {meeting.address && (
-          <div 
+          <div
             className="flex items-center gap-1.5 text-xs text-allo-muted hover:text-[#FF8769] cursor-pointer"
             onClick={handleAddressClick}
           >
@@ -233,7 +233,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
           </div>
           <div className="flex items-center gap-1.5">
             <Clock size={14} />
-            <span>{new Date(meeting.startTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            <span>{new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
         </div>
       </div>

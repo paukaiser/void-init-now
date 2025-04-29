@@ -153,15 +153,16 @@ app.post('/api/meetings', async (req, res) => {
 
         let companyName = 'Unknown Company';
         let companyAddress = 'Unknown Address';
+        let contactName = 'Unknown Contact';
+        let contactPhone = '';
         let dealId = null;
 
-        // Fetch company name
+        // Fetch associated company
         try {
           const assocRes = await axios.get(
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/companies`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-
           const companyId = assocRes.data.results?.[0]?.id;
           if (companyId) {
             const companyRes = await axios.get(
@@ -169,7 +170,6 @@ app.post('/api/meetings', async (req, res) => {
               { headers: { Authorization: `Bearer ${token}` } }
             );
             companyName = companyRes.data.properties.name || 'Unnamed Company';
-            // Try all likely address fields:
             companyAddress =
               companyRes.data.properties.address ||
               companyRes.data.properties.address1 ||
@@ -180,7 +180,26 @@ app.post('/api/meetings', async (req, res) => {
           console.warn(`⚠️ Could not fetch company for meeting ${id}`);
         }
 
-        // Fetch associated dealId
+        // 🆕 Fetch associated contact
+        try {
+          const assocContactRes = await axios.get(
+            `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/contacts`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          const contactId = assocContactRes.data.results?.[0]?.id;
+          if (contactId) {
+            const contactRes = await axios.get(
+              `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,phone`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            contactName = `${contactRes.data.properties.firstname || ''} ${contactRes.data.properties.lastname || ''}`.trim();
+            contactPhone = contactRes.data.properties.phone || '';
+          }
+        } catch (e) {
+          console.warn(`⚠️ Could not fetch contact for meeting ${id}`);
+        }
+
+        // Fetch deal ID
         try {
           const dealsRes = await axios.get(
             `https://api.hubapi.com/crm/v4/objects/meetings/${id}/associations/deals`,
@@ -199,10 +218,12 @@ app.post('/api/meetings', async (req, res) => {
           startTime: properties.hs_meeting_start_time,
           endTime: properties.hs_meeting_end_time,
           date,
-          address: companyAddress || 'No location', // <<<<<<
+          address: companyAddress || 'No location',
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
           companyName,
+          contactName,   // 🆕
+          contactPhone,  // 🆕
           dealId
         };
       })
@@ -214,6 +235,7 @@ app.post('/api/meetings', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch meetings' });
   }
 });
+
 
 
 // ✅ Get one meeting by ID
