@@ -15,6 +15,7 @@ import AddMeeting from './pages/AddMeeting.tsx';
 import MeetingOutcome from './pages/MeetingOutcome.tsx';
 import PositiveOutcome from './pages/PositiveOutcome.tsx';      // <--- Import
 import NegativeOutcome from './pages/NegativeOutcome.tsx';      // <--- Import
+import FollowUpOutcome from './pages/FollowUpOutcome.tsx';      // <--- Import
 // import FollowUpComponent from './pages/FollowUpComponent.tsx'; // <-- if you have this
 
 import { MeetingProvider } from './context/MeetingContext.tsx';
@@ -77,6 +78,10 @@ function App() {
           <Route
             path="/meeting/:id/outcome"
             element={isAuthenticated ? <MeetingOutcome /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/meeting/:id/follow-up"
+            element={isAuthenticated ? <FollowUpOutcome /> : <Navigate to="/" />}
           />
           {/* Outcome-specific routes */}
           <Route

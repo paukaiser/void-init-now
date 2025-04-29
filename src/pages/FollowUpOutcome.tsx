@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Home, Clock, Calendar as CalendarIcon } from 'lucide-react';
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button.tsx";
 import { toast } from "sonner";
-import AudioRecorder from '@/components/AudioRecorder';
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
+import AudioRecorder from '../components/AudioRecorder.tsx';
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.tsx";
+import { Calendar } from "../components/ui/calendar.tsx";
 import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils.ts";
+import { useLocation } from 'react-router-dom';
 
 const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,13 +19,31 @@ const FollowUpOutcome: React.FC = () => {
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showDateSelector, setShowDateSelector] = useState(false);
 
-  const handleAudioSend = (blob: Blob) => {
+  const location = useLocation();
+  const isHotDeal = location.state?.isHotDeal;
+  const dealId = location.state?.dealId;
+
+  const handleAudioSend = async (blob: Blob) => {
     setAudioBlob(blob);
 
-    // In a real app, this would send the recording to Zapier via webhook
-    console.log('Sending voice note to Zapier webhook');
+    // Build FormData for file upload
+    const formData = new FormData();
+    formData.append('audio', blob, 'voice-note.webm'); // Use the correct extension
+    console.log('Audio blob:', blob); // Log the blob instead of undefined req.file
+    console.log('Forwarding audio to Zapier...');
+    try {
+      const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
-    toast.success("Voice note recorded successfully");
+      if (!response.ok) throw new Error('Failed to send audio to backend');
+      toast.success("Voice note recorded and sent successfully");
+    } catch (err) {
+      toast.error("Failed to send voice note");
+      console.error("Backend error:", err);
+    }
   };
 
   const handleScheduleFollowUp = () => {
@@ -229,3 +248,7 @@ const FollowUpOutcome: React.FC = () => {
 };
 
 export default FollowUpOutcome;
+
+function setStep(arg0: string) {
+  throw new Error('Function not implemented.');
+}
