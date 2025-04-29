@@ -148,35 +148,58 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
 
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-    const meetingBgColor = 'bg-[#FF8769]/100';
+    
+    // Bestimme die Hintergrundfarbe basierend auf dem Status
+    let meetingBgColor = 'bg-[#FF8769]/90';
+    let meetingHoverBgColor = 'hover:bg-[#FF8769]/100';
+    
+    if (meeting.status === 'completed') {
+      meetingBgColor = 'bg-green-200';
+      meetingHoverBgColor = 'hover:bg-green-300';
+    } else if (meeting.status === 'canceled') {
+      meetingBgColor = 'bg-red-200';
+      meetingHoverBgColor = 'hover:bg-red-300';
+    } else if (meeting.status === 'rescheduled') {
+      meetingBgColor = 'bg-yellow-200';
+      meetingHoverBgColor = 'hover:bg-yellow-300';
+    }
+
+    // Berechne die minimale Höhe basierend auf der Dauer (aber mindestens 50px für Lesbarkeit)
+    const calculatedHeight = `${durationPercentage}%`;
+    const minHeight = '50px';
 
     return (
       <div
-        className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardCursor}`}
+        className={`meeting-card ${meetingBgColor} ${meetingHoverBgColor} transition-all duration-200 ${cardCursor} shadow-sm border border-opacity-10`}
         style={{
           top: `${startPercentage}%`,
-          height: `${durationPercentage}%`,
-          minHeight: '40px',
-          maxHeight: `${durationPercentage > 100 ? 100 : durationPercentage}%`
+          height: calculatedHeight,
+          minHeight: minHeight,
+          maxHeight: `${durationPercentage > 100 ? 100 : durationPercentage}%`,
+          zIndex: 10
         }}
         onClick={handleClick}
       >
         <div className="p-2 flex flex-col h-full overflow-hidden">
           <div className="flex justify-between items-start mb-1">
-            <div className="text-xs font-bold truncate">{meeting.title}</div>
+            <div className="text-xs font-bold truncate max-w-[75%]">{meeting.title}</div>
             <div>
               {renderStatusBadge()}
             </div>
           </div>
-          <div className="mt-auto text-xs text-allo-muted flex flex-wrap gap-2">
+          <div className="mt-auto text-xs flex flex-wrap gap-2">
             <div className="flex items-center gap-1 truncate">
               <Building2 size={10} />
-              <span className="truncate">{meeting.companyName}</span>
+              <span className="truncate max-w-[80px]">{meeting.companyName}</span>
             </div>
             <div className="flex items-center gap-1 truncate">
               <User size={10} />
-              <span className="truncate">{meeting.contactName}</span>
+              <span className="truncate max-w-[80px]">{meeting.contactName}</span>
             </div>
+          </div>
+          <div className="text-xs opacity-75 mt-1">
+            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+            {new Date(meeting.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>

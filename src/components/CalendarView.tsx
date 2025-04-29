@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   format,
@@ -29,7 +30,7 @@ interface CalendarViewProps {
   userId: string;
   selectedDate?: Date;
   onSelectMeeting?: (meeting: Meeting) => void;
-  onFetchedMeetings?: (meetings: Meeting[]) => void; // ← add this
+  onFetchedMeetings?: (meetings: Meeting[]) => void;
 }
 
 
@@ -40,6 +41,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
   const [currentTime, setCurrentTime] = useState(new Date());
   const [meetingToCancel, setMeetingToCancel] = useState<Meeting | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const START_HOUR = 8;
@@ -55,6 +57,30 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
+
+  // Auto-scroll to current time when component mounts or when the current time changes
+  useEffect(() => {
+    if (isSameDay(currentDate, new Date()) && scrollRef.current) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      
+      if (currentHour >= START_HOUR && currentHour <= END_HOUR) {
+        const totalMinutes = (END_HOUR - START_HOUR) * 60;
+        const minutesSinceStart = (currentHour - START_HOUR) * 60 + currentMinute;
+        const scrollPercentage = (minutesSinceStart / totalMinutes);
+        
+        // Get the height of the scroll container
+        const scrollAreaHeight = scrollRef.current.scrollHeight;
+        
+        // Scroll to the position with an offset to center the current time
+        const offsetHeight = scrollRef.current.clientHeight / 2;
+        const scrollToPosition = (scrollAreaHeight * scrollPercentage) - offsetHeight;
+        
+        scrollRef.current.scrollTop = Math.max(0, scrollToPosition);
+      }
+    }
+  }, [currentDate, currentTime]);
 
   useEffect(() => {
     const fetchMeetings = async () => {
@@ -184,7 +210,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <ScrollArea className="flex-grow h-full">
+      <ScrollArea className="flex-grow h-full" viewportRef={scrollRef}>
         <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
           <div className="flex flex-col min-w-[60px]">
             <div className="h-10 border-b border-gray-100" />
