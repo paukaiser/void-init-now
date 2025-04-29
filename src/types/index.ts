@@ -1,4 +1,5 @@
 export interface Task {
+  subject: string;
   id: string;
   contactName: string;
   phoneNumber: string;
@@ -13,9 +14,10 @@ export interface Task {
   disqualifyReason?: string;
   disqualifyOtherReason?: string;
   moreInfo?: string;
+  body?: string; // 🆕 ADD THIS LINE
 }
 
-export type SalesRegion = 
+export type SalesRegion =
   | "Augsburg"
   | "Berlin"
   | "Bielefeld"
@@ -38,7 +40,7 @@ export type SalesRegion =
   | "Regensburg"
   | "Stuttgart";
 
-export type Cuisine = 
+export type Cuisine =
   | "African"
   | "Burger"
   | "Cafe"

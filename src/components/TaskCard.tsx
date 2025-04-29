@@ -2,17 +2,17 @@
 import React, { useState } from 'react';
 import { Calendar, Phone, X, Calendar as CalendarIcon, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { format, isPast, isSameDay } from 'date-fns';
-import { Task } from '@/types';
-import { Card, CardContent } from '@/components/ui/card';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Task } from '../types/index.ts';
+import { Card, CardContent } from '../components/ui/card.tsx';
+import { useIsMobile } from '../hooks/use-mobile.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog.tsx";
+import { Button } from "../components/ui/button.tsx";
 import { useNavigate } from 'react-router-dom';
 import { toast } from "sonner";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
+import { Input } from "../components/ui/input.tsx";
 import { useState as useStateDialog } from "react";
-import { Label } from "@/components/ui/label";
+import { Label } from "../components/ui/label.tsx";
 
 interface TaskCardProps {
   task: Task;
@@ -27,14 +27,14 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   const [disqualifyReason, setDisqualifyReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
   const [showDisqualifyDialog, setShowDisqualifyDialog] = useState(false);
-  
+
   const isPastDue = task.dueDate && isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), new Date());
-  
+
   const handleCardClick = () => {
     setIsDialogOpen(true);
     if (onClick) onClick();
   };
-  
+
   const handleScheduleMeeting = () => {
     setIsDialogOpen(false);
     // If this task is scheduled, we also mark it as completed
@@ -47,18 +47,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       }
     });
   };
-  
+
   const handleCall = () => {
     window.location.href = `tel:${task.phoneNumber}`;
     setIsDialogOpen(false);
   };
-  
+
   const handleComplete = () => {
     toast.success(`Task for ${task.contactName} marked as completed`);
     setIsDialogOpen(false);
     if (onComplete) onComplete(task.id);
   };
-  
+
   const openDisqualifyDialog = () => {
     setShowDisqualifyDialog(true);
     setIsDialogOpen(false);
@@ -77,53 +77,65 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
 
     if (onDisqualify) {
       onDisqualify(
-        task.id, 
-        disqualifyReason, 
+        task.id,
+        disqualifyReason,
         disqualifyReason === "Other" ? otherReason : undefined
       );
     }
-    
+
     toast.info(`Task for ${task.contactName} marked as disqualified`);
     setShowDisqualifyDialog(false);
   };
-  
+
   return (
     <>
-      <Card 
+      <Card
         className={`cursor-pointer transition-all hover:shadow-md ${!task.isRead ? 'border-l-4 border-l-[#2E1813]' : ''}`}
         onClick={handleCardClick}
       >
         <CardContent className="p-2">
           <div className="flex flex-col">
             <div className="flex justify-between items-start">
-              <h3 className="font-semibold text-xs">{task.contactName}</h3>
+              <h3
+                className={`font-semibold text-xs ${isPastDue ? 'text-red-600' : ''
+                  }`}
+              >
+                {task.subject}
+              </h3>
               {isPastDue && (
-                <Clock className="h-3 w-3 text-amber-500" />
+                <div className="flex items-center gap-1 text-xs text-red-600">
+                  <Clock className="h-3 w-3" />
+                  <span>Overdue</span>
+                </div>
               )}
             </div>
             <p className="text-xs text-muted-foreground truncate">{task.restaurantName}</p>
           </div>
         </CardContent>
       </Card>
-      
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Actions for {task.contactName}</DialogTitle>
+            <DialogTitle>Actions for {task.subject}</DialogTitle>
           </DialogHeader>
-          
-          <div className="space-y-2 py-2">
-            <div className="text-sm">
-              <p><span className="font-medium">Restaurant:</span> {task.restaurantName}</p>
-              <p><span className="font-medium">Cuisine:</span> {task.cuisine}</p>
-              <p><span className="font-medium">Phone:</span> {task.phoneNumber}</p>
-              <p><span className="font-medium">Email:</span> {task.email}</p>
-            </div>
+
+          <div className="text-sm space-y-2">
+            <p>
+              <span className="font-medium">Notes:</span>{" "}
+              {task.body ? task.body.replace(/<[^>]+>/g, '').trim() : "N/A"}
+            </p>            <p><span className="font-medium">Restaurant:</span> {task.restaurantName || "N/A"}</p>
+            <p><span className="font-medium">Contact:</span> {task.contactName || "N/A"}</p>
+            <p><span className="font-medium">Cuisine:</span> {task.cuisine || "N/A"}</p>
+            <p><span className="font-medium">Phone:</span> {task.phoneNumber || "N/A"}</p>
+            <p><span className="font-medium">Email:</span> {task.email || "N/A"}</p>
           </div>
-          
+
+
+
           <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button 
-              onClick={handleCall} 
+            <Button
+              onClick={handleCall}
               className="w-full flex items-center justify-center"
               variant="outline"
               size="sm"
@@ -131,8 +143,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               <Phone size={16} className="mr-1" />
               Call
             </Button>
-            <Button 
-              onClick={handleScheduleMeeting} 
+            <Button
+              onClick={handleScheduleMeeting}
               className="w-full flex items-center justify-center"
               variant="outline"
               size="sm"
@@ -140,8 +152,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               <CalendarIcon size={16} className="mr-1" />
               Schedule
             </Button>
-            <Button 
-              onClick={openDisqualifyDialog} 
+            <Button
+              onClick={openDisqualifyDialog}
               className="w-full flex items-center justify-center"
               variant="outline"
               size="sm"
@@ -149,8 +161,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               <XCircle size={16} className="mr-1" />
               Disqualify
             </Button>
-            <Button 
-              onClick={handleComplete} 
+            <Button
+              onClick={handleComplete}
               className="w-full flex items-center justify-center"
               variant="outline"
               size="sm"
@@ -165,12 +177,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       <Dialog open={showDisqualifyDialog} onOpenChange={setShowDisqualifyDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Disqualify {task.contactName}</DialogTitle>
+            <DialogTitle>
+              {task.contactName && task.contactName !== "Unknown Contact"
+                ? `Actions for ${task.contactName}`
+                : task.restaurantName && task.restaurantName !== "Unknown Restaurant"
+                  ? `Actions for ${task.restaurantName}`
+                  : "Task Details"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="disqualify-reason">Disqualification Reason</Label>
-              <Select 
+              <Select
                 onValueChange={(value) => setDisqualifyReason(value)}
                 value={disqualifyReason}
               >
@@ -194,8 +212,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
             {disqualifyReason === "Other" && (
               <div className="space-y-2">
                 <Label htmlFor="other-reason">Disqualification Reason - Other</Label>
-                <Input 
-                  id="other-reason" 
+                <Input
+                  id="other-reason"
                   value={otherReason}
                   onChange={(e) => setOtherReason(e.target.value)}
                   placeholder="Please specify the reason"
@@ -203,8 +221,8 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               </div>
             )}
 
-            <Button 
-              onClick={handleDisqualify} 
+            <Button
+              onClick={handleDisqualify}
               className="w-full"
             >
               Submit

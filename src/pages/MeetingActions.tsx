@@ -24,14 +24,13 @@ import {
 import { data } from '@remix-run/router';
 
 const MeetingActions: React.FC = () => {
-  
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { meetings } = useMeetingContext(); // ✅ use context
   const [meetingDetails, setMeetingDetails] = useState<any | null>(null);
-  console.log("Fetched meetings from backend:", data.results);
 
   useEffect(() => {
     const foundMeeting = meetings.find(m => m.id === id);
@@ -44,7 +43,7 @@ const MeetingActions: React.FC = () => {
 
   const handleAddressClick = () => {
     const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(meetingDetails.address)}`;
-    globalThis.open(googleMapsUrl, '_blank');
+    window.open(googleMapsUrl, '_blank');
   };
 
   const handleCancelConfirm = async () => {
@@ -70,7 +69,7 @@ const MeetingActions: React.FC = () => {
     } catch (err) {
       alert('Failed to cancel meeting. Please try again.');
     }
-  };  
+  };
 
   const handleComplete = () => {
     navigate(`/meeting/${id}/outcome`, {

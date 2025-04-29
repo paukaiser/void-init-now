@@ -95,12 +95,25 @@ const Dashboard: React.FC = () => {
     return <div className="p-6">🔄 Loading dashboard...</div>;
   }
 
-  const tasksForSelectedDate = tasks.filter(task =>
-    !task.completed &&
-    !task.disqualified &&
-    (isSameDay(new Date(task.dueDate), currentDate) ||
-      (isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), new Date())))
-  );
+  const tasksForSelectedDate = tasks.filter((task) => {
+    const due = new Date(task.dueDate);
+
+    // Show past + today tasks if today is selected
+    if (isSameDay(currentDate, new Date())) {
+      return (
+        !task.completed &&
+        !task.disqualified &&
+        (isSameDay(due, currentDate) || isPast(due))
+      );
+    }
+
+    // For future days, show only tasks due exactly on that day
+    return (
+      !task.completed &&
+      !task.disqualified &&
+      isSameDay(due, currentDate)
+    );
+  });
 
   const displayedTasks = isMobile && !showAllTasks
     ? tasksForSelectedDate.slice(0, 4)
@@ -120,7 +133,7 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="flex-none mb-2">
-        {tasksForSelectedDate.length > 0 && (
+        {tasksForSelectedDate.length > 0 ? (
           <div>
             <div className="flex items-center cursor-pointer" onClick={navigateToTasks}>
               <h3 className="text-sm font-medium mb-1 text-muted-foreground">Tasks</h3>
@@ -157,6 +170,11 @@ const Dashboard: React.FC = () => {
                 )}
               </Button>
             )}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center">
+            <p className="text-sm text-muted-foreground">No tasks for this day. Check all your tasks in the </p>
+            <Button variant="link" onClick={navigateToTasks} className="ml-1">Inbox</Button>
           </div>
         )}
       </div>

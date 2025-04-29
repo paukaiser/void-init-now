@@ -386,81 +386,6 @@ app.post('/api/meeting/:id/cancel', async (req, res) => {
 });
 
 
-// Fetch all tasks for the logged-in user (salesperson)
-app.get('/api/tasks', async (req, res) => {
-  const token = req.session.accessToken;
-  if (!token) return res.status(401).send('Not authenticated');
-
-  const hubspotClient = new Client({ accessToken: token });
-
-  try {
-    const response = await hubspotClient.crm.objects.tasks.basicApi.getPage(
-      100, // limit (adjust as needed)
-      undefined, // after (for pagination, leave undefined for first page)
-      [
-        "hs_task_body",
-        "hs_timestamp",
-        "hs_task_status",
-        "hubspot_owner_id",
-        "hs_task_priority",
-        "hs_task_subject",
-        "hs_task_due_date"
-      ]
-    );
-
-    // Optionally, map/format the response as you wish
-    const tasks = response.results.map(task => ({
-      id: task.id,
-      subject: task.properties.hs_task_subject,
-      status: task.properties.hs_task_status,
-      body: task.properties.hs_task_body,
-      dueDate: task.properties.hs_task_due_date,
-      ownerId: task.properties.hubspot_owner_id,
-      createdAt: task.properties.hs_timestamp,
-      // Add more fields or associations as needed
-    }));
-
-    res.json({ tasks });
-  } catch (err) {
-    console.error("❌ Failed to fetch tasks:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch tasks' });
-  }
-});
-
-// Reschedule a meeting
-app.patch('/api/meetings/:id/reschedule', async (req, res) => {
-  const token = req.session.accessToken;
-  if (!token) return res.status(401).send('Not authenticated');
-
-  const hubspotClient = new Client({ accessToken: token });
-  const meetingId = req.params.id;
-  const { startTime, endTime, notes } = req.body;
-  console.log("About to PATCH with properties:", {
-    hs_meeting_start_time: startTime,
-    hs_meeting_end_time: endTime,
-    // etc.
-  });
-
-  try {
-    // Send timestamps as strings
-    const result = await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
-      properties: {
-        hs_meeting_start_time: startTime,
-        hs_meeting_end_time: endTime,
-        hs_timestamp: startTime,
-        hs_meeting_outcome: "RESCHEDULED",
-        hs_internal_meeting_notes: notes || '',
-      }
-    });
-    // Log the FULL response from HubSpot!
-    console.log('HubSpot PATCH response:', JSON.stringify(result, null, 2));
-    res.json({ success: true });
-  } catch (err) {
-    console.error("❌ Failed to reschedule meeting:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to reschedule meeting' });
-  }
-});
-
 // Send Voice Note to Zapier
 const upload = multer(); // memory storage
 
@@ -678,5 +603,113 @@ app.post('/api/meeting/:id/mark-completed', async (req, res) => {
   } catch (err) {
     console.error("❌ Failed to cancel meeting:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to complete meeting' });
+  }
+});
+
+
+
+// Fetch all tasks for the logged-in user (salesperson)
+app.post('/api/tasks', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const { ownerId } = req.body;
+  console.log("📩 Incoming task fetch body:", req.body);
+
+  try {
+    const response = await axios.post('https://api.hubapi.com/crm/v3/objects/tasks/search', {
+      filterGroups: [{
+        filters: [
+          { propertyName: "hubspot_owner_id", operator: "EQ", value: ownerId },
+          { propertyName: "hs_task_status", operator: "NEQ", value: "COMPLETED" },
+        ]
+      }],
+      properties: [
+        "hs_object_id",
+        "hs_task_subject",
+        "hs_task_body",
+        "hs_task_status",
+        "hubspot_owner_id",
+        "hs_task_priority",
+        "hs_task_due_date",
+        "hs_timestamp"
+      ],
+      limit: 100
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    console.log("🟢 Tasks fetched:", response.data.results.length);
+
+    const tasks = await Promise.all(response.data.results.map(async (task) => {
+      const taskId = task.id;
+      let restaurantName = 'Unknown Restaurant';
+      let contactName = '';
+      let email = '';
+      let phoneNumber = '';
+      let cuisine = '';
+
+      // Fetch associated company
+      try {
+        const assocCompany = await axios.get(
+          `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/companies`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const companyId = assocCompany.data.results?.[0]?.id;
+
+        if (companyId) {
+          const companyDetails = await axios.get(
+            `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name,industry`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          restaurantName = companyDetails.data.properties.name || restaurantName;
+          cuisine = companyDetails.data.properties.industry || '';
+        }
+      } catch (err) {
+        console.warn(`⚠️ No company for task ${taskId}`);
+      }
+
+      // Fetch associated contact
+      try {
+        const assocContact = await axios.get(
+          `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/contacts`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const contactId = assocContact.data.results?.[0]?.id;
+
+        if (contactId) {
+          const contactDetails = await axios.get(
+            `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,email,phone`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          );
+          contactName = `${contactDetails.data.properties.firstname || ''} ${contactDetails.data.properties.lastname || ''}`.trim();
+          email = contactDetails.data.properties.email || '';
+          phoneNumber = contactDetails.data.properties.phone || '';
+        }
+      } catch (err) {
+        console.warn(`⚠️ No contact for task ${taskId}`);
+      }
+
+      return {
+        id: taskId,
+        subject: task.properties.hs_task_subject,
+        contactName, // 🧠 fetched from associated contact
+        restaurantName, // 🧠 fetched from associated company
+        cuisine,
+        phoneNumber,
+        email,
+        body: task.properties.hs_task_body || "", // 📝 task body = notes
+        status: task.properties.hs_task_status,
+        dueDate: task.properties.hs_task_due_date,
+        createdAt: task.properties.hs_timestamp,
+        ownerId: task.properties.hubspot_owner_id,
+      };
+
+    }));
+
+    res.json({ tasks });
+  } catch (err) {
+    console.error("❌ HubSpot API error:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch tasks' });
   }
 });
