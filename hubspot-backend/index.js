@@ -598,6 +598,7 @@ app.post('/api/meeting/:id/mark-completed', async (req, res) => {
         hs_meeting_outcome: "COMPLETED"
       }
     });
+    setMeetings((prev) => prev.map(meeting => meeting.id === meetingId ? { ...meeting, status: 'completed' } : meeting));
 
     res.json({ success: true });
   } catch (err) {
@@ -711,5 +712,34 @@ app.post('/api/tasks', async (req, res) => {
   } catch (err) {
     console.error("❌ HubSpot API error:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to fetch tasks' });
+  }
+});
+
+
+app.patch('/api/meetings/:id/reschedule', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+  const meetingId = req.params.id;
+  const { startTime, endTime, notes } = req.body;
+
+  try {
+    // Send timestamps as strings
+    const result = await hubspotClient.crm.objects.meetings.basicApi.update(meetingId, {
+      properties: {
+        hs_meeting_start_time: String(startTime),
+        hs_meeting_end_time: String(endTime),
+        hs_timestamp: String(startTime),
+        hs_meeting_outcome: "RESCHEDULED",
+        hs_internal_meeting_notes: notes || '',
+      }
+    });
+    // Log the FULL response from HubSpot!
+    console.log('HubSpot PATCH response:', JSON.stringify(result, null, 2));
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Failed to reschedule meeting:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to reschedule meeting' });
   }
 });

@@ -126,7 +126,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               {task.body ? task.body.replace(/<[^>]+>/g, '').trim() : "N/A"}
             </p>            <p><span className="font-medium">Restaurant:</span> {task.restaurantName || "N/A"}</p>
             <p><span className="font-medium">Contact:</span> {task.contactName || "N/A"}</p>
-            <p><span className="font-medium">Cuisine:</span> {task.cuisine || "N/A"}</p>
             <p><span className="font-medium">Phone:</span> {task.phoneNumber || "N/A"}</p>
             <p><span className="font-medium">Email:</span> {task.email || "N/A"}</p>
           </div>
