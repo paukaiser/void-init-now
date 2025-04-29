@@ -40,3 +40,20 @@
 .read-the-docs {
   color: #888;
 }
+
+.task-overdue {
+  position: relative;
+}
+
+.task-overdue::after {
+  content: 'OVERDUE';
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.65rem;
+  color: #ea384c;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
+  z-index: 5;
+}

@@ -3,17 +3,17 @@ import { useUser } from '../hooks/useUser.ts';
 import { useTasks } from '../hooks/useTasks.ts';
 import WeeklyOverview from '../components/WeeklyOverview.tsx';
 import CalendarView from '../components/CalendarView.tsx';
-import TaskCard from '../components/TaskCard.tsx';
+import TaskCardWrapper from '../components/TaskCardWrapper.tsx';
 import FloatingActionButton from '../components/FloatingActionButton.tsx';
 import { Meeting } from '../components/MeetingCard.tsx';
-import { format, addDays, addWeeks, isPast, isSameDay } from 'date-fns';
+import { format, addDays, addWeeks, isPast, isSameDay, isToday } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog.tsx';
 import { Button } from '../components/ui/button.tsx';
 import { Input } from '../components/ui/input.tsx';
 import { Label } from '../components/ui/label.tsx';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Calendar as CalendarIcon, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, ChevronDown, ChevronUp, ArrowRight, Inbox } from 'lucide-react';
 import { Calendar } from '../components/ui/calendar.tsx';
 import { cn } from '../lib/utils.ts';
 import { useIsMobile } from '../hooks/use-mobile.tsx';
@@ -141,7 +141,7 @@ const Dashboard: React.FC = () => {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {displayedTasks.map(task => (
-                <TaskCard
+                <TaskCardWrapper
                   key={task.id}
                   task={task}
                   onClick={() => handleTaskClick(task.id)}
@@ -172,9 +172,16 @@ const Dashboard: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">No tasks for this day. Check all your tasks in the </p>
-            <Button variant="link" onClick={navigateToTasks} className="ml-1">Inbox</Button>
+          <div className="flex flex-col items-center justify-center p-6 border border-dashed rounded-lg bg-gray-50">
+            <p className="text-sm text-muted-foreground text-center mb-2">
+              {isToday(currentDate) 
+                ? "No tasks for today. Check all coming up tasks in your inbox." 
+                : `No tasks for ${format(currentDate, 'MMMM d, yyyy')}.`}
+            </p>
+            <div className="flex items-center mt-1">
+              <Inbox className="h-5 w-5 mr-2 text-muted-foreground" />
+              <Button variant="link" onClick={navigateToTasks} className="px-1">Go to Inbox</Button>
+            </div>
           </div>
         )}
       </div>

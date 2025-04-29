@@ -1,13 +1,18 @@
 
 import React, { useState } from 'react';
 import TaskCard from '../components/TaskCard.tsx';
+import TaskCardWrapper from '../components/TaskCardWrapper.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.tsx";
 import { Badge } from "../components/ui/badge.tsx";
 import { useTasks } from '../hooks/useTasks.ts';
+import { Button } from "../components/ui/button.tsx";
+import { ArrowLeft } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const Inbox: React.FC = () => {
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
   const [activeTab, setActiveTab] = useState("incomplete");
+  const navigate = useNavigate();
 
   const incompleteTasks = tasks.filter((task) => !task.completed && !task.disqualified);
   const completedTasks = tasks.filter((task) => task.completed || task.disqualified);
@@ -26,7 +31,18 @@ const Inbox: React.FC = () => {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">My Inbox</h2>
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => navigate('/dashboard')} 
+          className="mr-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <h2 className="text-xl font-semibold">My Inbox</h2>
+      </div>
 
       <Tabs defaultValue="incomplete" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
@@ -48,7 +64,7 @@ const Inbox: React.FC = () => {
           <div className="space-y-4">
             {incompleteTasks.length > 0 ? (
               incompleteTasks.map(task => (
-                <TaskCard
+                <TaskCardWrapper
                   key={task.id}
                   task={task}
                   onClick={() => handleTaskClick(task.id)}
@@ -68,7 +84,7 @@ const Inbox: React.FC = () => {
           <div className="space-y-4">
             {completedTasks.length > 0 ? (
               completedTasks.map(task => (
-                <TaskCard
+                <TaskCardWrapper
                   key={task.id}
                   task={task}
                   onClick={() => handleTaskClick(task.id)}
