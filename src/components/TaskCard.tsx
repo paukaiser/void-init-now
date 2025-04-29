@@ -100,7 +100,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
                 className={`font-semibold text-xs ${isPastDue ? 'text-red-600' : ''
                   }`}
               >
-                {task.subject}
+                {task.restaurantName}
               </h3>
               {isPastDue && (
                 <div className="flex items-center gap-1 text-xs text-red-600">
@@ -109,7 +109,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
                 </div>
               )}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{task.restaurantName}</p>
           </div>
         </CardContent>
       </Card>
@@ -117,7 +116,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Actions for {task.subject}</DialogTitle>
+            <DialogTitle>Actions for {task.restaurantName}</DialogTitle>
           </DialogHeader>
 
           <div className="text-sm space-y-2">

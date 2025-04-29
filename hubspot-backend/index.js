@@ -645,7 +645,7 @@ app.post('/api/tasks', async (req, res) => {
         filters: [
           { propertyName: "hubspot_owner_id", operator: "EQ", value: ownerId },
           { propertyName: "hs_task_status", operator: "NEQ", value: "COMPLETED" },
-          { propertyName: "hs_task_subject", operator: "STARTS_WITH", value: "Followup Task" }
+          { propertyName: "hs_task_subject", operator: "CONTAINS_TOKEN", value: "Followup Task" }
         ]
       }],
       properties: [
