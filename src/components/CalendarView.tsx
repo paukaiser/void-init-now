@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   format,
@@ -41,8 +40,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
   const [currentTime, setCurrentTime] = useState(new Date());
   const [meetingToCancel, setMeetingToCancel] = useState<Meeting | null>(null);
   const calendarRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const currentTimeIndicatorRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   const START_HOUR = 8;
@@ -113,25 +110,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
     fetchMeetings();
   }, [userId, currentDate]);
 
-  // Scroll to current time on init and when currentDate changes
-  useEffect(() => {
-    if (isSameDay(currentDate, new Date()) && scrollAreaRef.current && currentTimeIndicatorRef.current) {
-      setTimeout(() => {
-        const currentTimePosition = timeToY(currentTime);
-        if (currentTimePosition > 0) {
-          // Calculate the scroll position (subtract some offset to position the current time in the middle of the view)
-          const viewportHeight = scrollAreaRef.current?.clientHeight || 0;
-          const scrollPosition = (currentTimePosition / 100) * (calendarRef.current?.clientHeight || 0) - (viewportHeight / 2);
-          
-          scrollAreaRef.current?.scrollTo({
-            top: scrollPosition > 0 ? scrollPosition : 0,
-            behavior: 'smooth'
-          });
-        }
-      }, 300); // Small timeout to ensure the rendering is complete
-    }
-  }, [currentDate, currentTime, loading]);
-
   const timeToY = (time: Date): number => {
     const hours = time.getHours();
     const minutes = time.getMinutes();
@@ -178,7 +156,6 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
     if (isSameDay(currentDate, new Date()) && currentTimePosition > 0 && currentTimePosition < 100) {
       grid.push(
         <div
-          ref={currentTimeIndicatorRef}
           key="current-time-indicator"
           className="current-time-indicator"
           style={{ top: `${currentTimePosition}%` }}
@@ -207,7 +184,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <ScrollArea className="flex-grow h-full" ref={scrollAreaRef}>
+      <ScrollArea className="flex-grow h-full">
         <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
           <div className="flex flex-col min-w-[60px]">
             <div className="h-10 border-b border-gray-100" />
