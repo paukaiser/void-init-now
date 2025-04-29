@@ -1,11 +1,15 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import TaskCard from '../components/TaskCard.tsx';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs.tsx";
 import { Badge } from "../components/ui/badge.tsx";
 import { useTasks } from '../hooks/useTasks.ts';
+import { Button } from "../components/ui/button.tsx";
+import { ArrowLeft } from "lucide-react";
 
 const Inbox: React.FC = () => {
+  const navigate = useNavigate();
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
   const [activeTab, setActiveTab] = useState("incomplete");
 
@@ -26,7 +30,18 @@ const Inbox: React.FC = () => {
 
   return (
     <div className="w-full max-w-5xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">My Inbox</h2>
+      <div className="flex items-center mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="mr-2" 
+          onClick={() => navigate('/dashboard')}
+        >
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+        <h2 className="text-xl font-semibold">My Inbox</h2>
+      </div>
 
       <Tabs defaultValue="incomplete" value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
