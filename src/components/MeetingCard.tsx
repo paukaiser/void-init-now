@@ -148,11 +148,30 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
     
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-    const meetingBgColor = 'bg-[#FF8769]/100';
+    
+    // Set different background colors based on meeting status
+    let meetingBgColor = 'bg-[#FF8769]/100';
+    if (meeting.status === 'canceled') {
+      meetingBgColor = 'bg-red-400/90'; // Red for canceled
+    } else if (meeting.status === 'rescheduled') {
+      meetingBgColor = 'bg-yellow-400/90'; // Yellow for rescheduled
+    } else if (meeting.status === 'completed') {
+      meetingBgColor = 'bg-green-400/90'; // Green for completed
+    }
+    
+    // Adjust hover state based on status
+    let hoverClass = 'hover:bg-[#FF8769]/90';
+    if (meeting.status === 'canceled') {
+      hoverClass = 'hover:bg-red-400';
+    } else if (meeting.status === 'rescheduled') {
+      hoverClass = 'hover:bg-yellow-400';
+    } else if (meeting.status === 'completed') {
+      hoverClass = 'hover:bg-green-400';
+    }
     
     return (
       <div 
-        className={`meeting-card ${meetingBgColor} hover:bg-[#FF8769]/90 transition-all duration-200 ${cardCursor}`}
+        className={`meeting-card ${meetingBgColor} ${hoverClass} transition-all duration-200 ${cardCursor}`}
         style={{ 
           top: `${startPercentage}%`, 
           height: `${durationPercentage}%`,
