@@ -12,6 +12,8 @@ export interface Meeting {
     type?: string;
     date?: string;
     dealId?: string | number; // (number in backend, but sometimes string in FE)
+    companyId?: string | number;
+    contactId?: string | number;
     // add other fields as needed
 }
 

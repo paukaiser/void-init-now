@@ -112,8 +112,8 @@ app.get('/api/me', async (req, res) => {
   }
 });
 
-// ✅ Get meetings by user
-// ✅ Get meetings by user WITH DEAL ID
+
+// ✅ Get meetings by user WITH contactId, companyId, and dealId
 app.post('/api/meetings', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
@@ -153,8 +153,12 @@ app.post('/api/meetings', async (req, res) => {
 
         let companyName = 'Unknown Company';
         let companyAddress = 'Unknown Address';
+        let companyId = null;
+
         let contactName = 'Unknown Contact';
         let contactPhone = '';
+        let contactId = null;
+
         let dealId = null;
 
         // Fetch associated company
@@ -163,7 +167,7 @@ app.post('/api/meetings', async (req, res) => {
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/companies`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          const companyId = assocRes.data.results?.[0]?.id;
+          companyId = assocRes.data.results?.[0]?.id || null;
           if (companyId) {
             const companyRes = await axios.get(
               `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name,address,address1,address_street`,
@@ -174,19 +178,19 @@ app.post('/api/meetings', async (req, res) => {
               companyRes.data.properties.address ||
               companyRes.data.properties.address1 ||
               companyRes.data.properties.address_street ||
-              null;
+              'Unknown Address';
           }
         } catch (e) {
           console.warn(`⚠️ Could not fetch company for meeting ${id}`);
         }
 
-        // 🆕 Fetch associated contact
+        // Fetch associated contact
         try {
           const assocContactRes = await axios.get(
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/contacts`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          const contactId = assocContactRes.data.results?.[0]?.id;
+          contactId = assocContactRes.data.results?.[0]?.id || null;
           if (contactId) {
             const contactRes = await axios.get(
               `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,phone`,
@@ -199,7 +203,7 @@ app.post('/api/meetings', async (req, res) => {
           console.warn(`⚠️ Could not fetch contact for meeting ${id}`);
         }
 
-        // Fetch deal ID
+        // Fetch associated deal
         try {
           const dealsRes = await axios.get(
             `https://api.hubapi.com/crm/v4/objects/meetings/${id}/associations/deals`,
@@ -222,8 +226,10 @@ app.post('/api/meetings', async (req, res) => {
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
           companyName,
-          contactName,   // 🆕
-          contactPhone,  // 🆕
+          companyId,
+          contactName,
+          contactPhone,
+          contactId,
           dealId
         };
       })
@@ -235,6 +241,7 @@ app.post('/api/meetings', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch meetings' });
   }
 });
+
 
 
 
@@ -320,45 +327,54 @@ app.post('/api/meetings/create', async (req, res) => {
 
   const hubspotClient = new Client({ accessToken: token });
 
+  let ownerId = req.session.ownerId;
+
+  // 🔄 Fallback: fetch from access token if missing
+  if (!ownerId) {
+    try {
+      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
+      ownerId = whoami.data.user_id;
+      console.log("🔁 Fetched ownerId from HubSpot token:", ownerId);
+    } catch (err) {
+      console.error("❌ Failed to fetch user_id from access token:", err.response?.data || err.message);
+      return res.status(400).json({ error: 'Could not resolve owner ID' });
+    }
+  }
+
   const {
     title,
     companyId,
-    contactId, // optional
+    contactId,  // optional
+    dealId,     // optional
     meetingType,
-    startTime, // ISO format
-    endTime,   // ISO format
-    notes
+    startTime,
+    endTime,
+    notes,
   } = req.body;
 
-  // Log everything you're about to send!
-  console.log("Creating meeting:", {
-    title, companyId, contactId, meetingType, startTime, endTime, notes
+  console.log("📤 Creating meeting:", {
+    title, companyId, contactId, dealId, meetingType, startTime, endTime, notes, ownerId
   });
 
   // REQUIRED: hs_timestamp must be set and should match start time!
   const associations = [];
+
   if (companyId) {
     associations.push({
       to: { id: companyId },
-      types: [
-        {
-          associationCategory: "HUBSPOT_DEFINED",
-          associationTypeId: 200 // 200 is default for Meeting->Company
-        }
-      ]
+      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 188 }]
     });
   }
   if (contactId) {
     associations.push({
       to: { id: contactId },
-      types: [
-        {
-          associationCategory: "HUBSPOT_DEFINED",
-          associationTypeId: 200 // 200 is default for Meeting->Contact
-        }
-      ]
+      types: [{
+        associationCategory: "HUBSPOT_DEFINED",
+        associationTypeId: 200
+      }]
     });
   }
+  console.log("Associating meeting with:", JSON.stringify(associations, null, 2));
 
   try {
     const meetingRes = await hubspotClient.crm.objects.meetings.basicApi.create({
@@ -367,14 +383,14 @@ app.post('/api/meetings/create', async (req, res) => {
         hs_meeting_start_time: startTime,
         hs_meeting_end_time: endTime,
         hs_timestamp: startTime,
-        hs_internal_meeting_notes: notes || '',
         hs_activity_type: meetingType,
-        hs_meeting_outcome: 'SCHEDULED',
+        hs_internal_meeting_notes: notes || '',
+        hubspot_owner_id: ownerId // ✅ critical for "Hosted by Paul Kaiser"
       },
       associations
     });
 
-    console.log("Meeting created successfully:", meetingRes);
+    console.log("✅ Meeting created successfully:", meetingRes.id);
     res.json({ success: true, meetingId: meetingRes.id });
   } catch (err) {
     console.error("❌ Failed to create meeting:", err.response?.data || err.message);

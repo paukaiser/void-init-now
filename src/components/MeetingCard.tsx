@@ -15,11 +15,13 @@ export interface Meeting {
   startTime: string;
   endTime: string;
   date: string;
-  type?: 'sales meeting' | 'sales followup';
+  type?: 'Sales Meeting' | 'Sales Followup';
   status?: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
   address?: string;
   dealId?: string | number | null;
   onSelect?: (meeting: Meeting) => void;
+  companyId?: string | number | null;
+  contactId?: string | number | null;
 }
 
 interface MeetingCardProps {
@@ -148,11 +150,11 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
 
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-    
+
     // Bestimme die Hintergrundfarbe basierend auf dem Status
     let meetingBgColor = 'bg-[#FF8769]/90';
     let meetingHoverBgColor = 'hover:bg-[#FF8769]/100';
-    
+
     if (meeting.status === 'completed') {
       meetingBgColor = 'bg-green-200';
       meetingHoverBgColor = 'hover:bg-green-300';
@@ -198,7 +200,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
             </div>
           </div>
           <div className="text-xs opacity-75 mt-1">
-            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
             {new Date(meeting.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>

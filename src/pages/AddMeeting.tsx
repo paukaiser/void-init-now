@@ -19,22 +19,22 @@ const AddMeeting: React.FC = () => {
   const location = useLocation();
 
   // Detect reschedule/followup
-  const isRescheduling = location.pathname.includes('reschedule') || 
-                        (location.state && location.state.isRescheduling);
+  const isRescheduling = location.pathname.includes('reschedule') ||
+    (location.state && location.state.isRescheduling);
   const isFollowUp = location.state && location.state.isFollowUp;
 
   // Get prefilled data if any
   const prefilledData = location.state || {};
 
   const [date, setDate] = useState<Date | undefined>(
-    prefilledData.preselectedDate 
-      ? new Date(prefilledData.preselectedDate) 
+    prefilledData.preselectedDate
+      ? new Date(prefilledData.preselectedDate)
       : undefined
   );
   const [startTime, setStartTime] = useState("");
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
-  const [meetingType, setMeetingType] = useState<"sales meeting" | "sales followup">(
-    isFollowUp ? "sales followup" : (prefilledData.meetingType || "sales meeting")
+  const [meetingType, setMeetingType] = useState<"Sales Meeting" | "Sales Followup">(
+    isFollowUp ? "Sales Followup" : (prefilledData.meetingType || "Sales Meeting")
   );
   const [notes, setNotes] = useState(prefilledData.notes || "");
 
@@ -44,8 +44,14 @@ const AddMeeting: React.FC = () => {
   // Prefill company data if needed
   useEffect(() => {
     if ((isFollowUp || forceCompany || isRescheduling) && prefilledData.companyName) {
+      if (!prefilledData.companyId) {
+        toast.error("Missing company ID for follow-up meeting");
+        navigate('/dashboard');
+        return;
+      }
+
       const company: Company = {
-        id: prefilledData.companyId || 'temp-id',
+        id: prefilledData.companyId,
         name: prefilledData.companyName,
         address: prefilledData.companyAddress || 'Unknown Address'
       };
@@ -64,7 +70,7 @@ const AddMeeting: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Form submit triggered");
-  
+
     if (!date || !startTime) {
       toast.error("Please select date and time");
       return;
@@ -73,28 +79,28 @@ const AddMeeting: React.FC = () => {
       toast.error("Please select a company");
       return;
     }
-  
+
     const company = selectedCompany?.name || prefilledData.companyName || "Unknown Company";
-    const meetingTypeLabel = meetingType === "sales meeting" ? "Meeting" : "Followup";
-    const title = `allO x ${company} - ${meetingTypeLabel}`;
-  
+    const meetingTypeLabel = meetingType === "Sales Meeting" ? "Sales Meeting" : "Sales Followup";
+    const title = `${meetingTypeLabel}`;
+
     // Calculate start/end
     const meetingDate = new Date(date);
     const [startHour, startMinute] = startTime.split(':').map(Number);
     meetingDate.setHours(startHour, startMinute, 0, 0);
-  
+
     const endDate = new Date(meetingDate);
     endDate.setHours(endDate.getHours() + 1);
-  
+
     // UNIX milliseconds
     const startMillis = meetingDate.getTime();
     const endMillis = endDate.getTime();
-  
+
     const isInPast = meetingDate < new Date();
-  
+
     if (isRescheduling) {
       // PATCH logic for rescheduling
-      
+
       const meetingId = prefilledData.meetingId;
       if (!meetingId) {
         toast.error("Missing meeting ID for reschedule!");
@@ -105,9 +111,9 @@ const AddMeeting: React.FC = () => {
         endTime: endDate.toISOString(),
         notes: notes || ""
       };
-      
-      
-      
+
+
+
       try {
         const res = await fetch(`http://localhost:3000/api/meetings/${meetingId}/reschedule`, {
           method: "PATCH",
@@ -116,9 +122,9 @@ const AddMeeting: React.FC = () => {
           body: JSON.stringify(patchPayload),
         });
         console.log("Reschedule PATCH server responded", res.status);
-  
+
         if (!res.ok) throw new Error("Failed to reschedule meeting");
-  
+
         toast.success("Meeting rescheduled!");
         navigate('/dashboard');
       } catch (err) {
@@ -127,18 +133,18 @@ const AddMeeting: React.FC = () => {
       }
       return;
     }
-  
+
     // Normal POST (new or follow-up) — FIXED
     const payload = {
       title,
       companyId: selectedCompany?.id || prefilledData.companyId,
-      meetingType,
+      meetingType: meetingTypeLabel,
       startTime: startMillis,  // ✔️
       endTime: endMillis,      // ✔️
       notes,
     };
     console.log("Submitting meeting", payload);
-  
+
     try {
       const res = await fetch('http://localhost:3000/api/meetings/create', {
         method: 'POST',
@@ -147,20 +153,37 @@ const AddMeeting: React.FC = () => {
         body: JSON.stringify(payload),
       });
       console.log("Server responded", res.status);
-  
+
       if (!res.ok) throw new Error('Failed to create meeting');
+
+      // ✅ Mark previous meeting as completed if this is a follow-up
+      if (isFollowUp && prefilledData.meetingId) {
+        try {
+          const completeRes = await fetch(`http://localhost:3000/api/meeting/${prefilledData.meetingId}/mark-completed`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (!completeRes.ok) throw new Error('Failed to mark original meeting as completed');
+          console.log("✅ Original meeting marked as completed");
+        } catch (err) {
+          console.error("❌ Could not mark original meeting completed:", err);
+          toast.error("Original meeting was not marked as completed.");
+        }
+      }
+
       if (isInPast) {
         toast.success("Past meeting logged as completed");
       } else {
         toast.success(isFollowUp ? "Follow-up scheduled" : "Meeting scheduled");
       }
+
       navigate('/dashboard');
     } catch (err) {
       console.error("❌ Meeting creation failed", err);
       toast.error("Failed to schedule meeting");
     }
   };
-  
+
 
   const generateTimeOptions = () => {
     const options = [];
@@ -190,36 +213,36 @@ const AddMeeting: React.FC = () => {
   return (
     <div className="allo-page">
       <div className="w-full max-w-3xl mx-auto py-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="mb-6"
           onClick={() => navigate('/dashboard')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Meetings
         </Button>
-        
+
         <div className="allo-card w-full">
           <h2 className="text-xl font-semibold mb-6">
-            {isRescheduling 
-              ? "Reschedule Meeting" 
-              : isFollowUp 
+            {isRescheduling
+              ? "Reschedule Meeting"
+              : isFollowUp
                 ? "Schedule Follow-up Meeting"
                 : "Schedule New Meeting"}
           </h2>
-          
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {showCompanySelection && (
                 <div className="md:col-span-2">
-                  <CompanySearch 
+                  <CompanySearch
                     onSelect={setSelectedCompany}
                     value={selectedCompany}
                     required={true}
                   />
                 </div>
               )}
-              
+
               {showCompanyDetails && (
                 <div className="md:col-span-2">
                   <div className="border rounded-md p-3 bg-gray-50">
@@ -231,34 +254,34 @@ const AddMeeting: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               {showMeetingTypeSelection && (
                 <div className="md:col-span-2 space-y-2">
                   <Label>Meeting Type <span className="text-red-500">*</span></Label>
-                  <RadioGroup 
+                  <RadioGroup
                     defaultValue={meetingType}
-                    onValueChange={(value: "sales meeting" | "sales followup") => setMeetingType(value)}
+                    onValueChange={(value: "Sales Meeting" | "Sales Followup") => setMeetingType(value)}
                     className="flex flex-col space-y-1"
                   >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sales meeting" id="meeting-type-sales" />
+                      <RadioGroupItem value="Sales Meeting" id="meeting-type-sales" />
                       <Label htmlFor="meeting-type-sales" className="cursor-pointer">Sales Meeting</Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="sales followup" id="meeting-type-followup" />
-                      <Label htmlFor="meeting-type-followup" className="cursor-pointer">Sales Follow-up</Label>
+                      <RadioGroupItem value="Sales Followup" id="meeting-type-followup" />
+                      <Label htmlFor="meeting-type-followup" className="cursor-pointer">Sales Followup</Label>
                     </div>
                   </RadioGroup>
                 </div>
               )}
-              
+
               {showMeetingTypeDisplay && (
                 <div className="space-y-2 md:col-span-2">
                   <Label>Meeting Type</Label>
-                  <div className="text-sm bg-gray-50 border rounded p-2">Sales Follow-up</div>
+                  <div className="text-sm bg-gray-50 border rounded p-2">Sales Followup</div>
                 </div>
               )}
-              
+
               <div className="space-y-2 md:col-span-2">
                 <Label>Date <span className="text-red-500">*</span></Label>
                 <Popover>
@@ -285,7 +308,7 @@ const AddMeeting: React.FC = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div className="space-y-2 md:col-span-2">
                 <Label htmlFor="start-time">Start Time <span className="text-red-500">*</span></Label>
                 <select
@@ -299,19 +322,19 @@ const AddMeeting: React.FC = () => {
                   {generateTimeOptions()}
                 </select>
               </div>
-              
+
               <div className="md:col-span-2 space-y-2">
                 <Label htmlFor="notes">Notes</Label>
-                <Textarea 
-                  id="notes" 
-                  placeholder="Add any internal notes about this meeting" 
-                  value={notes} 
+                <Textarea
+                  id="notes"
+                  placeholder="Add any internal notes about this meeting"
+                  value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="min-h-[100px]"
                 />
               </div>
             </div>
-            
+
             <div className="flex justify-end pt-4">
               <Button type="submit" className="allo-button">
                 {isRescheduling ? "Reschedule Meeting" : isFollowUp ? "Schedule Follow-up" : "Schedule Meeting"}
