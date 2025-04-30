@@ -56,7 +56,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
   // Initialize Google Maps Autocomplete
   const addressInputRef = useRef<HTMLInputElement>(null);
-  
+
   useEffect(() => {
     // Load Google Maps JavaScript API script
     const script = document.createElement('script');
@@ -74,23 +74,23 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
   const initAutocomplete = () => {
     if (!addressInputRef.current || !window.google) return;
-    
+
     const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current);
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       if (!place.geometry) return;
-      
+
       // Extract address components
       const addressComponents = place.address_components || [];
-      
+
       let street = '';
       let city = '';
       let postalCode = '';
       let state = '';
-      
+
       addressComponents.forEach(component => {
         const types = component.types;
-        
+
         if (types.includes('street_number') || types.includes('route')) {
           street += component.long_name + ' ';
         }
@@ -104,7 +104,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           state = component.long_name;
         }
       });
-      
+
       setNewCompany(prev => ({
         ...prev,
         street: street.trim(),
@@ -199,7 +199,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         dealName: `${selectedCompanyForDialog.name} - New Deal`,
         pipeline: "default", // ✅ internal pipeline ID
         stage: "appointmentscheduled", // ✅ internal stage ID, not "Meeting Scheduled"
-        companyId: selectedCompanyForDialog.id
+        companyId: selectedCompanyForDialog.id,
       };
 
 
@@ -256,7 +256,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
   const handleCreateCompany = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate form
     if (!newCompany.name || !newCompany.street || !newCompany.city || !newCompany.postalCode) {
       toast.error("Please fill in all required fields");
@@ -275,20 +275,20 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         state: newCompany.state || 'N/A',
         cuisine: newCompany.cuisine,
       };
-      
+
       const companyRes = await fetch('http://localhost:3000/api/companies/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(companyPayload)
       });
-      
+
       if (!companyRes.ok) {
         throw new Error("Failed to create company");
       }
-      
+
       const company = await companyRes.json();
-      
+
       // 2. Automatically create a deal for the new company
       const dealPayload = {
         dealName: `${company.name} - New Deal`,
@@ -296,23 +296,23 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         stage: "appointmentscheduled", // stage ID
         companyId: company.id
       };
-      
+
       const dealRes = await fetch('http://localhost:3000/api/hubspot/deals/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(dealPayload)
       });
-      
+
       if (!dealRes.ok) {
         throw new Error("Failed to create deal for new company");
       }
-      
+
       const deal = await dealRes.json();
-      
+
       toast.success("Company created with new deal");
       setShowAddCompanyDialog(false);
-      
+
       // 3. Select the newly created company with its deal
       onSelectRef.current({
         id: company.id,
@@ -320,7 +320,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         address: `${company.street}, ${company.city}, ${company.postalCode}`,
         dealId: deal.id
       });
-      
+
       setSearchTerm(company.name);
     } catch (err) {
       console.error("❌ Failed to create company:", err);
@@ -439,30 +439,30 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           <form onSubmit={handleCreateCompany} className="py-4 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="company-name">Restaurant Name <span className="text-red-500">*</span></Label>
-              <Input 
-                id="company-name" 
-                name="name" 
+              <Input
+                id="company-name"
+                name="name"
                 value={newCompany.name}
                 onChange={handleNewCompanyChange}
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="company-address">Address <span className="text-red-500">*</span></Label>
-              <Input 
+              <Input
                 id="company-address"
                 placeholder="Search address..."
                 ref={addressInputRef}
                 className="mb-2"
               />
-              
+
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
                   <Label htmlFor="company-street">Street Address <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="company-street" 
-                    name="street" 
+                  <Input
+                    id="company-street"
+                    name="street"
                     value={newCompany.street}
                     onChange={handleNewCompanyChange}
                     required
@@ -470,9 +470,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company-city">City <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="company-city" 
-                    name="city" 
+                  <Input
+                    id="company-city"
+                    name="city"
                     value={newCompany.city}
                     onChange={handleNewCompanyChange}
                     required
@@ -482,9 +482,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-2">
                   <Label htmlFor="company-postal">Postal Code <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="company-postal" 
-                    name="postalCode" 
+                  <Input
+                    id="company-postal"
+                    name="postalCode"
                     value={newCompany.postalCode}
                     onChange={handleNewCompanyChange}
                     required
@@ -492,31 +492,31 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="company-state">State</Label>
-                  <Input 
-                    id="company-state" 
-                    name="state" 
+                  <Input
+                    id="company-state"
+                    name="state"
                     value={newCompany.state}
                     onChange={handleNewCompanyChange}
                   />
                 </div>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="company-cuisine">Cuisine</Label>
-              <Input 
-                id="company-cuisine" 
-                name="cuisine" 
+              <Input
+                id="company-cuisine"
+                name="cuisine"
                 value={newCompany.cuisine}
                 onChange={handleNewCompanyChange}
                 placeholder="e.g. Italian, Mediterranean, American..."
               />
             </div>
-            
+
             <DialogFooter>
-              <Button 
-                type="button" 
-                variant="outline" 
+              <Button
+                type="button"
+                variant="outline"
                 onClick={() => setShowAddCompanyDialog(false)}
               >
                 Cancel

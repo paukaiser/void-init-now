@@ -836,37 +836,50 @@ app.post('/api/hubspot/deals/create', async (req, res) => {
 
   const hubspotClient = new Client({ accessToken: token });
 
+  // ✅ Try getting ownerId from session, or fallback to HubSpot token info
+  let ownerId = req.session.ownerId;
+  if (!ownerId) {
+    try {
+      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
+      ownerId = whoami.data.user_id;
+      console.log("🔁 Fetched ownerId from token:", ownerId);
+    } catch (err) {
+      console.error("❌ Could not resolve ownerId", err.response?.data || err.message);
+      return res.status(400).json({ error: 'Could not resolve owner ID' });
+    }
+  }
+
   const {
     dealName,
-    pipeline = "default", // or "Sales Pipeline" if you've renamed it
-    stage = "appointmentscheduled",
+    pipeline,
+    stage,
     companyId
   } = req.body;
 
-  if (!dealName || !companyId) {
-    return res.status(400).json({ error: 'Missing dealName or companyId' });
-  }
+  console.log("📩 Creating deal for company", companyId);
 
   try {
-    const createResponse = await hubspotClient.crm.deals.basicApi.create({
+    const response = await hubspotClient.crm.deals.basicApi.create({
       properties: {
         dealname: dealName,
-        pipeline,
-        dealstage: stage,
+        pipeline: pipeline || 'default',
+        dealstage: stage || 'appointmentscheduled',
+        hubspot_owner_id: ownerId,
+        sdr_owner: ownerId // 🔹 Custom field set to same user
       },
-      associations: [{
-        to: { id: companyId },
-        types: [{
-          associationCategory: "HUBSPOT_DEFINED",
-          associationTypeId: 341 // Company-to-Deal
-        }]
-      }]
+      associations: [
+        {
+          to: { id: companyId },
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 5 }]
+        }
+      ]
     });
 
-    console.log("✅ Deal created:", createResponse.id);
-    res.json({ id: createResponse.id });
+    console.log("✅ Deal created:", response.id);
+    res.json({ success: true, id: response.id });
   } catch (err) {
     console.error("❌ Failed to create deal:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to create deal', details: err.response?.data || err.message });
   }
 });
+
