@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "../components/ui/input.tsx";
 import { Label } from "../components/ui/label.tsx";
 import { Search, Plus } from 'lucide-react';
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
+import { Button } from "../components/ui/button.tsx";
 
 export interface Company {
   id: string;
@@ -33,6 +36,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showNoDealDialog, setShowNoDealDialog] = useState(false);
+  const [selectedCompanyForDialog, setSelectedCompanyForDialog] = useState<Company | null>(null);
   const onSelectRef = useRef(onSelect);
 
   useEffect(() => {
@@ -100,10 +105,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       const firstDeal = deals[0];
 
       if (!firstDeal) {
-        toast.warning("No deals found for this company. Meeting will be unassociated.");
+        // No deals found, show dialog
+        setSelectedCompanyForDialog(company);
+        setShowNoDealDialog(true);
+      } else {
+        // Pass company with dealId
+        onSelectRef.current({ ...company, dealId: firstDeal.id || null });
       }
-      // Pass company with optional dealId
-      onSelectRef.current({ ...company, dealId: firstDeal?.id || null });
     } catch (err) {
       console.error("❌ Failed to fetch deal:", err);
       toast.error("Could not fetch deal for selected company.");
@@ -111,6 +119,51 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     }
   };
 
+  const handleCreateDeal = async () => {
+    if (!selectedCompanyForDialog) return;
+    
+    try {
+      const payload = {
+        dealName: `${selectedCompanyForDialog.name} - New Deal`,
+        pipeline: "Sales Pipeline",
+        stage: "Meeting Scheduled",
+        companyId: selectedCompanyForDialog.id
+      };
+      
+      const res = await fetch('http://localhost:3000/api/hubspot/deals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to create deal");
+      }
+      
+      const newDeal = await res.json();
+      toast.success("New deal created successfully");
+      
+      // Close dialog and select company with new deal ID
+      setShowNoDealDialog(false);
+      onSelectRef.current({ 
+        ...selectedCompanyForDialog, 
+        dealId: newDeal.id 
+      });
+    } catch (err) {
+      console.error("❌ Failed to create deal:", err);
+      toast.error("Could not create new deal");
+      // Still select the company but without a deal
+      setShowNoDealDialog(false);
+      onSelectRef.current({ ...selectedCompanyForDialog, dealId: null });
+    }
+  };
+
+  const handleAddNewCompany = () => {
+    // This function was referenced but not implemented in the original code
+    // Will implement placeholder functionality
+    toast.info("Adding new company feature not implemented yet");
+  };
 
   useEffect(() => {
     if (value) {
@@ -174,6 +227,43 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           )}
         </div>
       )}
+      
+      {/* No Deal Dialog */}
+      <Dialog open={showNoDealDialog} onOpenChange={setShowNoDealDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>No Deal Found</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              No deal was found for {selectedCompanyForDialog?.name}. 
+              Would you like to create a new deal with the following details?
+            </p>
+            <div className="space-y-2 text-sm border-l-2 border-gray-200 pl-3">
+              <p><span className="font-medium">Deal Name:</span> {selectedCompanyForDialog?.name} - New Deal</p>
+              <p><span className="font-medium">Pipeline:</span> Sales Pipeline</p>
+              <p><span className="font-medium">Stage:</span> Meeting Scheduled</p>
+              <p><span className="font-medium">Association:</span> {selectedCompanyForDialog?.name}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setShowNoDealDialog(false);
+                if (selectedCompanyForDialog) {
+                  onSelectRef.current({ ...selectedCompanyForDialog, dealId: null });
+                }
+              }}
+            >
+              Skip
+            </Button>
+            <Button onClick={handleCreateDeal}>
+              Create Deal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
