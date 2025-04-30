@@ -8,6 +8,7 @@ export interface Company {
   id: string;
   name: string;
   address: string;
+  dealId?: string | null;
 }
 
 interface CompanySearchProps {
@@ -80,27 +81,36 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     debouncedSearch(term);
   };
 
-  const handleSelectCompany = (company: Company) => {
+  const handleSelectCompany = async (company: Company) => {
     setSearchTerm(company.name);
     setShowResults(false);
     setSearchResults([]);
     setError(null);
-    onSelectRef.current(company);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/hubspot/company/${company.id}/deals`, {
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch deals");
+      }
+
+      const deals = await res.json();
+      const firstDeal = deals[0];
+
+      if (!firstDeal) {
+        toast.warning("No deals found for this company. Meeting will be unassociated.");
+      }
+      // Pass company with optional dealId
+      onSelectRef.current({ ...company, dealId: firstDeal?.id || null });
+    } catch (err) {
+      console.error("❌ Failed to fetch deal:", err);
+      toast.error("Could not fetch deal for selected company.");
+      onSelectRef.current({ ...company, dealId: null });
+    }
   };
 
-  const handleAddNewCompany = () => {
-    const newCompany: Company = {
-      id: `new-${Date.now()}`,
-      name: searchTerm,
-      address: 'Please update address'
-    };
-    setSearchTerm(newCompany.name);
-    setShowResults(false);
-    setSearchResults([]);
-    setError(null);
-    onSelectRef.current(newCompany);
-    toast.info("Locally added company. Not saved in HubSpot.");
-  };
 
   useEffect(() => {
     if (value) {

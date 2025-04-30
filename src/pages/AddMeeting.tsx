@@ -337,7 +337,11 @@ const AddMeeting: React.FC = () => {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button type="submit" className="allo-button">
+              <Button
+                type="submit"
+                className="allo-button"
+                onClick={handleSubmit}
+              >
                 {isRescheduling ? "Reschedule Meeting" : isFollowUp ? "Schedule Follow-up" : "Schedule Meeting"}
               </Button>
             </div>

@@ -788,3 +788,44 @@ app.patch('/api/meetings/:id/reschedule', async (req, res) => {
     res.status(500).json({ error: 'Failed to reschedule meeting' });
   }
 });
+
+
+// get deals for a company
+// Add this to your Express app
+app.get('/api/hubspot/company/:companyId/deals', async (req, res) => {
+  const token = req.session.accessToken;
+  const { companyId } = req.params;
+
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    const assocRes = await hubspotClient.crm.associations.v4.basicApi.getPage(
+      'companies',
+      companyId,
+      'deals',
+      undefined,
+      100
+    );
+
+    const dealIds = assocRes.results.map(r => r.toObjectId);
+    if (!dealIds.length) return res.json([]);
+
+    const dealDetails = await hubspotClient.crm.deals.batchApi.read({
+      inputs: dealIds.map(id => ({ id })),
+      properties: ['dealname', 'dealstage', 'pipeline'],
+    });
+
+    const salesPipelineDeals = dealDetails.results.filter(
+      deal => deal.properties.pipeline === 'default' // adjust if your pipeline ID differs
+    );
+
+    res.json(salesPipelineDeals);
+  } catch (err) {
+    console.error("❌ Error fetching deals for company:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch deals', details: err.response?.data || err.message });
+  }
+});
+
+
