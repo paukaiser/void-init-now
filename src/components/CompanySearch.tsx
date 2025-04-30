@@ -121,34 +121,35 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
   const handleCreateDeal = async () => {
     if (!selectedCompanyForDialog) return;
-    
+
     try {
       const payload = {
         dealName: `${selectedCompanyForDialog.name} - New Deal`,
-        pipeline: "Sales Pipeline",
-        stage: "Meeting Scheduled",
+        pipeline: "default", // ✅ internal pipeline ID
+        stage: "appointmentscheduled", // ✅ internal stage ID, not "Meeting Scheduled"
         companyId: selectedCompanyForDialog.id
       };
-      
+
+
       const res = await fetch('http://localhost:3000/api/hubspot/deals/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload)
       });
-      
+
       if (!res.ok) {
         throw new Error("Failed to create deal");
       }
-      
+
       const newDeal = await res.json();
       toast.success("New deal created successfully");
-      
+
       // Close dialog and select company with new deal ID
       setShowNoDealDialog(false);
-      onSelectRef.current({ 
-        ...selectedCompanyForDialog, 
-        dealId: newDeal.id 
+      onSelectRef.current({
+        ...selectedCompanyForDialog,
+        dealId: newDeal.id
       });
     } catch (err) {
       console.error("❌ Failed to create deal:", err);
@@ -227,7 +228,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           )}
         </div>
       )}
-      
+
       {/* No Deal Dialog */}
       <Dialog open={showNoDealDialog} onOpenChange={setShowNoDealDialog}>
         <DialogContent className="sm:max-w-md">
@@ -236,7 +237,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           </DialogHeader>
           <div className="py-4">
             <p className="text-sm text-gray-500 mb-4">
-              No deal was found for {selectedCompanyForDialog?.name}. 
+              No deal was found for {selectedCompanyForDialog?.name}.
               Would you like to create a new deal with the following details?
             </p>
             <div className="space-y-2 text-sm border-l-2 border-gray-200 pl-3">
@@ -247,8 +248,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
             </div>
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setShowNoDealDialog(false);
                 if (selectedCompanyForDialog) {

@@ -829,3 +829,44 @@ app.get('/api/hubspot/company/:companyId/deals', async (req, res) => {
 });
 
 
+
+app.post('/api/hubspot/deals/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  const {
+    dealName,
+    pipeline = "default", // or "Sales Pipeline" if you've renamed it
+    stage = "appointmentscheduled",
+    companyId
+  } = req.body;
+
+  if (!dealName || !companyId) {
+    return res.status(400).json({ error: 'Missing dealName or companyId' });
+  }
+
+  try {
+    const createResponse = await hubspotClient.crm.deals.basicApi.create({
+      properties: {
+        dealname: dealName,
+        pipeline,
+        dealstage: stage,
+      },
+      associations: [{
+        to: { id: companyId },
+        types: [{
+          associationCategory: "HUBSPOT_DEFINED",
+          associationTypeId: 341 // Company-to-Deal
+        }]
+      }]
+    });
+
+    console.log("✅ Deal created:", createResponse.id);
+    res.json({ id: createResponse.id });
+  } catch (err) {
+    console.error("❌ Failed to create deal:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to create deal', details: err.response?.data || err.message });
+  }
+});
