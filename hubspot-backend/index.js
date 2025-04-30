@@ -374,6 +374,12 @@ app.post('/api/meetings/create', async (req, res) => {
       }]
     });
   }
+  if (dealId) {
+    associations.push({
+      to: { id: dealId },
+      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 212 }]
+    });
+  }
   console.log("Associating meeting with:", JSON.stringify(associations, null, 2));
 
   try {

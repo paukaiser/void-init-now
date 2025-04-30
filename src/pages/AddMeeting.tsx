@@ -142,6 +142,7 @@ const AddMeeting: React.FC = () => {
       startTime: startMillis,  // ✔️
       endTime: endMillis,      // ✔️
       notes,
+      dealId: prefilledData.dealId,
     };
     console.log("Submitting meeting", payload);
 

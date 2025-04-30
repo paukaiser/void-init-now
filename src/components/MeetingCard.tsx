@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle, MapPin } from 'lucide-react';
@@ -22,6 +21,7 @@ export interface Meeting {
   onSelect?: (meeting: Meeting) => void;
   companyId?: string | number | null;
   contactId?: string | number | null;
+  completed?: boolean;
 }
 
 interface MeetingCardProps {
@@ -70,7 +70,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     e.stopPropagation(); // Prevent triggering the card click
     if (meeting.address) {
       const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(meeting.address)}`;
-      window.open(googleMapsUrl, '_blank');
+      (window as any).open(googleMapsUrl, '_blank');
     }
   };
 

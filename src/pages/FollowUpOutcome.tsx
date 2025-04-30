@@ -9,6 +9,10 @@ import { Calendar } from "../components/ui/calendar.tsx";
 import { format } from "date-fns";
 import { cn } from "../lib/utils.ts";
 import { useMeetingContext } from '../context/MeetingContext.tsx';
+import { useLocation } from 'react-router-dom'; // already imported? good
+
+
+
 
 const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -17,9 +21,14 @@ const FollowUpOutcome: React.FC = () => {
   const [showTaskOptions, setShowTaskOptions] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showDateSelector, setShowDateSelector] = useState(false);
+  const location = useLocation();
+  const isHotDeal = location.state?.isHotDeal || false;
+  const dealId = location.state?.dealId || null;
 
   const { meetings } = useMeetingContext();
   const meetingDetails = meetings.find(m => m.id === id);
+
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     if (!meetingDetails) {
@@ -27,6 +36,12 @@ const FollowUpOutcome: React.FC = () => {
       navigate('/dashboard');
     }
   }, [meetingDetails, navigate]);
+
+  useEffect(() => {
+    if (meetingDetails && meetingDetails.completed) {
+      setIsCompleted(true);
+    }
+  }, [meetingDetails]);
 
   const handleAudioSend = async (blob: Blob) => {
     setAudioBlob(blob);
@@ -54,6 +69,7 @@ const FollowUpOutcome: React.FC = () => {
     navigate('/add-meeting', {
       state: {
         isFollowUp: true,
+        originalMeetingId: meetingDetails.id,
         meetingId: id,
         companyId: meetingDetails.companyId,
         companyName: meetingDetails.companyName,
@@ -63,6 +79,7 @@ const FollowUpOutcome: React.FC = () => {
         dealId: meetingDetails.dealId,
         forceCompany: true,
         meetingType: meetingDetails.type,
+        isHotDeal: isHotDeal,
       }
     });
   };
@@ -143,6 +160,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
                   onClick={handleScheduleFollowUp}
+                  disabled={isCompleted}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Meeting
@@ -151,6 +169,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center py-4 bg-amber-500 hover:bg-amber-600 text-white"
                   onClick={() => setShowTaskOptions(true)}
+                  disabled={isCompleted}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Task
@@ -159,6 +178,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center"
                   onClick={handleComplete}
+                  disabled={isCompleted}
                 >
                   <Home size={18} className="mr-2" />
                   Return to Homepage
