@@ -883,3 +883,58 @@ app.post('/api/hubspot/deals/create', async (req, res) => {
   }
 });
 
+// create task 
+app.post('/api/hubspot/tasks/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const {
+    taskDate,
+    companyId,
+    contactId,
+    dealId,
+    companyName,
+    ownerId
+  } = req.body;
+
+  if (!taskDate || !companyId || !contactId || !dealId || !companyName || !ownerId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const hubspot = new Client({ accessToken: token });
+
+  const taskPayload = {
+    properties: {
+      hs_timestamp: taskDate,
+      hs_task_body: `Followup with the restaurant ${companyName}`,
+      hubspot_owner_id: ownerId,
+      hs_task_subject: `Followup Task - ${companyName}`,
+      hs_task_status: "NOT_STARTED",
+      hs_task_priority: "MEDIUM",
+      hs_task_type: "CALL"
+    },
+    associations: [
+      {
+        to: { id: contactId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 204 }]
+      },
+      {
+        to: { id: companyId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 192 }]
+      },
+      {
+        to: { id: dealId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 216 }]
+      }
+    ]
+  };
+
+  try {
+    const response = await hubspot.crm.objects.tasks.basicApi.create(taskPayload);
+    console.log("✅ Task created:", response.id);
+    res.json({ success: true, taskId: response.id });
+  } catch (err) {
+    console.error("❌ Failed to create task:", err.response?.body || err.message);
+    res.status(500).json({ error: "Failed to create task", details: err.response?.body || err.message });
+  }
+});
