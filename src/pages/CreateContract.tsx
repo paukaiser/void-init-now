@@ -2,13 +2,13 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Save, Download, Printer, Check, Home, Mail, Plus, Minus } from 'lucide-react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "../components/ui/button.tsx";
+import { Input } from "../components/ui/input.tsx";
+import { Label } from "../components/ui/label.tsx";
+import { Checkbox } from "../components/ui/checkbox.tsx";
+import { Textarea } from "../components/ui/textarea.tsx";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from "../components/ui/dialog.tsx";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.tsx";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import html2pdf from 'html2pdf.js';
@@ -20,13 +20,13 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "../components/ui/form.tsx";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import SignatureCanvas from 'react-signature-canvas';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "../components/ui/collapsible.tsx";
+import { Separator } from "../components/ui/separator.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 
 interface PackageOption {
   name: string;
@@ -67,13 +67,13 @@ const formSchema = z.object({
   alloBeratername: z.string().min(1, "allO Berater Name ist erforderlich"),
   expectedCardVolume: z.string().optional(),
   remarks: z.string().optional(),
-  
+
   // SEPA fields
   accountHolder: z.string().optional(),
   accountAddress: z.string().optional(),
   iban: z.string().optional(),
   goLiveDate: z.string().optional(),
-  
+
   signerName: z.string().optional(),
   signatureDate: z.string().optional(),
 });
@@ -96,10 +96,10 @@ const CreateContract: React.FC = () => {
   const [additionalHardwareItem, setAdditionalHardwareItem] = useState<string>("");
   const [showAdditionalHardware, setShowAdditionalHardware] = useState(false);
   const [additionalHardwareQuantity, setAdditionalHardwareQuantity] = useState(1);
-  
+
   // Get username from location state
   const username = location.state?.username || "";
-  
+
   // Create form
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -121,27 +121,27 @@ const CreateContract: React.FC = () => {
     },
     mode: "onChange", // This enables real-time validation
   });
-  
+
   // Watch form fields for auto-fill
   const contactPerson = form.watch('contactPerson');
   const address = form.watch('address');
   const expectedCardVolume = form.watch('expectedCardVolume');
-  
+
   // Update SEPA fields when contact person or address changes
   useEffect(() => {
     if (contactPerson && !form.getValues('accountHolder')) {
       form.setValue('accountHolder', contactPerson);
     }
-    
+
     if (address && !form.getValues('accountAddress')) {
       form.setValue('accountAddress', address);
     }
-    
+
     if (contactPerson && !form.getValues('signerName')) {
       form.setValue('signerName', contactPerson);
     }
   }, [contactPerson, address, form]);
-  
+
   const [packages, setPackages] = useState<PackageOption[]>([
     {
       name: "S",
@@ -163,7 +163,7 @@ const CreateContract: React.FC = () => {
       features: ["TSE Kasse", "unbegrenzte Lizenzen", "5 kostenlose Extras"]
     }
   ]);
-  
+
   const editPackagePrice = (packageIndex: number, priceType: 'originalPrice' | 'discountedPrice', newPrice: string) => {
     const updatedPackages = [...packages];
     updatedPackages[packageIndex] = {
@@ -172,7 +172,7 @@ const CreateContract: React.FC = () => {
     };
     setPackages(updatedPackages);
   };
-  
+
   const extras: ExtraOption[] = [
     { id: "reservierung", name: "Reservierung" },
     { id: "webshop", name: "Webshop" },
@@ -183,7 +183,7 @@ const CreateContract: React.FC = () => {
     { id: "lieferando", name: "Lieferando Integration" },
     { id: "uber", name: "Uber Integration" }
   ];
-  
+
   const [selfOrderOptions, setSelOrderOptions] = useState({
     tabletOrdering: false,
     tabletOrderingQuantity: 1,
@@ -193,7 +193,7 @@ const CreateContract: React.FC = () => {
     tabletQuantity: 1,
     bierhahnkamera: false
   });
-  
+
   const [hardwareOptions, setHardwareOptions] = useState({
     bonDrucker: false,
     bonDruckerQuantity: 2,
@@ -202,14 +202,14 @@ const CreateContract: React.FC = () => {
     iPad: false,
     iPadQuantity: 1
   });
-  
+
   const additionalHardwareOptions = [
     "allO Go Hülle",
     "Metal QR Code",
     "Drucker mit Kassenladenabschluss",
     "WisePOS E Terminal"
   ];
-  
+
   const [servicesOptions, setServicesOptions] = useState({
     support: true,
     steuerberater: true,
@@ -217,9 +217,9 @@ const CreateContract: React.FC = () => {
     fotoshooting: false,
     tse: true
   });
-  
+
   const [amexCheckbox, setAmexCheckbox] = useState(false);
-  
+
   // Make support options not adjustable
   useEffect(() => {
     setServicesOptions(prev => ({
@@ -228,24 +228,24 @@ const CreateContract: React.FC = () => {
       steuerberater: true
     }));
   }, []);
-  
+
   const handleExtraToggle = (extraId: string) => {
-    setSelectedExtras(prev => 
+    setSelectedExtras(prev =>
       prev.includes(extraId)
         ? prev.filter(id => id !== extraId)
         : [...prev, extraId]
     );
   };
-  
+
   const handleHardwareToggle = (option: keyof typeof hardwareOptions) => {
     if (option.endsWith('Quantity')) return;
-    
+
     setHardwareOptions(prev => ({
       ...prev,
       [option]: !prev[option]
     }));
   };
-  
+
   const handleHardwareQuantityChange = (option: 'bonDruckerQuantity' | 'alloGoQuantity' | 'iPadQuantity', value: number) => {
     if (value >= 1 && value <= 99) {
       setHardwareOptions(prev => ({
@@ -254,7 +254,7 @@ const CreateContract: React.FC = () => {
       }));
     }
   };
-  
+
   const handleServicesToggle = (option: keyof typeof servicesOptions) => {
     // Only allow toggling website, fotoshooting, and tse
     if (option === 'website' || option === 'fotoshooting' || option === 'tse') {
@@ -264,16 +264,16 @@ const CreateContract: React.FC = () => {
       }));
     }
   };
-  
+
   const handleSelfOrderToggle = (option: keyof typeof selfOrderOptions) => {
     if (option.endsWith('Quantity')) return;
-    
+
     setSelOrderOptions(prev => ({
       ...prev,
       [option]: !prev[option]
     }));
   };
-  
+
   const handleQuantityChange = (option: 'kioskQuantity' | 'tabletQuantity' | 'tabletOrderingQuantity', value: number) => {
     if (value >= 1 && value <= 99) {
       setSelOrderOptions(prev => ({
@@ -282,10 +282,10 @@ const CreateContract: React.FC = () => {
       }));
     }
   };
-  
+
   const generatePDF = () => {
     if (!contractRef.current) return;
-    
+
     const element = contractRef.current;
     const opt = {
       margin: [10, 10, 10, 10],
@@ -294,21 +294,21 @@ const CreateContract: React.FC = () => {
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
     };
-    
+
     // Instead of saving directly, get the output as blob
     html2pdf().set(opt).from(element).toPdf().output('datauristring').then((dataUrl: string) => {
       setPdfDataUrl(dataUrl);
       setShowPreviewDialog(true);
     });
   };
-  
+
   const printPDF = () => {
     if (pdfDataUrl) {
       const iframe = document.createElement('iframe');
       iframe.style.display = 'none';
       iframe.src = pdfDataUrl;
       document.body.appendChild(iframe);
-      
+
       iframe.onload = () => {
         iframe.contentWindow?.print();
         setTimeout(() => {
@@ -317,40 +317,40 @@ const CreateContract: React.FC = () => {
       };
     }
   };
-  
+
   const sendPdfViaEmail = () => {
     // In a real app, this would send the PDF via email
     toast.success("Contract PDF sent via email");
     setShowPreviewDialog(false);
     setShowSuccessDialog(true);
   };
-  
+
   const clearSignature = () => {
     if (signatureRef.current) {
       signatureRef.current.clear();
     }
   };
-  
+
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     if (!selectedPackage) {
       toast.error("Bitte wählen Sie ein Paket");
       return;
     }
-    
+
     if (!selectedPayment) {
       toast.error("Bitte wählen Sie einen Zahlungstarif");
       return;
     }
-    
+
     if (!signatureRef.current || signatureRef.current.isEmpty()) {
       toast.error("Bitte unterschreiben Sie das Formular");
       return;
     }
-    
+
     // In a real app, we would save the signature as an image
     const signatureDataUrl = signatureRef.current.toDataURL();
     console.log('Signature data URL:', signatureDataUrl);
-    
+
     console.log("Form data:", data);
     console.log("Selected package:", selectedPackage);
     console.log("Selected extras:", selectedExtras);
@@ -359,12 +359,12 @@ const CreateContract: React.FC = () => {
     console.log("Hardware options:", hardwareOptions);
     console.log("Services options:", servicesOptions);
     console.log("Onboarding type:", onboardingType);
-    
+
     generatePDF();
   };
-  
+
   const currentPackage = packages.find(p => p.name === selectedPackage);
-  
+
   // Format expected card volume with Euro sign
   const formatCardVolume = (value: string) => {
     if (!value) return '';
@@ -372,27 +372,27 @@ const CreateContract: React.FC = () => {
     const numericValue = value.replace(/[^\d]/g, '');
     return `${numericValue}€`;
   };
-  
+
   return (
     <div className="allo-page pb-12">
       <div className="w-full max-w-4xl mx-auto py-4">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           className="mb-6"
           onClick={() => navigate('/')}
         >
           <ChevronLeft size={16} className="mr-1" />
           Back to Home
         </Button>
-        
+
         <div className="allo-card w-full mb-8">
           <h2 className="text-xl font-semibold mb-6">Create New Contract</h2>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Restaurant Information</h3>
-                
+
                 <div className="grid grid-cols-1 gap-4">
                   <FormField
                     control={form.control}
@@ -407,7 +407,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="address"
@@ -421,7 +421,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField
                       control={form.control}
@@ -436,7 +436,7 @@ const CreateContract: React.FC = () => {
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -445,17 +445,17 @@ const CreateContract: React.FC = () => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="email" 
-                                placeholder="Email Adresse" 
-                                {...field} 
+                              <Input
+                                type="email"
+                                placeholder="Email Adresse"
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="mobile"
@@ -472,41 +472,41 @@ const CreateContract: React.FC = () => {
                                   </PopoverTrigger>
                                   <PopoverContent className="w-48 p-0">
                                     <div className="grid grid-cols-1 gap-1 p-2">
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setCountryCode("+49")}
                                         className="justify-start"
                                       >
                                         +49 (Germany)
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setCountryCode("+43")}
                                         className="justify-start"
                                       >
                                         +43 (Austria)
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setCountryCode("+41")}
                                         className="justify-start"
                                       >
                                         +41 (Switzerland)
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setCountryCode("+33")}
                                         className="justify-start"
                                       >
                                         +33 (France)
                                       </Button>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm" 
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
                                         onClick={() => setCountryCode("+31")}
                                         className="justify-start"
                                       >
@@ -515,10 +515,10 @@ const CreateContract: React.FC = () => {
                                     </div>
                                   </PopoverContent>
                                 </Popover>
-                                <Input 
+                                <Input
                                   className="rounded-l-none"
-                                  placeholder="+49xxxxxxxxxx" 
-                                  {...field} 
+                                  placeholder="+49xxxxxxxxxx"
+                                  {...field}
                                 />
                               </div>
                             </FormControl>
@@ -528,7 +528,7 @@ const CreateContract: React.FC = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <FormField
                     control={form.control}
                     name="alloBeratername"
@@ -544,12 +544,12 @@ const CreateContract: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Wähle Dein Paket</h3>
                 </div>
-                
+
                 <div className="bg-black text-amber-400 py-3 px-4 rounded-md text-center font-medium mb-4">
                   Wichtig: nur 9,9€/Monat in den ersten{" "}
                   <Popover>
@@ -561,7 +561,7 @@ const CreateContract: React.FC = () => {
                         <span className="text-sm font-medium mb-1">Anzahl der Monate:</span>
                         <div className="flex justify-around">
                           {[3, 6, 9, 12].map(month => (
-                            <Button 
+                            <Button
                               key={month}
                               variant={promotionMonths === month ? "default" : "outline"}
                               size="sm"
@@ -576,10 +576,10 @@ const CreateContract: React.FC = () => {
                   </Popover>
                   {" "}Monaten!
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {packages.map((pkg, idx) => (
-                    <div 
+                    <div
                       key={pkg.name}
                       className={`relative border rounded-md p-4 text-center ${selectedPackage === pkg.name ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
                     >
@@ -589,22 +589,22 @@ const CreateContract: React.FC = () => {
                           <span>Seller</span>
                         </div>
                       )}
-                      
+
                       <div className="flex items-center justify-center space-x-3 mb-3">
-                        <Checkbox 
+                        <Checkbox
                           id={`package-${pkg.name}`}
                           checked={selectedPackage === pkg.name}
                           onCheckedChange={() => setSelectedPackage(selectedPackage === pkg.name ? "" : pkg.name)}
                         />
                         <Label htmlFor={`package-${pkg.name}`} className="text-lg font-medium">{pkg.name}</Label>
                       </div>
-                      
+
                       <div className="mb-3 flex flex-col items-center">
                         <div className="text-sm">TSE Kasse</div>
                         <div className="text-sm">unbegrenzte Lizenzen</div>
                         <div className="text-sm">{pkg.features[2]}</div>
                       </div>
-                      
+
                       <div className="flex items-baseline justify-center space-x-2">
                         <Popover>
                           <PopoverTrigger asChild>
@@ -613,14 +613,14 @@ const CreateContract: React.FC = () => {
                           <PopoverContent className="w-48 p-2">
                             <div className="space-y-2">
                               <Label htmlFor={`original-price-${idx}`}>Original Preis</Label>
-                              <Input 
+                              <Input
                                 id={`original-price-${idx}`}
-                                value={pkg.originalPrice.replace('€', '')} 
+                                value={pkg.originalPrice.replace('€', '')}
                                 onChange={(e) => editPackagePrice(idx, 'originalPrice', `${e.target.value}€`)}
                                 className="mb-2"
                               />
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => setEditingPrices(false)}
                                 className="w-full"
                               >
@@ -636,14 +636,14 @@ const CreateContract: React.FC = () => {
                           <PopoverContent className="w-48 p-2">
                             <div className="space-y-2">
                               <Label htmlFor={`discounted-price-${idx}`}>Rabattierter Preis</Label>
-                              <Input 
+                              <Input
                                 id={`discounted-price-${idx}`}
-                                value={pkg.discountedPrice.replace('€', '')} 
+                                value={pkg.discountedPrice.replace('€', '')}
                                 onChange={(e) => editPackagePrice(idx, 'discountedPrice', `${e.target.value}€`)}
                                 className="mb-2"
                               />
-                              <Button 
-                                size="sm" 
+                              <Button
+                                size="sm"
                                 onClick={() => setEditingPrices(false)}
                                 className="w-full"
                               >
@@ -654,22 +654,22 @@ const CreateContract: React.FC = () => {
                         </Popover>
                         <span className="text-sm text-gray-600">/Monat</span>
                       </div>
-                      
+
                       <div className="text-xs text-gray-500 mt-1">*Monatlich kündbar</div>
                     </div>
                   ))}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Wähle Deine kostenlosen Extras</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {extras.map((extra) => (
                     <div key={extra.id} className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id={`extra-${extra.id}`}
                         checked={selectedExtras.includes(extra.id)}
                         onCheckedChange={() => handleExtraToggle(extra.id)}
@@ -679,17 +679,17 @@ const CreateContract: React.FC = () => {
                   ))}
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Wähle Deinen unglaublich günstigen Zahlungstarif</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-100 p-4 rounded-md">
                   <div className="border rounded-md p-3 flex flex-col bg-white">
                     <div className="font-medium text-sm text-gray-600 mb-2 text-center">Einheitstarif</div>
                     <div className="flex items-center space-x-3">
-                      <Checkbox 
+                      <Checkbox
                         id="payment-option1"
                         checked={selectedPayment === "option1"}
                         onCheckedChange={() => setSelectedPayment(selectedPayment === "option1" ? "" : "option1")}
@@ -697,13 +697,13 @@ const CreateContract: React.FC = () => {
                       <Label htmlFor="payment-option1">0.79% + 0.08€</Label>
                     </div>
                   </div>
-                  
+
                   <div className="border rounded-md p-3 bg-white">
                     <div className="font-medium text-sm text-gray-600 mb-2 text-center">Differenzierter Tarif</div>
                     <div className="flex items-center space-x-0 flex-col items-start">
                       <div className="pl-6 text-sm">Debit: 0.49% + 0.08€</div>
                       <div className="flex items-center space-x-3">
-                        <Checkbox 
+                        <Checkbox
                           id="payment-option2"
                           checked={selectedPayment === "option2"}
                           onCheckedChange={() => setSelectedPayment(selectedPayment === "option2" ? "" : "option2")}
@@ -713,11 +713,11 @@ const CreateContract: React.FC = () => {
                       <div className="pl-6 text-sm">Kredit: 0.99% + 0.08€</div>
                     </div>
                   </div>
-                  
+
                   <div className="md:col-span-2 flex justify-center items-center space-x-2 mt-1">
-                    <Checkbox 
-                      id="cardTypes" 
-                      checked={amexCheckbox} 
+                    <Checkbox
+                      id="cardTypes"
+                      checked={amexCheckbox}
                       onCheckedChange={() => setAmexCheckbox(!amexCheckbox)}
                     />
                     <Label htmlFor="cardTypes" className="text-sm">Gültig auch für Amex, Firmenkarten & internationale Karten</Label>
@@ -727,16 +727,16 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Mache Umsatz wie McDonald's</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center justify-between space-x-2">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id="tablet-ordering"
                         checked={selfOrderOptions.tabletOrdering}
                         onCheckedChange={() => handleSelfOrderToggle("tabletOrdering")}
@@ -746,10 +746,10 @@ const CreateContract: React.FC = () => {
                     {selfOrderOptions.tabletOrdering && (
                       <div className="flex items-center">
                         <Label htmlFor="ordering-quantity" className="mr-2 text-sm">Anzahl:</Label>
-                        <Input 
+                        <Input
                           id="ordering-quantity"
-                          type="number" 
-                          min="1" 
+                          type="number"
+                          min="1"
                           max="99"
                           className="w-16 h-8 text-center"
                           value={selfOrderOptions.tabletOrderingQuantity}
@@ -758,10 +758,10 @@ const CreateContract: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center justify-between space-x-2">
                     <div className="flex items-center space-x-2">
-                      <Checkbox 
+                      <Checkbox
                         id="self-order-kiosk"
                         checked={selfOrderOptions.kiosk}
                         onCheckedChange={() => handleSelfOrderToggle("kiosk")}
@@ -771,10 +771,10 @@ const CreateContract: React.FC = () => {
                     {selfOrderOptions.kiosk && (
                       <div className="flex items-center">
                         <Label htmlFor="kiosk-quantity" className="mr-2 text-sm">Anzahl:</Label>
-                        <Input 
+                        <Input
                           id="kiosk-quantity"
-                          type="number" 
-                          min="1" 
+                          type="number"
+                          min="1"
                           max="99"
                           className="w-16 h-8 text-center"
                           value={selfOrderOptions.kioskQuantity}
@@ -783,18 +783,18 @@ const CreateContract: React.FC = () => {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="kitchen-monitor"
                       checked={selfOrderOptions.tablet}
                       onCheckedChange={() => handleSelfOrderToggle("tablet")}
                     />
                     <Label htmlFor="kitchen-monitor">Kitchen Monitor: 59€ /Monat</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="bierhahnkamera"
                       checked={selfOrderOptions.bierhahnkamera}
                       onCheckedChange={() => handleSelfOrderToggle("bierhahnkamera")}
@@ -803,15 +803,15 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Kostenloses Hardware Paket</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="bon-drucker"
                       checked={hardwareOptions.bonDrucker}
                       onCheckedChange={() => handleHardwareToggle("bonDrucker")}
@@ -825,26 +825,26 @@ const CreateContract: React.FC = () => {
                           <div className="space-y-2">
                             <Label htmlFor="bon-drucker-quantity">Anzahl</Label>
                             <div className="flex items-center space-x-2">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('bonDruckerQuantity', Math.max(1, hardwareOptions.bonDruckerQuantity - 1))}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <Input 
+                              <Input
                                 id="bon-drucker-quantity"
-                                type="number" 
-                                min="1" 
+                                type="number"
+                                min="1"
                                 max="99"
                                 className="w-16 h-8 text-center"
                                 value={hardwareOptions.bonDruckerQuantity}
                                 onChange={(e) => handleHardwareQuantityChange('bonDruckerQuantity', parseInt(e.target.value))}
                               />
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('bonDruckerQuantity', Math.min(99, hardwareOptions.bonDruckerQuantity + 1))}
                               >
@@ -856,9 +856,9 @@ const CreateContract: React.FC = () => {
                       </Popover>
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="allo-go"
                       checked={hardwareOptions.alloGo}
                       onCheckedChange={() => handleHardwareToggle("alloGo")}
@@ -872,26 +872,26 @@ const CreateContract: React.FC = () => {
                           <div className="space-y-2">
                             <Label htmlFor="allo-go-quantity">Anzahl</Label>
                             <div className="flex items-center space-x-2">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('alloGoQuantity', Math.max(1, hardwareOptions.alloGoQuantity - 1))}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <Input 
+                              <Input
                                 id="allo-go-quantity"
-                                type="number" 
-                                min="1" 
+                                type="number"
+                                min="1"
                                 max="99"
                                 className="w-16 h-8 text-center"
                                 value={hardwareOptions.alloGoQuantity}
                                 onChange={(e) => handleHardwareQuantityChange('alloGoQuantity', parseInt(e.target.value))}
                               />
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('alloGoQuantity', Math.min(99, hardwareOptions.alloGoQuantity + 1))}
                               >
@@ -903,9 +903,9 @@ const CreateContract: React.FC = () => {
                       </Popover>
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="ipad"
                       checked={hardwareOptions.iPad}
                       onCheckedChange={() => handleHardwareToggle("iPad")}
@@ -919,26 +919,26 @@ const CreateContract: React.FC = () => {
                           <div className="space-y-2">
                             <Label htmlFor="ipad-quantity">Anzahl</Label>
                             <div className="flex items-center space-x-2">
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('iPadQuantity', Math.max(1, hardwareOptions.iPadQuantity - 1))}
                               >
                                 <Minus className="h-4 w-4" />
                               </Button>
-                              <Input 
+                              <Input
                                 id="ipad-quantity"
-                                type="number" 
-                                min="1" 
+                                type="number"
+                                min="1"
                                 max="99"
                                 className="w-16 h-8 text-center"
                                 value={hardwareOptions.iPadQuantity}
                                 onChange={(e) => handleHardwareQuantityChange('iPadQuantity', parseInt(e.target.value))}
                               />
-                              <Button 
-                                type="button" 
-                                variant="outline" 
+                              <Button
+                                type="button"
+                                variant="outline"
                                 size="sm"
                                 onClick={() => handleHardwareQuantityChange('iPadQuantity', Math.min(99, hardwareOptions.iPadQuantity + 1))}
                               >
@@ -950,12 +950,12 @@ const CreateContract: React.FC = () => {
                       </Popover>
                     </Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
                     {!showAdditionalHardware ? (
-                      <Button 
-                        type="button" 
-                        variant="outline" 
+                      <Button
+                        type="button"
+                        variant="outline"
                         size="sm"
                         onClick={() => setShowAdditionalHardware(true)}
                         className="text-blue-500"
@@ -965,12 +965,12 @@ const CreateContract: React.FC = () => {
                       </Button>
                     ) : (
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
+                        <Checkbox
                           id="additional-hardware"
                           checked={!!additionalHardwareItem}
                         />
-                        <Select 
-                          value={additionalHardwareItem} 
+                        <Select
+                          value={additionalHardwareItem}
                           onValueChange={setAdditionalHardwareItem}
                         >
                           <SelectTrigger className="w-[200px]">
@@ -984,7 +984,7 @@ const CreateContract: React.FC = () => {
                             ))}
                           </SelectContent>
                         </Select>
-                        
+
                         {additionalHardwareItem && (
                           <Popover>
                             <PopoverTrigger asChild>
@@ -994,26 +994,26 @@ const CreateContract: React.FC = () => {
                               <div className="space-y-2">
                                 <Label htmlFor="additional-quantity">Anzahl</Label>
                                 <div className="flex items-center space-x-2">
-                                  <Button 
-                                    type="button" 
-                                    variant="outline" 
+                                  <Button
+                                    type="button"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setAdditionalHardwareQuantity(Math.max(1, additionalHardwareQuantity - 1))}
                                   >
                                     <Minus className="h-4 w-4" />
                                   </Button>
-                                  <Input 
+                                  <Input
                                     id="additional-quantity"
-                                    type="number" 
-                                    min="1" 
+                                    type="number"
+                                    min="1"
                                     max="99"
                                     className="w-16 h-8 text-center"
                                     value={additionalHardwareQuantity}
                                     onChange={(e) => setAdditionalHardwareQuantity(parseInt(e.target.value) || 1)}
                                   />
-                                  <Button 
-                                    type="button" 
-                                    variant="outline" 
+                                  <Button
+                                    type="button"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => setAdditionalHardwareQuantity(Math.min(99, additionalHardwareQuantity + 1))}
                                   >
@@ -1029,42 +1029,42 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Leistungen</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="support"
                       checked={servicesOptions.support}
                       disabled={true}
                     />
                     <Label htmlFor="support">Kostenloser Support (11Uhr - min.23Uhr)</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="steuerberater"
                       checked={servicesOptions.steuerberater}
                       disabled={true}
                     />
                     <Label htmlFor="steuerberater">Kostenlose Steuerberater-Support</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="website"
                       checked={servicesOptions.website}
                       onCheckedChange={() => handleServicesToggle("website")}
                     />
                     <Label htmlFor="website">Website: 99€ einmalige Zahlung</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="fotoshooting"
                       checked={servicesOptions.fotoshooting}
                       onCheckedChange={() => handleServicesToggle("fotoshooting")}
@@ -1072,11 +1072,11 @@ const CreateContract: React.FC = () => {
                     <Label htmlFor="fotoshooting">Fotoshooting: Gratis* oder 499€ /Session</Label>
                   </div>
                 </div>
-                
+
                 <Separator className="my-4" />
-                
+
                 <div className="flex items-start space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id="tse"
                     checked={servicesOptions.tse}
                     onCheckedChange={() => handleServicesToggle("tse")}
@@ -1091,24 +1091,24 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Onboarding Type</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="online-onboarding"
                       checked={onboardingType === "online"}
                       onCheckedChange={() => setOnboardingType(onboardingType === "online" ? "" : "online")}
                     />
                     <Label htmlFor="online-onboarding">Online Onboarding</Label>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2">
-                    <Checkbox 
+                    <Checkbox
                       id="onsite-onboarding"
                       checked={onboardingType === "onsite"}
                       onCheckedChange={() => setOnboardingType(onboardingType === "onsite" ? "" : "onsite")}
@@ -1117,29 +1117,29 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Anmerkungen</h3>
                 </div>
-                
+
                 <FormField
                   control={form.control}
                   name="remarks"
                   render={({ field }) => (
                     <FormItem>
                       <FormControl>
-                        <Textarea 
+                        <Textarea
                           placeholder="Weitere Informationen oder Anmerkungen"
                           className="min-h-[120px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
                   name="expectedCardVolume"
@@ -1154,7 +1154,7 @@ const CreateContract: React.FC = () => {
                             // Remove non-numeric characters for storing
                             const rawValue = e.target.value.replace(/[^\d]/g, '');
                             onChange(rawValue);
-                            
+
                             // Format with € for display
                             if (e.target.value && !e.target.value.endsWith('€') && rawValue) {
                               e.target.value = `${rawValue}€`;
@@ -1168,12 +1168,12 @@ const CreateContract: React.FC = () => {
                   )}
                 />
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">SEPA-Lastschrift</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -1188,7 +1188,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="accountAddress"
@@ -1202,7 +1202,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="iban"
@@ -1216,7 +1216,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="goLiveDate"
@@ -1232,12 +1232,12 @@ const CreateContract: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-200 py-2 px-4 rounded-md">
                   <h3 className="text-center font-medium">Unterschrift</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
@@ -1252,7 +1252,7 @@ const CreateContract: React.FC = () => {
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
                     name="signatureDate"
@@ -1267,13 +1267,13 @@ const CreateContract: React.FC = () => {
                     )}
                   />
                 </div>
-                
+
                 <div className="border border-gray-300 rounded-md p-2">
                   <div className="bg-gray-50 border-b border-gray-200 p-2 mb-2 flex justify-between items-center">
                     <span className="text-sm">Unterschrift</span>
-                    <Button 
-                      type="button" 
-                      variant="outline" 
+                    <Button
+                      type="button"
+                      variant="outline"
                       size="sm"
                       onClick={clearSignature}
                     >
@@ -1290,9 +1290,9 @@ const CreateContract: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex justify-end pt-6">
-                <Button 
+                <Button
                   type="submit"
                   className="allo-button"
                 >
@@ -1302,7 +1302,7 @@ const CreateContract: React.FC = () => {
             </form>
           </Form>
         </div>
-        
+
         <div className="hidden">
           <div ref={contractRef} className="bg-white p-8 max-w-[210mm]" style={{ fontFamily: 'Arial, sans-serif' }}>
             <div className="flex justify-between items-start mb-6">
@@ -1316,7 +1316,7 @@ const CreateContract: React.FC = () => {
                 <div className="text-xs">31.03.2023</div>
               </div>
             </div>
-            
+
             <div className="mb-6 space-y-1">
               <p><strong>Restaurant:</strong> {form.getValues().companyName}</p>
               <p><strong>Adresse:</strong> {form.getValues().address}</p>
@@ -1327,7 +1327,7 @@ const CreateContract: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
@@ -1336,13 +1336,13 @@ const CreateContract: React.FC = () => {
               Your contract has been successfully created. You can now print it or send it via email.
             </DialogDescription>
           </DialogHeader>
-          
+
           {pdfDataUrl && (
             <div className="max-h-[60vh] overflow-auto my-4 border border-gray-200 rounded">
               <iframe src={pdfDataUrl} className="w-full h-[500px]" />
             </div>
           )}
-          
+
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
             <Button variant="outline" onClick={printPDF} className="flex items-center gap-2">
               <Printer className="h-4 w-4" />
@@ -1355,7 +1355,7 @@ const CreateContract: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
         <DialogContent>
           <DialogHeader>
@@ -1370,8 +1370,8 @@ const CreateContract: React.FC = () => {
             </p>
           </div>
           <DialogFooter>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full sm:w-auto"
               onClick={() => navigate('/')}
             >
