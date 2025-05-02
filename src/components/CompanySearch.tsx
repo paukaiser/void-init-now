@@ -12,7 +12,6 @@ export interface Company {
   name: string;
   address: string;
   dealId?: string | null;
-  contactId?: string | null;
 }
 
 interface CompanySearchProps {

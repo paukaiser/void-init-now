@@ -448,7 +448,7 @@ app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => 
       knownLength: req.file.size,
     });
 
-    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pdsjyw/', {
+    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pamztu/', {
       method: 'POST',
       body: formData,
       headers: formData.getHeaders(),
