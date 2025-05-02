@@ -319,6 +319,41 @@ app.get('/api/companies/search', async (req, res) => {
   }
 });
 
+// create contact
+// POST /api/hubspot/contacts/create
+app.post('/api/hubspot/contacts/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const { firstName, lastName, email, phone, companyId } = req.body;
+  if (!firstName || !lastName || !email || !companyId) {
+    return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    // 1. Create the contact
+    const contactRes = await hubspotClient.crm.contacts.basicApi.create({
+      properties: { firstname: firstName, lastname: lastName, email, phone }
+    });
+
+    const contactId = contactRes.id;
+
+    // 2. Associate with the company
+    await hubspotClient.crm.companies.associationsApi.create(
+      companyId,
+      "contacts",
+      [{ to: { id: contactId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 1 }] }]
+    );
+
+    res.json({ id: contactId });
+  } catch (err) {
+    console.error("❌ Failed to create contact or associate:", err.response?.data || err.message);
+    res.status(500).json({ error: "Contact creation failed" });
+  }
+});
+
 
 // Add Meeting
 app.post('/api/meetings/create', async (req, res) => {
@@ -849,6 +884,41 @@ app.get('/api/hubspot/company/:companyId/deals', async (req, res) => {
   }
 });
 
+// get conctacts of a copmany
+app.get('/api/hubspot/company/:companyId/contacts', async (req, res) => {
+  const token = req.session.accessToken;
+  const { companyId } = req.params;
+
+  if (!token) return res.status(401).send('Not authenticated');
+  if (!companyId) return res.status(400).send('Missing company ID');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    // Get associated contact IDs (v4)
+    const assocRes = await hubspotClient.crm.associations.v4.basicApi.getPage(
+      'companies',
+      companyId,
+      'contacts',
+      undefined,
+      100
+    );
+
+    const contactIds = assocRes.results.map(r => r.toObjectId);
+    if (!contactIds.length) return res.json([]);
+
+    // Fetch contact details
+    const contactDetails = await hubspotClient.crm.contacts.batchApi.read({
+      inputs: contactIds.map(id => ({ id })),
+      properties: ['firstname', 'lastname', 'email', 'phone']
+    });
+
+    res.json(contactDetails.results);
+  } catch (err) {
+    console.error("❌ Failed to fetch associated contacts:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to fetch associated contacts', details: err.response?.data || err.message });
+  }
+});
 
 
 app.post('/api/hubspot/deals/create', async (req, res) => {
@@ -917,6 +987,7 @@ app.post('/api/hubspot/tasks/create', async (req, res) => {
     companyName,
     ownerId
   } = req.body;
+  console.log("📩 Creating task for company", companyId);
 
   if (!taskDate || !companyId || !contactId || !dealId || !companyName || !ownerId) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -959,3 +1030,65 @@ app.post('/api/hubspot/tasks/create', async (req, res) => {
     res.status(500).json({ error: "Failed to create task", details: err.response?.body || err.message });
   }
 });
+
+
+app.post('/api/hubspot/contact/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  let ownerId = req.session.ownerId;
+  if (!ownerId) {
+    try {
+      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
+      ownerId = whoami.data.user_id;
+      console.log("🔁 Fetched ownerId from token:", ownerId);
+    } catch (err) {
+      console.error("❌ Could not resolve ownerId", err.response?.data || err.message);
+      return res.status(400).json({ error: 'Could not resolve owner ID' });
+    }
+  }
+
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    companyId
+  } = req.body;
+
+  try {
+    // Step 1: Create contact
+    const contactRes = await hubspotClient.crm.contacts.basicApi.create({
+      properties: {
+        firstname: firstName,
+        lastname: lastName,
+        email,
+        phone,
+        hubspot_owner_id: ownerId
+      }
+    });
+
+    const contactId = contactRes.id;
+
+    // Step 2: Associate with company
+    await hubspotClient.crm.contacts.associationsApi.create(
+      contactId,
+      'company',
+      [
+        {
+          to: { id: companyId },
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 1 }]
+        }
+      ]
+    );
+
+    console.log("✅ Contact created and associated:", contactId);
+    res.json({ success: true, id: contactId });
+  } catch (err) {
+    console.error("❌ Failed to create contact or associate:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to create or associate contact', details: err.response?.data || err.message });
+  }
+});
+
