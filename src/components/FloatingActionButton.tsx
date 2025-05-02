@@ -142,6 +142,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
+              <Label>Company Name <span className="text-red-500">*</span></Label>
               <CompanySearch onSelect={setSelectedCompany} value={selectedCompany} required />
             </div>
 
