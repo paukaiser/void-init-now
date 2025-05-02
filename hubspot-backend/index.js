@@ -112,8 +112,8 @@ app.get('/api/me', async (req, res) => {
   }
 });
 
-
-// ✅ Get meetings by user WITH contactId, companyId, and dealId
+// ✅ Get meetings by user
+// ✅ Get meetings by user WITH DEAL ID
 app.post('/api/meetings', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
@@ -153,12 +153,8 @@ app.post('/api/meetings', async (req, res) => {
 
         let companyName = 'Unknown Company';
         let companyAddress = 'Unknown Address';
-        let companyId = null;
-
         let contactName = 'Unknown Contact';
         let contactPhone = '';
-        let contactId = null;
-
         let dealId = null;
 
         // Fetch associated company
@@ -167,7 +163,7 @@ app.post('/api/meetings', async (req, res) => {
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/companies`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          companyId = assocRes.data.results?.[0]?.id || null;
+          const companyId = assocRes.data.results?.[0]?.id;
           if (companyId) {
             const companyRes = await axios.get(
               `https://api.hubapi.com/crm/v3/objects/companies/${companyId}?properties=name,address,address1,address_street`,
@@ -178,19 +174,19 @@ app.post('/api/meetings', async (req, res) => {
               companyRes.data.properties.address ||
               companyRes.data.properties.address1 ||
               companyRes.data.properties.address_street ||
-              'Unknown Address';
+              null;
           }
         } catch (e) {
           console.warn(`⚠️ Could not fetch company for meeting ${id}`);
         }
 
-        // Fetch associated contact
+        // 🆕 Fetch associated contact
         try {
           const assocContactRes = await axios.get(
             `https://api.hubapi.com/crm/v3/objects/meetings/${id}/associations/contacts`,
             { headers: { Authorization: `Bearer ${token}` } }
           );
-          contactId = assocContactRes.data.results?.[0]?.id || null;
+          const contactId = assocContactRes.data.results?.[0]?.id;
           if (contactId) {
             const contactRes = await axios.get(
               `https://api.hubapi.com/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,phone`,
@@ -203,7 +199,7 @@ app.post('/api/meetings', async (req, res) => {
           console.warn(`⚠️ Could not fetch contact for meeting ${id}`);
         }
 
-        // Fetch associated deal
+        // Fetch deal ID
         try {
           const dealsRes = await axios.get(
             `https://api.hubapi.com/crm/v4/objects/meetings/${id}/associations/deals`,
@@ -226,10 +222,8 @@ app.post('/api/meetings', async (req, res) => {
           status: properties.hs_meeting_outcome || 'scheduled',
           type: properties.hs_activity_type || 'meeting',
           companyName,
-          companyId,
-          contactName,
-          contactPhone,
-          contactId,
+          contactName,   // 🆕
+          contactPhone,  // 🆕
           dealId
         };
       })
@@ -241,7 +235,6 @@ app.post('/api/meetings', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch meetings' });
   }
 });
-
 
 
 
@@ -327,60 +320,45 @@ app.post('/api/meetings/create', async (req, res) => {
 
   const hubspotClient = new Client({ accessToken: token });
 
-  let ownerId = req.session.ownerId;
-
-  // 🔄 Fallback: fetch from access token if missing
-  if (!ownerId) {
-    try {
-      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
-      ownerId = whoami.data.user_id;
-      console.log("🔁 Fetched ownerId from HubSpot token:", ownerId);
-    } catch (err) {
-      console.error("❌ Failed to fetch user_id from access token:", err.response?.data || err.message);
-      return res.status(400).json({ error: 'Could not resolve owner ID' });
-    }
-  }
-
   const {
     title,
     companyId,
-    contactId,  // optional
-    dealId,     // optional
+    contactId, // optional
     meetingType,
-    startTime,
-    endTime,
-    notes,
+    startTime, // ISO format
+    endTime,   // ISO format
+    notes
   } = req.body;
 
-  console.log("📤 Creating meeting:", {
-    title, companyId, contactId, dealId, meetingType, startTime, endTime, notes, ownerId
+  // Log everything you're about to send!
+  console.log("Creating meeting:", {
+    title, companyId, contactId, meetingType, startTime, endTime, notes
   });
 
   // REQUIRED: hs_timestamp must be set and should match start time!
   const associations = [];
-
   if (companyId) {
     associations.push({
       to: { id: companyId },
-      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 188 }]
+      types: [
+        {
+          associationCategory: "HUBSPOT_DEFINED",
+          associationTypeId: 200 // 200 is default for Meeting->Company
+        }
+      ]
     });
   }
   if (contactId) {
     associations.push({
       to: { id: contactId },
-      types: [{
-        associationCategory: "HUBSPOT_DEFINED",
-        associationTypeId: 200
-      }]
+      types: [
+        {
+          associationCategory: "HUBSPOT_DEFINED",
+          associationTypeId: 200 // 200 is default for Meeting->Contact
+        }
+      ]
     });
   }
-  if (dealId) {
-    associations.push({
-      to: { id: dealId },
-      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 212 }]
-    });
-  }
-  console.log("Associating meeting with:", JSON.stringify(associations, null, 2));
 
   try {
     const meetingRes = await hubspotClient.crm.objects.meetings.basicApi.create({
@@ -389,14 +367,14 @@ app.post('/api/meetings/create', async (req, res) => {
         hs_meeting_start_time: startTime,
         hs_meeting_end_time: endTime,
         hs_timestamp: startTime,
-        hs_activity_type: meetingType,
         hs_internal_meeting_notes: notes || '',
-        hubspot_owner_id: ownerId // ✅ critical for "Hosted by Paul Kaiser"
+        hs_activity_type: meetingType,
+        hs_meeting_outcome: 'SCHEDULED',
       },
       associations
     });
 
-    console.log("✅ Meeting created successfully:", meetingRes.id);
+    console.log("Meeting created successfully:", meetingRes);
     res.json({ success: true, meetingId: meetingRes.id });
   } catch (err) {
     console.error("❌ Failed to create meeting:", err.response?.data || err.message);
@@ -448,7 +426,7 @@ app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => 
       knownLength: req.file.size,
     });
 
-    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pamztu/', {
+    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pdsjyw/', {
       method: 'POST',
       body: formData,
       headers: formData.getHeaders(),
@@ -667,7 +645,7 @@ app.post('/api/tasks', async (req, res) => {
         filters: [
           { propertyName: "hubspot_owner_id", operator: "EQ", value: ownerId },
           { propertyName: "hs_task_status", operator: "NEQ", value: "COMPLETED" },
-          { propertyName: "hs_task_subject", operator: "CONTAINS_TOKEN", value: "Followup Task" }
+          { propertyName: "hs_task_subject", operator: "STARTS_WITH", value: "Followup Task" }
         ]
       }],
       properties: [
@@ -786,155 +764,5 @@ app.patch('/api/meetings/:id/reschedule', async (req, res) => {
   } catch (err) {
     console.error("❌ Failed to reschedule meeting:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to reschedule meeting' });
-  }
-});
-
-
-// get deals for a company
-// Add this to your Express app
-app.get('/api/hubspot/company/:companyId/deals', async (req, res) => {
-  const token = req.session.accessToken;
-  const { companyId } = req.params;
-
-  if (!token) return res.status(401).send('Not authenticated');
-
-  const hubspotClient = new Client({ accessToken: token });
-
-  try {
-    const assocRes = await hubspotClient.crm.associations.v4.basicApi.getPage(
-      'companies',
-      companyId,
-      'deals',
-      undefined,
-      100
-    );
-
-    const dealIds = assocRes.results.map(r => r.toObjectId);
-    if (!dealIds.length) return res.json([]);
-
-    const dealDetails = await hubspotClient.crm.deals.batchApi.read({
-      inputs: dealIds.map(id => ({ id })),
-      properties: ['dealname', 'dealstage', 'pipeline'],
-    });
-
-    const salesPipelineDeals = dealDetails.results.filter(
-      deal => deal.properties.pipeline === 'default' // adjust if your pipeline ID differs
-    );
-
-    res.json(salesPipelineDeals);
-  } catch (err) {
-    console.error("❌ Error fetching deals for company:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to fetch deals', details: err.response?.data || err.message });
-  }
-});
-
-
-
-app.post('/api/hubspot/deals/create', async (req, res) => {
-  const token = req.session.accessToken;
-  if (!token) return res.status(401).send('Not authenticated');
-
-  const hubspotClient = new Client({ accessToken: token });
-
-  // ✅ Try getting ownerId from session, or fallback to HubSpot token info
-  let ownerId = req.session.ownerId;
-  if (!ownerId) {
-    try {
-      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
-      ownerId = whoami.data.user_id;
-      console.log("🔁 Fetched ownerId from token:", ownerId);
-    } catch (err) {
-      console.error("❌ Could not resolve ownerId", err.response?.data || err.message);
-      return res.status(400).json({ error: 'Could not resolve owner ID' });
-    }
-  }
-
-  const {
-    dealName,
-    pipeline,
-    stage,
-    companyId
-  } = req.body;
-
-  console.log("📩 Creating deal for company", companyId);
-
-  try {
-    const response = await hubspotClient.crm.deals.basicApi.create({
-      properties: {
-        dealname: dealName,
-        pipeline: pipeline || 'default',
-        dealstage: stage || 'appointmentscheduled',
-        hubspot_owner_id: ownerId,
-        sdr_owner: ownerId // 🔹 Custom field set to same user
-      },
-      associations: [
-        {
-          to: { id: companyId },
-          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 5 }]
-        }
-      ]
-    });
-
-    console.log("✅ Deal created:", response.id);
-    res.json({ success: true, id: response.id });
-  } catch (err) {
-    console.error("❌ Failed to create deal:", err.response?.data || err.message);
-    res.status(500).json({ error: 'Failed to create deal', details: err.response?.data || err.message });
-  }
-});
-
-// create task 
-app.post('/api/hubspot/tasks/create', async (req, res) => {
-  const token = req.session.accessToken;
-  if (!token) return res.status(401).send('Not authenticated');
-
-  const {
-    taskDate,
-    companyId,
-    contactId,
-    dealId,
-    companyName,
-    ownerId
-  } = req.body;
-
-  if (!taskDate || !companyId || !contactId || !dealId || !companyName || !ownerId) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  const hubspot = new Client({ accessToken: token });
-
-  const taskPayload = {
-    properties: {
-      hs_timestamp: taskDate,
-      hs_task_body: `Followup with the restaurant ${companyName}`,
-      hubspot_owner_id: ownerId,
-      hs_task_subject: `Followup Task - ${companyName}`,
-      hs_task_status: "NOT_STARTED",
-      hs_task_priority: "MEDIUM",
-      hs_task_type: "CALL"
-    },
-    associations: [
-      {
-        to: { id: contactId },
-        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 204 }]
-      },
-      {
-        to: { id: companyId },
-        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 192 }]
-      },
-      {
-        to: { id: dealId },
-        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 216 }]
-      }
-    ]
-  };
-
-  try {
-    const response = await hubspot.crm.objects.tasks.basicApi.create(taskPayload);
-    console.log("✅ Task created:", response.id);
-    res.json({ success: true, taskId: response.id });
-  } catch (err) {
-    console.error("❌ Failed to create task:", err.response?.body || err.message);
-    res.status(500).json({ error: "Failed to create task", details: err.response?.body || err.message });
   }
 });

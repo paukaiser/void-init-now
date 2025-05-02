@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, Building2, CheckCircle, XCircle, ClockIcon, RotateCw, AlertTriangle, MapPin } from 'lucide-react';
@@ -7,7 +8,6 @@ import { cn } from "../lib/utils.ts";
 import { useIsMobile } from "../hooks/use-mobile.tsx";
 
 export interface Meeting {
-  ownerId: string;
   id: string;
   title: string;
   contactName: string;
@@ -15,14 +15,11 @@ export interface Meeting {
   startTime: string;
   endTime: string;
   date: string;
-  type?: 'Sales Meeting' | 'Sales Followup';
+  type?: 'sales meeting' | 'sales followup';
   status?: 'scheduled' | 'completed' | 'canceled' | 'rescheduled';
   address?: string;
   dealId?: string | number | null;
   onSelect?: (meeting: Meeting) => void;
-  companyId?: string | number | null;
-  contactId?: string | number | null;
-  completed?: boolean;
 }
 
 interface MeetingCardProps {
@@ -71,7 +68,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     e.stopPropagation(); // Prevent triggering the card click
     if (meeting.address) {
       const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(meeting.address)}`;
-      (window as any).open(googleMapsUrl, '_blank');
+      window.open(googleMapsUrl, '_blank');
     }
   };
 
@@ -151,11 +148,11 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     const durationPercentage = ((endMinutes - startMinutes) / totalMinutes) * 100;
 
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
-
+    
     // Bestimme die Hintergrundfarbe basierend auf dem Status
     let meetingBgColor = 'bg-[#FF8769]/90';
     let meetingHoverBgColor = 'hover:bg-[#FF8769]/100';
-
+    
     if (meeting.status === 'completed') {
       meetingBgColor = 'bg-green-200';
       meetingHoverBgColor = 'hover:bg-green-300';
@@ -201,7 +198,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
             </div>
           </div>
           <div className="text-xs opacity-75 mt-1">
-            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
+            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
             {new Date(meeting.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
