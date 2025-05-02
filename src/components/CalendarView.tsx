@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   format,
@@ -34,7 +33,7 @@ interface CalendarViewProps {
 }
 
 
-const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSelectMeeting}) => {
+const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSelectMeeting }) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const { setMeetings, meetings } = useMeetingContext();
   const [loading, setLoading] = useState(true);
@@ -64,19 +63,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
       const now = new Date();
       const currentHour = now.getHours();
       const currentMinute = now.getMinutes();
-      
+
       if (currentHour >= START_HOUR && currentHour <= END_HOUR) {
         const totalMinutes = (END_HOUR - START_HOUR) * 60;
         const minutesSinceStart = (currentHour - START_HOUR) * 60 + currentMinute;
         const scrollPercentage = (minutesSinceStart / totalMinutes);
-        
+
         // Get the height of the scroll container
         const scrollAreaHeight = scrollRef.current.scrollHeight;
-        
+
         // Scroll to the position with an offset to center the current time
         const offsetHeight = scrollRef.current.clientHeight / 2;
         const scrollToPosition = (scrollAreaHeight * scrollPercentage) - offsetHeight;
-        
+
         scrollRef.current.scrollTop = Math.max(0, scrollToPosition);
       }
     }
@@ -121,7 +120,9 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
           type: item.type,
           status: item.status,
           address: item.address,
-          dealId: item.dealId
+          dealId: item.dealId,
+          companyId: item.companyId,
+          contactId: item.contactId
         }));
 
         setMeetings(hubspotMeetings);
@@ -194,13 +195,13 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
       .forEach(meeting => {
         grid.push(
           <MeetingCard
-          key={meeting.id}
-          meeting={meeting}
-          isCalendarView
-          startHour={START_HOUR}
-          endHour={END_HOUR}
-          onCancel={() => setMeetingToCancel(meeting)}
-          onSelect={onSelectMeeting}
+            key={meeting.id}
+            meeting={meeting}
+            isCalendarView
+            startHour={START_HOUR}
+            endHour={END_HOUR}
+            onCancel={() => setMeetingToCancel(meeting)}
+            onSelect={onSelectMeeting}
           />
         );
       });
@@ -210,8 +211,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <ScrollArea className="flex-grow h-full" viewportRef={scrollRef}>
-        <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
+      <ScrollArea className="flex-grow h-full">
+        <div ref={scrollRef} className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
           <div className="flex flex-col min-w-[60px]">
             <div className="h-10 border-b border-gray-100" />
             {generateTimeSlots()}

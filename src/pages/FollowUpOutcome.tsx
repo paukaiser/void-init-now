@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Home, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from "../components/ui/button.tsx";
@@ -9,7 +8,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popove
 import { Calendar } from "../components/ui/calendar.tsx";
 import { format } from "date-fns";
 import { cn } from "../lib/utils.ts";
-import { useLocation } from 'react-router-dom';
+import { useMeetingContext } from '../context/MeetingContext.tsx';
+import { useLocation } from 'react-router-dom'; // already imported? good
+import { useUser } from '../hooks/useUser.ts';
+
+
+
 
 const FollowUpOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -18,19 +22,37 @@ const FollowUpOutcome: React.FC = () => {
   const [showTaskOptions, setShowTaskOptions] = useState(false);
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showDateSelector, setShowDateSelector] = useState(false);
-
   const location = useLocation();
-  const isHotDeal = location.state?.isHotDeal;
-  const dealId = location.state?.dealId;
+  const isHotDeal = location.state?.isHotDeal || false;
+  const dealId = location.state?.dealId || null;
+
+
+  const { meetings } = useMeetingContext();
+  const meetingDetails = meetings.find(m => m.id === id);
+  const user = useUser();
+  const ownerId = meetingDetails?.ownerId || user?.user_id;
+
+
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  useEffect(() => {
+    if (!meetingDetails) {
+      toast.error("Meeting not found");
+      navigate('/dashboard');
+    }
+  }, [meetingDetails, navigate]);
+
+  useEffect(() => {
+    if (meetingDetails && meetingDetails.completed) {
+      setIsCompleted(true);
+    }
+  }, [meetingDetails]);
 
   const handleAudioSend = async (blob: Blob) => {
     setAudioBlob(blob);
-
-    // Build FormData for file upload
     const formData = new FormData();
-    formData.append('audio', blob, 'voice-note.webm'); // Use the correct extension
-    console.log('Audio blob:', blob); // Log the blob instead of undefined req.file
-    console.log('Forwarding audio to Zapier...');
+    formData.append('audio', blob, 'voice-note.webm');
+
     try {
       const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
         method: 'POST',
@@ -47,98 +69,100 @@ const FollowUpOutcome: React.FC = () => {
   };
 
   const handleScheduleFollowUp = () => {
-    // In a real app, you would fetch meeting details from the API
-    // For demonstration purposes, we're using mock data
-    const mockMeetingDetails = {
-      companyId: 'mock-company-id',
-      companyName: 'Acme Inc',
-      companyAddress: '123 Main St, San Francisco, CA',
-      contactId: 'mock-contact-id',
-      contactName: 'John Doe',
-      meetingType: 'sales followup'
-    };
+    if (!meetingDetails) return;
 
-    // Navigate to add meeting page with follow-up data
     navigate('/add-meeting', {
       state: {
         isFollowUp: true,
+        originalMeetingId: meetingDetails.id,
         meetingId: id,
-        companyId: mockMeetingDetails.companyId,
-        companyName: mockMeetingDetails.companyName,
-        companyAddress: mockMeetingDetails.companyAddress,
-        contactId: mockMeetingDetails.contactId,
-        contactName: mockMeetingDetails.contactName,
-        forceCompany: true // Force company selection to be disabled
+        companyId: meetingDetails.companyId,
+        companyName: meetingDetails.companyName,
+        companyAddress: meetingDetails.address,
+        contactId: meetingDetails.contactId,
+        contactName: meetingDetails.contactName,
+        dealId: meetingDetails.dealId,
+        forceCompany: true,
+        meetingType: meetingDetails.type,
+        isHotDeal: isHotDeal,
       }
     });
   };
 
   const handleTaskSchedule = (timeframe: string) => {
-    let taskDate: Date;
     const today = new Date();
+    let taskDate = new Date(today);
 
-    switch (timeframe) {
-      case '3days':
-        taskDate = new Date(today);
-        taskDate.setDate(today.getDate() + 3);
-        break;
-      case '1week':
-        taskDate = new Date(today);
-        taskDate.setDate(today.getDate() + 7);
-        break;
-      case '2weeks':
-        taskDate = new Date(today);
-        taskDate.setDate(today.getDate() + 14);
-        break;
-      case '3weeks':
-        taskDate = new Date(today);
-        taskDate.setDate(today.getDate() + 21);
-        break;
-      case 'custom':
-        setShowDateSelector(true);
-        return;
-      default:
-        taskDate = new Date(today);
-        taskDate.setDate(today.getDate() + 7);
+    const daysMap: { [key: string]: number } = {
+      '3days': 3,
+      '1week': 7,
+      '2weeks': 14,
+      '3weeks': 21
+    };
+
+    if (timeframe === 'custom') {
+      setShowDateSelector(true);
+      return;
     }
 
+    taskDate.setDate(today.getDate() + (daysMap[timeframe] || 7));
     scheduleTask(taskDate);
   };
 
-  const scheduleTask = (taskDate: Date) => {
-    // In a real app, this would create a task in your API
-    console.log(`Scheduling follow-up task for ${format(taskDate, 'dd.MM.yyyy')}`);
+  const scheduleTask = async (taskDate: Date) => {
+    if (!meetingDetails) return;
 
-    // Simulate API call success
-    toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
+    const dateWithTime = new Date(taskDate);
+    dateWithTime.setHours(9, 0, 0, 0); // always at 09:00
 
-    // Close the task options and reset
-    setShowTaskOptions(false);
-    setShowDateSelector(false);
+    const unixMillis = dateWithTime.getTime();
 
-    // Navigate to home page
-    navigate('/');
+    const payload = {
+      taskDate: unixMillis,
+      companyId: meetingDetails.companyId,
+      contactId: meetingDetails.contactId,
+      dealId: meetingDetails.dealId,
+      companyName: meetingDetails.companyName,
+      ownerId: user?.user_id,
+    };
+    console.log("🧪 Task Payload:", payload);
+    console.log("✅ contactId from meetingDetails:", meetingDetails.contactId);
+
+    try {
+      const res = await fetch("http://localhost:3000/api/hubspot/tasks/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Failed to create task");
+
+      toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
+      setShowTaskOptions(false);
+      setShowDateSelector(false);
+      navigate('/');
+    } catch (err) {
+      console.error("❌ Failed to schedule task:", err);
+      toast.error("Failed to schedule follow-up task");
+    }
   };
 
+
+
   const handleComplete = async () => {
-    // Step 1: Mark meeting as completed in backend (and HubSpot)
     try {
       const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
         method: "POST",
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to mark meeting as completed");
-      toast.success("Meeting marked as negative outcome and completed!");
+      toast.success("Meeting marked as completed!");
     } catch (err) {
       toast.error("Failed to mark meeting as completed");
       console.error("Error marking meeting as completed:", err);
     }
-    // Step 2: Navigate away
     navigate('/dashboard');
-  };
-
-  const handleScheduleFollowUpTask = () => {
-    setShowTaskOptions(true);
   };
 
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
@@ -147,6 +171,8 @@ const FollowUpOutcome: React.FC = () => {
       scheduleTask(selectedDate);
     }
   };
+
+  if (!meetingDetails) return null;
 
   return (
     <div className="allo-page">
@@ -173,6 +199,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
                   onClick={handleScheduleFollowUp}
+                  disabled={isCompleted}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Meeting
@@ -180,7 +207,8 @@ const FollowUpOutcome: React.FC = () => {
 
                 <Button
                   className="flex items-center justify-center py-4 bg-amber-500 hover:bg-amber-600 text-white"
-                  onClick={handleScheduleFollowUpTask}
+                  onClick={() => setShowTaskOptions(true)}
+                  disabled={isCompleted}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Task
@@ -189,6 +217,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center"
                   onClick={handleComplete}
+                  disabled={isCompleted}
                 >
                   <Home size={18} className="mr-2" />
                   Return to Homepage
@@ -229,7 +258,6 @@ const FollowUpOutcome: React.FC = () => {
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     Select a date
                   </Button>
-
                   <Button
                     variant="outline"
                     className="mt-2"
@@ -248,7 +276,3 @@ const FollowUpOutcome: React.FC = () => {
 };
 
 export default FollowUpOutcome;
-
-function setStep(arg0: string) {
-  throw new Error('Function not implemented.');
-}

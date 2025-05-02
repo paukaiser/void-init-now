@@ -97,19 +97,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
           <div className="flex flex-col">
             <div className="flex justify-between items-start">
               <h3
-                className={`font-semibold text-xs ${isPastDue ? 'text-red-600' : ''
-                  }`}
+                className={`font-semibold text-xs ${isPastDue ? 'text-red-600' : ''}`}
               >
-                {task.subject}
+                {task.restaurantName}
               </h3>
               {isPastDue && (
                 <div className="flex items-center gap-1 text-xs text-red-600">
-                  <Clock className="h-3 w-3" />
+                  <Clock className="h-3 w-3 text-red-600" />
                   <span>Overdue</span>
                 </div>
               )}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{task.restaurantName}</p>
           </div>
         </CardContent>
       </Card>
@@ -117,20 +115,25 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Actions for {task.subject}</DialogTitle>
+            <DialogTitle>Actions for {task.restaurantName}</DialogTitle>
           </DialogHeader>
 
           <div className="text-sm space-y-2">
             <p>
               <span className="font-medium">Notes:</span>{" "}
               {task.body ? task.body.replace(/<[^>]+>/g, '').trim() : "N/A"}
-            </p>            <p><span className="font-medium">Restaurant:</span> {task.restaurantName || "N/A"}</p>
+            </p>            
+            <p><span className="font-medium">Restaurant:</span> {task.restaurantName || "N/A"}</p>
             <p><span className="font-medium">Contact:</span> {task.contactName || "N/A"}</p>
             <p><span className="font-medium">Phone:</span> {task.phoneNumber || "N/A"}</p>
             <p><span className="font-medium">Email:</span> {task.email || "N/A"}</p>
+            {isPastDue && (
+              <p className="flex items-center gap-1 text-red-600">
+                <Clock size={16} className="text-red-600" />
+                <span>This task is overdue</span>
+              </p>
+            )}
           </div>
-
-
 
           <div className="grid grid-cols-2 gap-2 pt-2">
             <Button
