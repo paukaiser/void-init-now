@@ -21,36 +21,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     if (selectedFile) {
       setFile(selectedFile);
-
-      setUploading(true);
-
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
-
-        if (onUpload) {
-          onUpload(selectedFile);
-        }
-
-        setUploaded(true);
-        toast({
-          title: 'File Uploaded',
-          description: 'Your file has been uploaded successfully.',
-        });
-      } catch (error) {
-        toast({
-          title: 'Upload Failed',
-          description: 'There was an error uploading your file. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setUploading(false);
+      setUploaded(false); // Reset upload status
+      if (onUpload) {
+        onUpload(selectedFile); // Just pass to parent, don't upload yet
       }
     }
   };
+
 
 
   const handleUpload = async () => {

@@ -13,17 +13,18 @@ const PositiveOutcome: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // 1. Try navigation state
   const navDealId = location.state?.dealId;
-  // 2. Try context
   const { meetings } = useMeetingContext?.() || { meetings: [] };
   const contextDealId = meetings.find(m => m.id === id)?.dealId;
 
-  // 3. Local state, preferring nav > context
   const [dealId, setDealId] = useState<string | null>(navDealId || contextDealId || null);
   const [loadingDealId, setLoadingDealId] = useState<boolean>(!dealId);
+  const [step, setStep] = useState<'contract' | 'voice' | 'reason'>('contract');
+  const [contractUploaded, setContractUploaded] = useState(false);
+  const [additionalNotes, setAdditionalNotes] = useState("");
+  const [audioUploading, setAudioUploading] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
-  // Only fetch if missing from nav/context
   useEffect(() => {
     if (!dealId && id) {
       const fetchDealId = async () => {
@@ -47,15 +48,6 @@ const PositiveOutcome: React.FC = () => {
     }
   }, [id, dealId]);
 
-  const [step, setStep] = useState<'contract' | 'voice' | 'reason'>('contract');
-  const [contractUploaded, setContractUploaded] = useState(false);
-
-  // New state for additional notes
-  const [additionalNotes, setAdditionalNotes] = useState("");
-  // For audio
-  const [audioUploading, setAudioUploading] = useState(false);
-
-  // Pass file and notes to backend!
   const handleFileUpload = async (file: File, notes?: string) => {
     if (!dealId) {
       toast.error("Cannot upload: Deal not found.");
@@ -76,14 +68,12 @@ const PositiveOutcome: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to upload contract');
       toast.success("Contract uploaded and attached to the deal!");
-      setContractUploaded(true);
     } catch (err) {
       toast.error("Failed to upload contract");
       console.error(err);
     }
   };
 
-  // Audio upload like NegativeOutcome
   const handleAudioSend = async (audioBlob: Blob) => {
     if (!dealId) {
       toast.error("No associated deal found for this meeting.");
@@ -113,12 +103,18 @@ const PositiveOutcome: React.FC = () => {
     }
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    if (!pendingFile) {
+      toast.error("Please upload a contract before proceeding.");
+      return;
+    }
+
+    await handleFileUpload(pendingFile, additionalNotes);
+    setContractUploaded(true);
     setStep('voice');
   };
 
   const handleComplete = async () => {
-    // Step 1: Mark meeting as completed in backend (and HubSpot)
     try {
       const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
         method: "POST",
@@ -130,7 +126,6 @@ const PositiveOutcome: React.FC = () => {
       toast.error("Failed to mark meeting as completed");
       console.error("Error marking meeting as completed:", err);
     }
-    // Step 2: Navigate away
     navigate('/dashboard');
   };
 
@@ -161,9 +156,8 @@ const PositiveOutcome: React.FC = () => {
 
           {step === 'contract' && !loadingDealId && dealId && (
             <div className="space-y-6">
-              {/* FileUploader now takes a custom handler to pass notes */}
               <FileUploader
-                onUpload={file => handleFileUpload(file, additionalNotes)}
+                onUpload={setPendingFile}
                 title="Upload Signed Contract"
               />
 
@@ -176,14 +170,12 @@ const PositiveOutcome: React.FC = () => {
                   value={additionalNotes}
                   onChange={e => setAdditionalNotes(e.target.value)}
                   placeholder="Add any relevant comments for the note…"
-                  disabled={contractUploaded}
                 />
               </div>
 
               <Button
                 className="allo-button w-full mt-6"
                 onClick={handleNextStep}
-                disabled={!contractUploaded}
               >
                 Next Step
                 <ArrowRight size={16} className="ml-1" />
@@ -205,12 +197,14 @@ const PositiveOutcome: React.FC = () => {
           {step === 'reason' && loadingDealId && (
             <div className="p-4 text-center">Loading deal info…</div>
           )}
+
           {step === 'reason' && !loadingDealId && dealId && (
             <ClosedWonReasonForm
               dealId={dealId}
               onComplete={handleComplete}
             />
           )}
+
           {step === 'reason' && !loadingDealId && !dealId && (
             <div className="text-red-500 p-4 text-center">
               No associated deal found for this meeting.
