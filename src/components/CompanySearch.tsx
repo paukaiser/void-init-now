@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "../components/ui/input.tsx";
 import { Label } from "../components/ui/label.tsx";
@@ -72,9 +73,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   }, []);
 
   const initAutocomplete = () => {
-    if (!addressInputRef.current || !window.google?.maps?.places) return;
+    if (!addressInputRef.current || !window.google) return;
 
-    const autocomplete = new window.google.maps.places.Autocomplete(addressInputRef.current);
+    const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current);
     autocomplete.addListener('place_changed', () => {
       const place = autocomplete.getPlace();
       if (!place.geometry) return;
