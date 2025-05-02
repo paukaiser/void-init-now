@@ -34,6 +34,7 @@ const FollowUpOutcome: React.FC = () => {
 
 
   const [isCompleted, setIsCompleted] = useState(false);
+  const [isVoiceNoteSent, setIsVoiceNoteSent] = useState(false);
 
   useEffect(() => {
     if (!meetingDetails) {
@@ -62,6 +63,7 @@ const FollowUpOutcome: React.FC = () => {
 
       if (!response.ok) throw new Error('Failed to send audio to backend');
       toast.success("Voice note recorded and sent successfully");
+      setIsVoiceNoteSent(true);
     } catch (err) {
       toast.error("Failed to send voice note");
       console.error("Backend error:", err);
@@ -199,7 +201,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center py-4 bg-blue-500 hover:bg-blue-600 text-white"
                   onClick={handleScheduleFollowUp}
-                  disabled={isCompleted}
+                  disabled={isCompleted || !isVoiceNoteSent}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Meeting
@@ -208,7 +210,7 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center py-4 bg-amber-500 hover:bg-amber-600 text-white"
                   onClick={() => setShowTaskOptions(true)}
-                  disabled={isCompleted}
+                  disabled={isCompleted || !isVoiceNoteSent}
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Task
@@ -217,7 +219,6 @@ const FollowUpOutcome: React.FC = () => {
                 <Button
                   className="flex items-center justify-center"
                   onClick={handleComplete}
-                  disabled={isCompleted}
                 >
                   <Home size={18} className="mr-2" />
                   Return to Homepage
