@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, Calendar as CalendarIcon, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from "../components/ui/button.tsx";
 import { Label } from "../components/ui/label.tsx";
@@ -11,6 +12,8 @@ import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group.tsx";
 import { cn } from "../lib/utils.ts";
 import { toast } from "sonner";
 import CompanySearch, { Company } from '../components/CompanySearch.tsx';
+import ContactSearch, { Contact } from '../components/ContactSearch.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 
 console.log("AddMeeting mounted");
 
@@ -37,6 +40,9 @@ const AddMeeting: React.FC = () => {
     isFollowUp ? "Sales Followup" : (prefilledData.meetingType || "Sales Meeting")
   );
   const [notes, setNotes] = useState(prefilledData.notes || "");
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [companyContacts, setCompanyContacts] = useState<Contact[]>([]);
+  const [loadingContacts, setLoadingContacts] = useState(false);
 
   // Check if company selection is forced
   const forceCompany = prefilledData.forceCompany || false;
@@ -66,6 +72,91 @@ const AddMeeting: React.FC = () => {
       setStartTime(`${startDate.getHours().toString().padStart(2, '0')}:${startDate.getMinutes().toString().padStart(2, '0')}`);
     }
   }, [prefilledData]);
+
+  // Fetch contacts when company is selected
+  useEffect(() => {
+    if (selectedCompany?.id) {
+      fetchCompanyContacts(selectedCompany.id);
+    } else {
+      setCompanyContacts([]);
+      setSelectedContact(null);
+    }
+  }, [selectedCompany]);
+  
+  const fetchCompanyContacts = async (companyId: string) => {
+    setLoadingContacts(true);
+    
+    try {
+      // Note: This is a mock API call for contacts.
+      // In a real application, this would be an actual API request
+      setTimeout(() => {
+        const mockContacts: { [key: string]: Contact[] } = {
+          '1': [
+            { 
+              id: '1',
+              fullName: 'Sarah Chen',
+              firstName: 'Sarah',
+              lastName: 'Chen',
+              email: 'sarah.chen@acmeinc.com',
+              phone: '(555) 123-4567',
+              mobilePhone: '(555) 987-6543',
+              companyId: '1'
+            },
+            { 
+              id: '2',
+              fullName: 'John Smith',
+              firstName: 'John',
+              lastName: 'Smith',
+              email: 'john.smith@acmeinc.com',
+              phone: '(555) 234-5678',
+              mobilePhone: '(555) 876-5432',
+              companyId: '1'
+            }
+          ],
+          '2': [
+            { 
+              id: '3',
+              fullName: 'Michael Rodriguez',
+              firstName: 'Michael',
+              lastName: 'Rodriguez',
+              email: 'mrodriguez@globaltech.com',
+              phone: '(555) 345-6789',
+              mobilePhone: '(555) 765-4321',
+              companyId: '2'
+            }
+          ],
+          '3': [
+            { 
+              id: '4',
+              fullName: 'David Park',
+              firstName: 'David',
+              lastName: 'Park',
+              email: 'david.park@innovate.solutions',
+              phone: '(555) 456-7890',
+              mobilePhone: '(555) 654-3210',
+              companyId: '3'
+            }
+          ]
+        };
+        
+        const contacts = mockContacts[companyId] || [];
+        setCompanyContacts(contacts);
+        
+        // Auto-select if there's only one contact
+        if (contacts.length === 1) {
+          setSelectedContact(contacts[0]);
+        } else if (contacts.length === 0) {
+          toast.info("No contacts found for this company");
+        }
+        
+        setLoadingContacts(false);
+      }, 500);
+    } catch (error) {
+      console.error("Error fetching company contacts:", error);
+      toast.error("Failed to load contacts for this company");
+      setLoadingContacts(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -109,10 +200,9 @@ const AddMeeting: React.FC = () => {
       const patchPayload = {
         startTime: meetingDate.toISOString(),
         endTime: endDate.toISOString(),
-        notes: notes || ""
+        notes: notes || "",
+        contactId: selectedContact?.id
       };
-
-
 
       try {
         const res = await fetch(`http://localhost:3000/api/meetings/${meetingId}/reschedule`, {
@@ -143,7 +233,7 @@ const AddMeeting: React.FC = () => {
       endTime: endMillis,      // ✔️
       notes,
       dealId: prefilledData.dealId,
-      contactId: prefilledData.contactId,
+      contactId: selectedContact?.id || prefilledData.contactId,
     };
     console.log("Submitting meeting", payload);
 
@@ -211,6 +301,15 @@ const AddMeeting: React.FC = () => {
   const showMeetingTypeSelection = !isFollowUp && !forceCompany && !isRescheduling;
   const showMeetingTypeDisplay = isFollowUp;
   const showCompanyDetails = (forceCompany || isFollowUp || isRescheduling) && (selectedCompany || prefilledData.companyName);
+  const showContactDropdown = selectedCompany && companyContacts.length > 1;
+  const showContactDetail = selectedContact && !showContactDropdown;
+
+  const handleContactChange = (contactId: string) => {
+    const contact = companyContacts.find(c => c.id === contactId);
+    if (contact) {
+      setSelectedContact(contact);
+    }
+  };
 
   return (
     <div className="allo-page">
@@ -254,6 +353,37 @@ const AddMeeting: React.FC = () => {
                       {selectedCompany?.address || prefilledData.companyAddress || 'Address not available'}
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* Contact selection */}
+              {selectedCompany && (
+                <div className="md:col-span-2">
+                  {loadingContacts ? (
+                    <div className="text-sm text-gray-500">Loading contacts...</div>
+                  ) : showContactDropdown ? (
+                    <div className="space-y-2">
+                      <Label htmlFor="contact">Contact Person</Label>
+                      <Select onValueChange={handleContactChange}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a contact" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companyContacts.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                              {contact.fullName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : showContactDetail ? (
+                    <div className="border rounded-md p-3 bg-gray-50">
+                      <Label className="block mb-1 text-sm">Contact</Label>
+                      <p className="font-medium">{selectedContact.fullName}</p>
+                      <p className="text-sm text-muted-foreground">{selectedContact.email}</p>
+                    </div>
+                  ) : null}
                 </div>
               )}
 
