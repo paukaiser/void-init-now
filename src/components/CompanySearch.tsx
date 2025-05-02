@@ -1,8 +1,11 @@
+
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "../components/ui/input.tsx";
 import { Label } from "../components/ui/label.tsx";
 import { Search, Plus } from 'lucide-react';
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
+import { Button } from "../components/ui/button.tsx";
 
 export interface Company {
   id: string;
@@ -33,11 +36,85 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showNoDealDialog, setShowNoDealDialog] = useState(false);
+  const [selectedCompanyForDialog, setSelectedCompanyForDialog] = useState<Company | null>(null);
+  const [showAddCompanyDialog, setShowAddCompanyDialog] = useState(false);
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    street: '',
+    city: '',
+    postalCode: '',
+    state: '',
+    cuisine: '',
+    fullAddress: ''
+  });
   const onSelectRef = useRef(onSelect);
 
   useEffect(() => {
     onSelectRef.current = onSelect;
   }, [onSelect]);
+
+  // Initialize Google Maps Autocomplete
+  const addressInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Load Google Maps JavaScript API script
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
+    script.async = true;
+    script.defer = true;
+    script.onload = initAutocomplete;
+    document.body.appendChild(script);
+
+    return () => {
+      // Clean up script when component unmounts
+      document.body.removeChild(script);
+    };
+  }, []);
+
+  const initAutocomplete = () => {
+    if (!addressInputRef.current || !window.google) return;
+
+    const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current);
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) return;
+
+      // Extract address components
+      const addressComponents = place.address_components || [];
+
+      let street = '';
+      let city = '';
+      let postalCode = '';
+      let state = '';
+
+      addressComponents.forEach(component => {
+        const types = component.types;
+
+        if (types.includes('street_number') || types.includes('route')) {
+          street += component.long_name + ' ';
+        }
+        if (types.includes('locality')) {
+          city = component.long_name;
+        }
+        if (types.includes('postal_code')) {
+          postalCode = component.long_name;
+        }
+        if (types.includes('administrative_area_level_1')) {
+          state = component.long_name;
+        }
+      });
+
+      setNewCompany(prev => ({
+        ...prev,
+        street: street.trim(),
+        city,
+        postalCode,
+        state,
+        fullAddress: place.formatted_address || ''
+      }));
+    });
+  };
 
   const searchCompanies = async (term: string) => {
     if (!term || term.trim().length < 2) {
@@ -100,10 +177,13 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       const firstDeal = deals[0];
 
       if (!firstDeal) {
-        toast.warning("No deals found for this company. Meeting will be unassociated.");
+        // No deals found, show dialog
+        setSelectedCompanyForDialog(company);
+        setShowNoDealDialog(true);
+      } else {
+        // Pass company with dealId
+        onSelectRef.current({ ...company, dealId: firstDeal.id || null });
       }
-      // Pass company with optional dealId
-      onSelectRef.current({ ...company, dealId: firstDeal?.id || null });
     } catch (err) {
       console.error("❌ Failed to fetch deal:", err);
       toast.error("Could not fetch deal for selected company.");
@@ -111,6 +191,144 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     }
   };
 
+  const handleCreateDeal = async () => {
+    if (!selectedCompanyForDialog) return;
+
+    try {
+      const payload = {
+        dealName: `${selectedCompanyForDialog.name} - New Deal`,
+        pipeline: "default", // ✅ internal pipeline ID
+        stage: "appointmentscheduled", // ✅ internal stage ID, not "Meeting Scheduled"
+        companyId: selectedCompanyForDialog.id,
+      };
+
+
+      const res = await fetch('http://localhost:3000/api/hubspot/deals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create deal");
+      }
+
+      const newDeal = await res.json();
+      toast.success("New deal created successfully");
+
+      // Close dialog and select company with new deal ID
+      setShowNoDealDialog(false);
+      onSelectRef.current({
+        ...selectedCompanyForDialog,
+        dealId: newDeal.id
+      });
+    } catch (err) {
+      console.error("❌ Failed to create deal:", err);
+      toast.error("Could not create new deal");
+      // Still select the company but without a deal
+      setShowNoDealDialog(false);
+      onSelectRef.current({ ...selectedCompanyForDialog, dealId: null });
+    }
+  };
+
+  const handleAddNewCompanyClick = () => {
+    setNewCompany({
+      name: searchTerm,
+      street: '',
+      city: '',
+      postalCode: '',
+      state: '',
+      cuisine: '',
+      fullAddress: ''
+    });
+    setShowAddCompanyDialog(true);
+    setShowResults(false);
+  };
+
+  const handleNewCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewCompany(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCreateCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate form
+    if (!newCompany.name || !newCompany.street || !newCompany.city || !newCompany.postalCode) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 1. Create company
+      const companyPayload = {
+        name: newCompany.name,
+        street: newCompany.street,
+        city: newCompany.city,
+        postalCode: newCompany.postalCode,
+        state: newCompany.state || 'N/A',
+        cuisine: newCompany.cuisine,
+      };
+
+      const companyRes = await fetch('http://localhost:3000/api/companies/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(companyPayload)
+      });
+
+      if (!companyRes.ok) {
+        throw new Error("Failed to create company");
+      }
+
+      const company = await companyRes.json();
+
+      // 2. Automatically create a deal for the new company
+      const dealPayload = {
+        dealName: `${company.name} - New Deal`,
+        pipeline: "default", // pipeline ID
+        stage: "appointmentscheduled", // stage ID
+        companyId: company.id
+      };
+
+      const dealRes = await fetch('http://localhost:3000/api/hubspot/deals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(dealPayload)
+      });
+
+      if (!dealRes.ok) {
+        throw new Error("Failed to create deal for new company");
+      }
+
+      const deal = await dealRes.json();
+
+      toast.success("Company created with new deal");
+      setShowAddCompanyDialog(false);
+
+      // 3. Select the newly created company with its deal
+      onSelectRef.current({
+        id: company.id,
+        name: company.name,
+        address: `${company.street}, ${company.city}, ${company.postalCode}`,
+        dealId: deal.id
+      });
+
+      setSearchTerm(company.name);
+    } catch (err) {
+      console.error("❌ Failed to create company:", err);
+      toast.error("Could not create company");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (value) {
@@ -165,7 +383,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
               <div className="p-4 text-center text-sm text-gray-500">No matching companies found</div>
               <div
                 className="p-3 hover:bg-gray-100 cursor-pointer border-t border-gray-100 flex items-center text-blue-600"
-                onMouseDown={handleAddNewCompany}
+                onMouseDown={handleAddNewCompanyClick}
               >
                 <Plus size={16} className="mr-2" />
                 <span>Add "{searchTerm}" as new company</span>
@@ -174,6 +392,142 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           )}
         </div>
       )}
+
+      {/* No Deal Dialog */}
+      <Dialog open={showNoDealDialog} onOpenChange={setShowNoDealDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>No Deal Found</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-500 mb-4">
+              No deal was found for {selectedCompanyForDialog?.name}.
+              Would you like to create a new deal with the following details?
+            </p>
+            <div className="space-y-2 text-sm border-l-2 border-gray-200 pl-3">
+              <p><span className="font-medium">Deal Name:</span> {selectedCompanyForDialog?.name} - New Deal</p>
+              <p><span className="font-medium">Pipeline:</span> Sales Pipeline</p>
+              <p><span className="font-medium">Stage:</span> Meeting Scheduled</p>
+              <p><span className="font-medium">Association:</span> {selectedCompanyForDialog?.name}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowNoDealDialog(false);
+                if (selectedCompanyForDialog) {
+                  onSelectRef.current({ ...selectedCompanyForDialog, dealId: null });
+                }
+              }}
+            >
+              Skip
+            </Button>
+            <Button onClick={handleCreateDeal}>
+              Create Deal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Company Dialog */}
+      <Dialog open={showAddCompanyDialog} onOpenChange={setShowAddCompanyDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Restaurant</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateCompany} className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Restaurant Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="company-name"
+                name="name"
+                value={newCompany.name}
+                onChange={handleNewCompanyChange}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-address">Address <span className="text-red-500">*</span></Label>
+              <Input
+                id="company-address"
+                placeholder="Search address..."
+                ref={addressInputRef}
+                className="mb-2"
+              />
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="company-street">Street Address <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="company-street"
+                    name="street"
+                    value={newCompany.street}
+                    onChange={handleNewCompanyChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-city">City <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="company-city"
+                    name="city"
+                    value={newCompany.city}
+                    onChange={handleNewCompanyChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
+                  <Label htmlFor="company-postal">Postal Code <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="company-postal"
+                    name="postalCode"
+                    value={newCompany.postalCode}
+                    onChange={handleNewCompanyChange}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="company-state">State</Label>
+                  <Input
+                    id="company-state"
+                    name="state"
+                    value={newCompany.state}
+                    onChange={handleNewCompanyChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-cuisine">Cuisine</Label>
+              <Input
+                id="company-cuisine"
+                name="cuisine"
+                value={newCompany.cuisine}
+                onChange={handleNewCompanyChange}
+                placeholder="e.g. Italian, Mediterranean, American..."
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddCompanyDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? "Creating..." : "Create Restaurant"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

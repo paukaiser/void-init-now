@@ -448,7 +448,7 @@ app.post('/api/meeting/send-voice', upload.single('audio'), async (req, res) => 
       knownLength: req.file.size,
     });
 
-    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pdsjyw/', {
+    const zapierResponse = await fetch('https://hooks.zapier.com/hooks/catch/20863141/2pamztu/', {
       method: 'POST',
       body: formData,
       headers: formData.getHeaders(),
@@ -829,3 +829,112 @@ app.get('/api/hubspot/company/:companyId/deals', async (req, res) => {
 });
 
 
+
+app.post('/api/hubspot/deals/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  // ✅ Try getting ownerId from session, or fallback to HubSpot token info
+  let ownerId = req.session.ownerId;
+  if (!ownerId) {
+    try {
+      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
+      ownerId = whoami.data.user_id;
+      console.log("🔁 Fetched ownerId from token:", ownerId);
+    } catch (err) {
+      console.error("❌ Could not resolve ownerId", err.response?.data || err.message);
+      return res.status(400).json({ error: 'Could not resolve owner ID' });
+    }
+  }
+
+  const {
+    dealName,
+    pipeline,
+    stage,
+    companyId
+  } = req.body;
+
+  console.log("📩 Creating deal for company", companyId);
+
+  try {
+    const response = await hubspotClient.crm.deals.basicApi.create({
+      properties: {
+        dealname: dealName,
+        pipeline: pipeline || 'default',
+        dealstage: stage || 'appointmentscheduled',
+        hubspot_owner_id: ownerId,
+        sdr_owner: ownerId // 🔹 Custom field set to same user
+      },
+      associations: [
+        {
+          to: { id: companyId },
+          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 5 }]
+        }
+      ]
+    });
+
+    console.log("✅ Deal created:", response.id);
+    res.json({ success: true, id: response.id });
+  } catch (err) {
+    console.error("❌ Failed to create deal:", err.response?.data || err.message);
+    res.status(500).json({ error: 'Failed to create deal', details: err.response?.data || err.message });
+  }
+});
+
+// create task 
+app.post('/api/hubspot/tasks/create', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const {
+    taskDate,
+    companyId,
+    contactId,
+    dealId,
+    companyName,
+    ownerId
+  } = req.body;
+
+  if (!taskDate || !companyId || !contactId || !dealId || !companyName || !ownerId) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  const hubspot = new Client({ accessToken: token });
+
+  const taskPayload = {
+    properties: {
+      hs_timestamp: taskDate,
+      hs_task_body: `Followup with the restaurant ${companyName}`,
+      hubspot_owner_id: ownerId,
+      hs_task_subject: `Followup Task - ${companyName}`,
+      hs_task_status: "NOT_STARTED",
+      hs_task_priority: "MEDIUM",
+      hs_task_type: "CALL"
+    },
+    associations: [
+      {
+        to: { id: contactId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 204 }]
+      },
+      {
+        to: { id: companyId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 192 }]
+      },
+      {
+        to: { id: dealId },
+        types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 216 }]
+      }
+    ]
+  };
+
+  try {
+    const response = await hubspot.crm.objects.tasks.basicApi.create(taskPayload);
+    console.log("✅ Task created:", response.id);
+    res.json({ success: true, taskId: response.id });
+  } catch (err) {
+    console.error("❌ Failed to create task:", err.response?.body || err.message);
+    res.status(500).json({ error: "Failed to create task", details: err.response?.body || err.message });
+  }
+});

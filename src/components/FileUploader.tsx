@@ -10,38 +10,63 @@ interface FileUploaderProps {
   title?: string;
 }
 
-const FileUploader: React.FC<FileUploaderProps> = ({ 
-  onUpload, 
+const FileUploader: React.FC<FileUploaderProps> = ({
+  onUpload,
   acceptedTypes = "application/pdf,image/*",
-  title = "Upload Contract" 
+  title = "Upload Contract"
 }) => {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0] || null;
     if (selectedFile) {
       setFile(selectedFile);
+
+      setUploading(true);
+
+      try {
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
+
+        if (onUpload) {
+          onUpload(selectedFile);
+        }
+
+        setUploaded(true);
+        toast({
+          title: 'File Uploaded',
+          description: 'Your file has been uploaded successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Upload Failed',
+          description: 'There was an error uploading your file. Please try again.',
+          variant: 'destructive',
+        });
+      } finally {
+        setUploading(false);
+      }
     }
   };
-  
+
+
   const handleUpload = async () => {
     if (!file) return;
-    
+
     setUploading(true);
-    
+
     // Simulate upload process
     try {
       // In a real app, you would upload to your server here
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       if (onUpload) {
         onUpload(file);
       }
-      
+
       setUploaded(true);
       toast({
         title: 'File Uploaded',
@@ -57,7 +82,7 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       setUploading(false);
     }
   };
-  
+
   const clearFile = () => {
     setFile(null);
     setUploaded(false);
@@ -65,20 +90,20 @@ const FileUploader: React.FC<FileUploaderProps> = ({
       inputRef.current.value = '';
     }
   };
-  
+
   const bytesToSize = (bytes: number) => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     if (bytes === 0) return '0 Byte';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round(bytes / Math.pow(1024, i)) + ' ' + sizes[i];
   };
-  
+
   return (
     <div className="allo-card flex flex-col space-y-4">
       <h3 className="text-lg font-medium">{title}</h3>
-      
+
       {!file ? (
-        <div 
+        <div
           className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center cursor-pointer hover:border-allo-primary transition-colors"
           onClick={() => inputRef.current?.click()}
         >
@@ -89,9 +114,9 @@ const FileUploader: React.FC<FileUploaderProps> = ({
           <p className="text-xs text-center text-allo-muted mt-1">
             PDF, JPG, PNG files are supported
           </p>
-          <input 
-            type="file" 
-            className="hidden" 
+          <input
+            type="file"
+            className="hidden"
             accept={acceptedTypes}
             onChange={handleFileChange}
             ref={inputRef}
@@ -113,25 +138,17 @@ const FileUploader: React.FC<FileUploaderProps> = ({
                 </span>
               </div>
             </div>
-            
-            <button 
+
+            <button
               className="text-allo-muted hover:text-red-500 transition-colors"
               onClick={clearFile}
             >
               <X size={18} />
             </button>
           </div>
-          
-          {!uploaded && (
-            <Button 
-              className="w-full mt-3 bg-allo-primary text-white"
-              onClick={handleUpload}
-              disabled={uploading}
-            >
-              {uploading ? 'Uploading...' : 'Upload File'}
-            </Button>
-          )}
-          
+
+
+
           {uploaded && (
             <div className="flex items-center space-x-2 mt-3 text-green-600 text-sm">
               <Check size={16} />

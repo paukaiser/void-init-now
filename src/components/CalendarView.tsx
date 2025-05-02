@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   format,
@@ -212,8 +211,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
   return (
     <div className="w-full h-full flex flex-col animate-fade-in">
-      <ScrollArea className="flex-grow h-full" viewportRef={scrollRef}>
-        <div className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
+      <ScrollArea className="flex-grow h-full">
+        <div ref={scrollRef} className="calendar-grid daily-view rounded-lg border border-gray-200 bg-white/90 h-full relative">
           <div className="flex flex-col min-w-[60px]">
             <div className="h-10 border-b border-gray-100" />
             {generateTimeSlots()}
