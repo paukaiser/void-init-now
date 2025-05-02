@@ -189,7 +189,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           email: `test.${companyNameForEmail}@allo.com`,
           phone: '',
         });
-        setSelectedCompanyForDialog({...company});
+        setSelectedCompanyForDialog({ ...company });
         setShowNoContactDialog(true);
       } else {
         // Pass company with contactId
@@ -296,27 +296,29 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         body: JSON.stringify(payload)
       });
 
+      const resBody = await res.json();
       if (!res.ok) {
-        throw new Error("Failed to create contact");
+        console.error("❌ Backend error:", resBody);
+        throw new Error(resBody?.error || "Failed to create contact");
       }
 
-      const newContact = await res.json();
+
+      const createdContact = await res.json();
       toast.success("New contact created successfully");
 
-      // Close dialog and select company with new contact ID
       setShowNoContactDialog(false);
       onSelectRef.current({
         ...selectedCompanyForDialog,
-        contactId: newContact.id
+        contactId: createdContact.id
       });
     } catch (err) {
       console.error("❌ Failed to create contact:", err);
       toast.error("Could not create new contact");
-      // Still select the company but without a contact
       setShowNoContactDialog(false);
       onSelectRef.current({ ...selectedCompanyForDialog, contactId: null });
     }
   };
+
 
   const handleAddNewCompanyClick = () => {
     setNewCompany({
@@ -403,10 +405,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       }
 
       const deal = await dealRes.json();
-      
+
       // 3. Prepare to check/create contact
       setShowAddCompanyDialog(false);
-      
+
       // Prepare prefilled contact information for the new company
       const companyNameForEmail = company.name.toLowerCase().replace(/\s+/g, '');
       setNewContact({
@@ -415,16 +417,16 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         email: `test.${companyNameForEmail}@allo.com`,
         phone: '',
       });
-      
+
       setSelectedCompanyForDialog({
         id: company.id,
         name: company.name,
         address: `${company.street}, ${company.city}, ${company.postalCode}`,
         dealId: deal.id
       });
-      
+
       toast.success("Company created with new deal");
-      
+
       // Show the contact creation dialog
       setShowNoContactDialog(true);
     } catch (err) {
@@ -548,7 +550,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
             <form className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                <Input 
+                <Input
                   id="firstName"
                   name="firstName"
                   value={newContact.firstName}
@@ -556,10 +558,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-                <Input 
+                <Input
                   id="lastName"
                   name="lastName"
                   value={newContact.lastName}
@@ -567,10 +569,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                <Input 
+                <Input
                   id="email"
                   name="email"
                   type="email"
@@ -579,10 +581,10 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone</Label>
-                <Input 
+                <Input
                   id="phone"
                   name="phone"
                   value={newContact.phone}
