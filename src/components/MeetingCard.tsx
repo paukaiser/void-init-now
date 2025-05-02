@@ -7,7 +7,6 @@ import { cn } from "../lib/utils.ts";
 import { useIsMobile } from "../hooks/use-mobile.tsx";
 
 export interface Meeting {
-  ownerId: string;
   id: string;
   title: string;
   contactName: string;

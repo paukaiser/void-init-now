@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import { cn } from "../lib/utils.ts";
 import { useMeetingContext } from '../context/MeetingContext.tsx';
 import { useLocation } from 'react-router-dom'; // already imported? good
-import { useUser } from '../hooks/useUser.ts';
 
 
 
@@ -26,12 +25,8 @@ const FollowUpOutcome: React.FC = () => {
   const isHotDeal = location.state?.isHotDeal || false;
   const dealId = location.state?.dealId || null;
 
-
   const { meetings } = useMeetingContext();
   const meetingDetails = meetings.find(m => m.id === id);
-  const user = useUser();
-  const ownerId = meetingDetails?.ownerId || user?.user_id;
-
 
   const [isCompleted, setIsCompleted] = useState(false);
 
@@ -109,46 +104,12 @@ const FollowUpOutcome: React.FC = () => {
     scheduleTask(taskDate);
   };
 
-  const scheduleTask = async (taskDate: Date) => {
-    if (!meetingDetails) return;
-
-    const dateWithTime = new Date(taskDate);
-    dateWithTime.setHours(9, 0, 0, 0); // always at 09:00
-
-    const unixMillis = dateWithTime.getTime();
-
-    const payload = {
-      taskDate: unixMillis,
-      companyId: meetingDetails.companyId,
-      contactId: meetingDetails.contactId,
-      dealId: meetingDetails.dealId,
-      companyName: meetingDetails.companyName,
-      ownerId: user?.user_id,
-    };
-    console.log("🧪 Task Payload:", payload);
-    console.log("✅ contactId from meetingDetails:", meetingDetails.contactId);
-
-    try {
-      const res = await fetch("http://localhost:3000/api/hubspot/tasks/create", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) throw new Error("Failed to create task");
-
-      toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
-      setShowTaskOptions(false);
-      setShowDateSelector(false);
-      navigate('/');
-    } catch (err) {
-      console.error("❌ Failed to schedule task:", err);
-      toast.error("Failed to schedule follow-up task");
-    }
+  const scheduleTask = (taskDate: Date) => {
+    toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
+    setShowTaskOptions(false);
+    setShowDateSelector(false);
+    navigate('/');
   };
-
-
 
   const handleComplete = async () => {
     try {
