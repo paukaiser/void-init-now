@@ -1043,23 +1043,15 @@ app.post('/api/hubspot/contact/create', async (req, res) => {
     try {
       const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
       ownerId = whoami.data.user_id;
-      console.log("🔁 Fetched ownerId from token:", ownerId);
     } catch (err) {
-      console.error("❌ Could not resolve ownerId", err.response?.data || err.message);
       return res.status(400).json({ error: 'Could not resolve owner ID' });
     }
   }
 
-  const {
-    firstName,
-    lastName,
-    email,
-    phone,
-    companyId
-  } = req.body;
+  const { firstName, lastName, email, phone, companyId } = req.body;
 
   try {
-    // Step 1: Create contact
+    // Step 1: Create the contact
     const contactRes = await hubspotClient.crm.contacts.basicApi.create({
       properties: {
         firstname: firstName,
@@ -1072,23 +1064,24 @@ app.post('/api/hubspot/contact/create', async (req, res) => {
 
     const contactId = contactRes.id;
 
-    // Step 2: Associate with company
-    await hubspotClient.crm.contacts.associationsApi.create(
-      contactId,
-      'company',
-      [
-        {
-          to: { id: companyId },
-          types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 1 }]
+    // Step 2: Use axios to call v4 endpoint for default association
+    await axios.put(
+      `https://api.hubapi.com/crm/v4/objects/contact/${contactId}/associations/default/company/${companyId}`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
-      ]
+      }
     );
 
     console.log("✅ Contact created and associated:", contactId);
     res.json({ success: true, id: contactId });
   } catch (err) {
-    console.error("❌ Failed to create contact or associate:", err.response?.data || err.message);
+    console.error("❌ Failed to create or associate contact:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to create or associate contact', details: err.response?.data || err.message });
   }
 });
+
 
