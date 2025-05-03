@@ -289,7 +289,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         companyId: selectedCompanyForDialog.id,
       };
 
-      const res = await fetch('http://localhost:3000/api/hubspot/contacts/create', {
+      const res = await fetch('http://localhost:3000/api/hubspot/contact/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
