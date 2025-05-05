@@ -213,7 +213,12 @@ const FloatingActionButton: React.FC = () => {
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarIcon className="mr-2 h-4 w-4" /> {date ? format(date, "dd.MM.yyyy") : <span>Select date</span>} </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent mode="single" selected={taskDate} onSelect={setTaskDate} initialFocus />
+                  <CalendarComponent
+                    mode="single"
+                    selected={date}
+                    onSelect={(selectedDate) => selectedDate && setDate(selectedDate)}
+                    initialFocus
+                  />
                 </PopoverContent>
               </Popover>
             </div>
