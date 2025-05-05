@@ -32,24 +32,37 @@ export const useTasks = () => {
                 if (!res.ok) throw new Error("Failed to fetch tasks");
                 const data = await res.json();
                 setTasks(
-                    (Array.isArray(data.tasks) ? data.tasks : []).map((
-                        task: any,
-                    ) => ({
-                        id: task.id,
-                        subject: task.subject,
-                        body: task.body,
-                        contactName: task.contactName || "Unknown Contact",
-                        phoneNumber: task.phoneNumber,
-                        email: task.email,
-                        restaurantName: task.restaurantName ||
-                            "Unknown Restaurant",
-                        cuisine: task.cuisine,
-                        createdAt: task.createdAt || new Date().toISOString(),
-                        dueDate: task.dueDate || new Date().toISOString(),
-                        isRead: false,
-                        completed: task.status === "COMPLETED",
-                        disqualified: false,
-                    })),
+                    (Array.isArray(data.tasks) ? data.tasks : []).map(
+                        (task: any) => {
+                            console.log(
+                                "🧠 Deal ID for task",
+                                task.id,
+                                ":",
+                                task.dealId,
+                            ); // ✅ ADD THIS
+
+                            return {
+                                id: task.id,
+                                subject: task.subject,
+                                body: task.body,
+                                contactName: task.contactName ||
+                                    "Unknown Contact",
+                                phoneNumber: task.phoneNumber,
+                                email: task.email,
+                                restaurantName: task.restaurantName ||
+                                    "Unknown Restaurant",
+                                cuisine: task.cuisine,
+                                createdAt: task.createdAt ||
+                                    new Date().toISOString(),
+                                dueDate: task.dueDate ||
+                                    new Date().toISOString(),
+                                isRead: false,
+                                completed: task.status === "COMPLETED",
+                                disqualified: false,
+                                dealId: task.dealId, // <- ensure you are actually including this
+                            };
+                        },
+                    ),
                 );
             } catch (error) {
                 console.error("Error fetching tasks:", error);
@@ -57,7 +70,6 @@ export const useTasks = () => {
                 setLoading(false);
             }
         };
-
         fetchTasks();
     }, [user]);
 

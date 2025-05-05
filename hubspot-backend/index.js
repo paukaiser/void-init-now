@@ -632,7 +632,7 @@ app.patch('/api/deal/:dealId/close-lost', async (req, res) => {
   try {
     await hubspotClient.crm.deals.basicApi.update(dealId, {
       properties: {
-        dealstage: deal_stage, // Use 'dealstage' (HubSpot internal property)
+        dealstage: "closedlost", // Use 'dealstage' (HubSpot internal property)
         closed_lost_reason,    // Make sure this property exists in your HubSpot portal!
       },
     });
@@ -750,8 +750,9 @@ app.post('/api/tasks', async (req, res) => {
       let email = '';
       let phoneNumber = '';
       let cuisine = '';
+      let dealId = '';
 
-      // Fetch associated company
+      // === 🔗 Fetch associated company ===
       try {
         const assocCompany = await axios.get(
           `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/companies`,
@@ -766,12 +767,24 @@ app.post('/api/tasks', async (req, res) => {
           );
           restaurantName = companyDetails.data.properties.name || restaurantName;
           cuisine = companyDetails.data.properties.industry || '';
+
+          // ✅ Fetch associated deals from company
+          try {
+            const assocDeals = await axios.get(
+              `https://api.hubapi.com/crm/v3/objects/companies/${companyId}/associations/deals`,
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            dealId = assocDeals.data.results?.[0]?.id || '';
+            console.log(`🔗 Found deal ${dealId} for company ${companyId}`);
+          } catch (err) {
+            console.warn(`⚠️ No deal found for company ${companyId}`);
+          }
         }
       } catch (err) {
         console.warn(`⚠️ No company for task ${taskId}`);
       }
 
-      // Fetch associated contact
+      // === 📞 Fetch associated contact ===
       try {
         const assocContact = await axios.get(
           `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/contacts`,
@@ -795,18 +808,18 @@ app.post('/api/tasks', async (req, res) => {
       return {
         id: taskId,
         subject: task.properties.hs_task_subject,
-        contactName, // 🧠 fetched from associated contact
-        restaurantName, // 🧠 fetched from associated company
+        contactName,
+        restaurantName,
         cuisine,
         phoneNumber,
+        dealId,
         email,
-        body: task.properties.hs_task_body || "", // 📝 task body = notes
+        body: task.properties.hs_task_body || "",
         status: task.properties.hs_task_status,
         dueDate: task.properties.hs_task_due_date,
         createdAt: task.properties.hs_timestamp,
         ownerId: task.properties.hubspot_owner_id,
       };
-
     }));
 
     res.json({ tasks });
@@ -815,6 +828,7 @@ app.post('/api/tasks', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch tasks' });
   }
 });
+
 
 
 app.patch('/api/meetings/:id/reschedule', async (req, res) => {

@@ -105,13 +105,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       );
     }
 
-    // ✅ Also mark the deal as Closed Lost
+    // ✅ Mark deal as Closed Lost
     if (task.dealId) {
       await markDealAsClosedLost(
         task.dealId,
         disqualifyReason === "Other" ? otherReason : disqualifyReason
       );
     }
+
+    // ✅ Also mark task as completed (backend + UI)
+    if (onComplete) {
+      await onComplete(task.id);
+    }
+
 
     toast.info(`Task for ${task.contactName} marked as disqualified`);
     setShowDisqualifyDialog(false);
@@ -229,15 +235,15 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
                   <SelectValue placeholder="Select a reason" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Bad Timing">Bad Timing</SelectItem>
-                  <SelectItem value="Budget Constraints">Budget Constraints</SelectItem>
-                  <SelectItem value="No Decision-making Power">No Decision-making Power</SelectItem>
-                  <SelectItem value="Competitor Preference">Competitor Preference</SelectItem>
-                  <SelectItem value="Not a Good Fit">Not a Good Fit</SelectItem>
-                  <SelectItem value="No Interest">No Interest</SelectItem>
-                  <SelectItem value="Prior Negative Experience">Prior Negative Experience</SelectItem>
-                  <SelectItem value="Technical Limitations">Technical Limitations</SelectItem>
+                  <SelectItem value="Too sophisticated/modern">Too sophisticated/modern</SelectItem>
+                  <SelectItem value="Too expensive">Too expensive</SelectItem>
+                  <SelectItem value="Too many features">Too many features</SelectItem>
+                  <SelectItem value="No fit to the restaurant type">No fit to the restaurant type</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
+                  <SelectItem value="No Interest">No Interest</SelectItem>
+                  <SelectItem value="Bad Timing">Bad Timing</SelectItem>
+                  <SelectItem value="Works black">Works black</SelectItem>
+                  <SelectItem value="Restaurant closed">Restaurant closed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
