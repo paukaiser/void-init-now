@@ -54,7 +54,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   };
 
   const handleComplete = () => {
-    toast.success(`Task for ${task.contactName} marked as completed`);
     setIsDialogOpen(false);
     if (onComplete) onComplete(task.id);
   };
@@ -122,7 +121,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
             <p>
               <span className="font-medium">Notes:</span>{" "}
               {task.body ? task.body.replace(/<[^>]+>/g, '').trim() : "N/A"}
-            </p>            
+            </p>
             <p><span className="font-medium">Restaurant:</span> {task.restaurantName || "N/A"}</p>
             <p><span className="font-medium">Contact:</span> {task.contactName || "N/A"}</p>
             <p><span className="font-medium">Phone:</span> {task.phoneNumber || "N/A"}</p>
@@ -152,7 +151,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               size="sm"
             >
               <CalendarIcon size={16} className="mr-1" />
-              Schedule
+              Schedule Meeting
             </Button>
             <Button
               onClick={openDisqualifyDialog}

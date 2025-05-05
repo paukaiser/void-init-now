@@ -1083,3 +1083,30 @@ app.post('/api/hubspot/contact/create', async (req, res) => {
     res.status(500).json({ error: 'Failed to create or associate contact', details: err.response?.data || err.message });
   }
 });
+
+
+// set task to completed
+app.post('/api/hubspot/tasks/complete', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+
+  const { taskId } = req.body;
+  console.log("🛠️ Updating taskId:", taskId);
+
+
+  try {
+    const hubspot = new Client({ accessToken: token });
+
+    await hubspot.crm.objects.tasks.basicApi.update(taskId, {
+      properties: {
+        hs_task_status: "COMPLETED"
+      }
+    });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Error completing task:", err);
+    res.status(500).json({ error: "Failed to complete task" });
+  }
+});

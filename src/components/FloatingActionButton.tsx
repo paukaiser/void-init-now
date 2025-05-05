@@ -253,7 +253,7 @@ const FloatingActionButton: React.FC = () => {
               <Textarea value={taskNotes} onChange={(e) => setTaskNotes(e.target.value)} placeholder="Add any task notes..." />
             </div>
             <div className="space-y-2">
-              <Label>Follow-up Date</Label>
+              <Label>Date</Label>
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarIcon className="mr-2 h-4 w-4" /> {taskDate ? format(taskDate, "dd.MM.yyyy") : <span>Select date</span>} </Button>

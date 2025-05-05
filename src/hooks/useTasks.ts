@@ -73,12 +73,28 @@ export const useTasks = () => {
         setTasks((prev) => prev.map((task) => ({ ...task, isRead: true })));
     };
 
-    const markAsCompleted = (taskId: string) => {
-        setTasks((prev) =>
-            prev.map((task) =>
-                task.id === taskId ? { ...task, completed: true } : task
-            )
-        );
+    const markAsCompleted = async (taskId: string) => {
+        try {
+            const res = await fetch(
+                "http://localhost:3000/api/hubspot/tasks/complete",
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ taskId }),
+                },
+            );
+
+            if (!res.ok) throw new Error("Failed to mark task as completed");
+
+            setTasks((prev) =>
+                prev.map((task) =>
+                    task.id === taskId ? { ...task, completed: true } : task
+                )
+            );
+        } catch (err) {
+            console.error("❌ Error completing task:", err);
+        }
     };
 
     const disqualifyTask = (

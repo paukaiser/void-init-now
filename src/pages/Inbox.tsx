@@ -20,9 +20,16 @@ const Inbox: React.FC = () => {
     markAsRead(taskId);
   };
 
-  const handleTaskComplete = (taskId: string) => {
-    markAsCompleted(taskId);
+  const handleTaskComplete = async (taskId: string) => {
+    try {
+      await markAsCompleted(taskId);
+      toast.success("Task marked as completed");
+    } catch (err) {
+      console.error("❌ Error completing task:", err);
+      toast.error("Failed to mark task as completed");
+    }
   };
+
 
   const handleTaskDisqualify = (taskId: string, reason: string, otherReason?: string) => {
     disqualifyTask(taskId, reason, otherReason);
@@ -31,10 +38,10 @@ const Inbox: React.FC = () => {
   return (
     <div className="w-full max-w-5xl mx-auto">
       <div className="flex items-center mb-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="mr-2" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="mr-2"
           onClick={() => navigate('/dashboard')}
         >
           <ArrowLeft className="h-4 w-4 mr-1" />
