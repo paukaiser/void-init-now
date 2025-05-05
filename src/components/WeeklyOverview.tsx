@@ -1,9 +1,8 @@
-
 import React, { useMemo, useState, useRef } from 'react';
-import { 
-  format, 
-  startOfWeek, 
-  addDays, 
+import {
+  format,
+  startOfWeek,
+  addDays,
   isSameDay,
   isSameMonth,
   isToday,
@@ -11,7 +10,7 @@ import {
   subWeeks
 } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { Meeting } from './MeetingCard';
+import { useMeetingContext } from '../context/MeetingContext';
 import { Task } from '@/types';
 import UserProfile from './UserProfile';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
@@ -19,17 +18,16 @@ import { Button } from '@/components/ui/button';
 
 interface WeeklyOverviewProps {
   currentDate: Date;
-  meetings: Meeting[];
   tasks: Task[];
   onDateSelect: (date: Date) => void;
 }
 
 const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   currentDate,
-  meetings,
   tasks,
   onDateSelect
 }) => {
+  const { meetings } = useMeetingContext(); // 👈 Get meetings from context
   const [weekOffset, setWeekOffset] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
@@ -79,17 +77,17 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
     onDateSelect(day);
     setWeekOffset(0);
   };
-  
+
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartX.current = e.touches[0].clientX;
   };
-  
+
   const handleTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
-    
+
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartX.current - touchEndX;
-    
+
     if (Math.abs(diff) > 50) {
       if (diff > 0) {
         goToNextWeek();
@@ -97,7 +95,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
         goToPreviousWeek();
       }
     }
-    
+
     touchStartX.current = null;
   };
 
@@ -108,7 +106,7 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   const MAX_DOTS_TOTAL = 8;
 
   return (
-    <div 
+    <div
       className="bg-white rounded-lg shadow-sm p-4 mb-4"
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -130,12 +128,12 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
         </div>
         <UserProfile small={true} />
       </div>
-      
+
       <div className="grid grid-cols-9 gap-1 text-center items-center">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-1 col-span-1" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-1 col-span-1"
           onClick={goToPreviousWeek}
           aria-label="Previous week"
         >
@@ -147,21 +145,21 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
             const dayMeetings = getMeetingsForDay(day);
             const dayTasks = getTasksForDay(day);
             const isSelected = isSameDay(day, currentDate);
-            
+
             const totalItems = dayMeetings.length + dayTasks.length;
             const showPlus = totalItems > MAX_DOTS_TOTAL;
             const dotSize = totalItems > MAX_DOTS ? "w-1.5 h-1.5" : "w-2 h-2";
-            
+
             let meetingDotsToShow = Math.min(dayMeetings.length, showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS);
             let taskDotsToShow = Math.min(dayTasks.length, showPlus ? (MAX_DOTS_TOTAL - meetingDotsToShow) : (MAX_DOTS - meetingDotsToShow));
-            
+
             if (meetingDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
               taskDotsToShow = Math.min(dayTasks.length, MAX_DOTS_TOTAL - meetingDotsToShow);
             }
             if (taskDotsToShow < (showPlus ? MAX_DOTS_TOTAL / 2 : MAX_DOTS) && !showPlus) {
               meetingDotsToShow = Math.min(dayMeetings.length, MAX_DOTS_TOTAL - taskDotsToShow);
             }
-            
+
             return (
               <button
                 key={index}
@@ -182,24 +180,24 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
                 )}>
                   {format(day, 'd')}
                 </span>
-                
+
                 <div className="flex gap-0.5 mt-1 items-center justify-center h-2">
                   {Array.from({ length: meetingDotsToShow }).map((_, i) => (
-                    <div 
-                      key={`meeting-${i}`} 
-                      className={`${dotSize} rounded-full bg-[#FF8769]`} 
+                    <div
+                      key={`meeting-${i}`}
+                      className={`${dotSize} rounded-full bg-[#FF8769]`}
                       title={`${dayMeetings.length} meetings`}
                     />
                   ))}
-                  
+
                   {Array.from({ length: taskDotsToShow }).map((_, i) => (
-                    <div 
-                      key={`task-${i}`} 
-                      className={`${dotSize} rounded-full bg-[#2E1813]`} 
+                    <div
+                      key={`task-${i}`}
+                      className={`${dotSize} rounded-full bg-[#2E1813]`}
                       title={`${dayTasks.length} tasks`}
                     />
                   ))}
-                  
+
                   {showPlus && (
                     <div className={`${dotSize} flex items-center justify-center ml-0.5 font-bold text-[8px] text-gray-600`} title={`${totalItems} total items`}>
                       +
@@ -211,10 +209,10 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
           })}
         </div>
 
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          className="p-1 col-span-1" 
+        <Button
+          variant="ghost"
+          size="sm"
+          className="p-1 col-span-1"
           onClick={goToNextWeek}
           aria-label="Next week"
         >
