@@ -998,7 +998,7 @@ app.post('/api/hubspot/tasks/create', async (req, res) => {
   const taskPayload = {
     properties: {
       hs_timestamp: taskDate,
-      hs_task_body: `Followup with the restaurant ${companyName}`,
+      hs_task_body: req.body.taskBody?.trim() || `Followup with the restaurant ${companyName}`,
       hubspot_owner_id: ownerId,
       hs_task_subject: `Followup Task - ${companyName}`,
       hs_task_status: "NOT_STARTED",
@@ -1083,5 +1083,3 @@ app.post('/api/hubspot/contact/create', async (req, res) => {
     res.status(500).json({ error: 'Failed to create or associate contact', details: err.response?.data || err.message });
   }
 });
-
-

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, FileText, CalendarIcon } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { cn } from '../lib/utils.ts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog.tsx";
 import { Button } from "../components/ui/button.tsx";
@@ -12,26 +12,30 @@ import { Calendar as CalendarComponent } from "../components/ui/calendar.tsx";
 import { Textarea } from "../components/ui/textarea.tsx";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group.tsx";
 import CompanySearch, { Company } from '../components/CompanySearch.tsx';
+import { useMeetingContext } from '../context/MeetingContext.tsx';
+import { useUser } from '../hooks/useUser.ts';
 
 interface CompanyWithDeal extends Company {
-  dealId?: string;
+  dealId?: string | null | undefined;
 }
 
-interface FloatingActionButtonProps {
-  onCreateTask?: () => void;
-}
-
-const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTask }) => {
+const FloatingActionButton: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateMeetingDialogOpen, setIsCreateMeetingDialogOpen] = useState(false);
+  const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyWithDeal | null>(null);
+  const [taskNotes, setTaskNotes] = useState("");
+  const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
   const [meetingType, setMeetingType] = useState<"Sales Meeting" | "Sales Followup">("Sales Meeting");
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState("");
   const [notes, setNotes] = useState("");
-
-  const navigate = useNavigate();
   const fabRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const { meetings } = useMeetingContext();
+  const meetingDetails = meetings.find(m => m.id === id);
+  const user = useUser();
 
   const toggleOptions = () => setIsOpen(!isOpen);
   const handleCreateMeeting = () => {
@@ -40,7 +44,46 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   };
   const handleCreateTask = () => {
     setIsOpen(false);
-    onCreateTask?.();
+    setIsCreateTaskDialogOpen(true);
+  };
+
+  const handleSubmitTask = async () => {
+    if (!selectedCompany || !taskDate) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const scheduledDate = new Date(taskDate);
+    scheduledDate.setHours(9, 0, 0, 0); // always 9:00am
+
+    const payload = {
+      taskDate: scheduledDate.getTime(),
+      companyId: selectedCompany.id,
+      contactId: selectedCompany.contactId,
+      dealId: selectedCompany.dealId,
+      companyName: selectedCompany.name,
+      ownerId: user?.user_id,
+      taskBody: taskNotes
+    };
+
+    try {
+      const res = await fetch("http://localhost:3000/api/hubspot/tasks/create", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Failed to create task");
+
+      toast.success(`Task scheduled for ${format(scheduledDate, 'dd.MM.yyyy')}`);
+      setIsCreateTaskDialogOpen(false);
+      setTaskDate(undefined);
+      setTaskNotes("");
+    } catch (err) {
+      console.error("❌ Failed to schedule task:", err);
+      toast.error("Failed to schedule follow-up task");
+    }
   };
 
   const handleSubmitMeeting = async () => {
@@ -48,7 +91,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
       toast.error("Please fill in all required fields");
       return;
     }
-
     const meetingDate = new Date(date);
     const [hour, minute] = startTime.split(":").map(Number);
     meetingDate.setHours(hour, minute, 0, 0);
@@ -135,6 +177,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
         </div>
       </div>
 
+      {/* Meeting Dialog */}
       <Dialog open={isCreateMeetingDialogOpen} onOpenChange={setIsCreateMeetingDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -167,13 +210,10 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
               <Label>Date <span className="text-red-500">*</span></Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, "dd.MM.yyyy") : <span>Select date</span>}
-                  </Button>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarIcon className="mr-2 h-4 w-4" /> {date ? format(date, "dd.MM.yyyy") : <span>Select date</span>} </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent mode="single" selected={date} onSelect={setDate} initialFocus />
+                  <CalendarComponent mode="single" selected={taskDate} onSelect={setTaskDate} initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
@@ -196,6 +236,36 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
                 Schedule Meeting
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Task Dialog */}
+      <Dialog open={isCreateTaskDialogOpen} onOpenChange={setIsCreateTaskDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Task</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <CompanySearch value={selectedCompany} onSelect={setSelectedCompany} required />
+            <div>
+              <Label>Optional Notes</Label>
+              <Textarea value={taskNotes} onChange={(e) => setTaskNotes(e.target.value)} placeholder="Add any task notes..." />
+            </div>
+            <div className="space-y-2">
+              <Label>Follow-up Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !date && "text-muted-foreground")}> <CalendarIcon className="mr-2 h-4 w-4" /> {taskDate ? format(taskDate, "dd.MM.yyyy") : <span>Select date</span>} </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent mode="single" selected={date} onSelect={setTaskDate} initialFocus />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <Button onClick={handleSubmitTask} className="bg-[#2E1813] hover:bg-[#2E1813]/90 text-white">
+              Create Task
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
