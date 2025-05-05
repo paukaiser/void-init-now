@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../hooks/useUser.ts';
 import { useTasks } from '../hooks/useTasks.ts';
@@ -34,7 +35,7 @@ const Dashboard: React.FC = () => {
   const isMobile = useIsMobile();
   const user = useUser();
   const { tasks, markAsRead, markAsCompleted, disqualifyTask, createTask } = useTasks();
-  const { setMeetings } = useMeetingContext();
+  const { meetings } = useMeetingContext();
 
 
   const handleDateSelect = (date: Date) => setCurrentDate(date);
@@ -126,7 +127,7 @@ const Dashboard: React.FC = () => {
       <div className="flex-none">
         <WeeklyOverview
           currentDate={currentDate}
-          meetings={[]} // or fetch real ones later
+          meetings={meetings} {/* Pass meetings from context */}
           tasks={tasks}
           onDateSelect={handleDateSelect}
         />
