@@ -63,7 +63,29 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
     setIsDialogOpen(false);
   };
 
-  const handleDisqualify = () => {
+  const markDealAsClosedLost = async (dealId: string, reason: string) => {
+    try {
+      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-lost`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deal_stage: "closedlost", // Make sure this matches the internal value in HubSpot
+          closed_lost_reason: reason
+        }),
+      });
+
+      if (!res.ok) throw new Error("Failed to mark deal as closed lost");
+
+      console.log("✅ Deal marked as Closed Lost");
+      toast.success("Deal marked as Closed Lost");
+    } catch (err) {
+      console.error("❌ Error marking deal as Closed Lost:", err);
+      toast.error("Failed to update deal status");
+    }
+  };
+
+  const handleDisqualify = async () => {
     if (!disqualifyReason) {
       toast.error("Please select a disqualification reason");
       return;
@@ -74,6 +96,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       return;
     }
 
+    // Disqualify the task
     if (onDisqualify) {
       onDisqualify(
         task.id,
@@ -82,9 +105,18 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
       );
     }
 
+    // ✅ Also mark the deal as Closed Lost
+    if (task.dealId) {
+      await markDealAsClosedLost(
+        task.dealId,
+        disqualifyReason === "Other" ? otherReason : disqualifyReason
+      );
+    }
+
     toast.info(`Task for ${task.contactName} marked as disqualified`);
     setShowDisqualifyDialog(false);
   };
+
 
   return (
     <>
@@ -160,7 +192,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               size="sm"
             >
               <XCircle size={16} className="mr-1" />
-              Disqualify
+              Lose the Deal
             </Button>
             <Button
               onClick={handleComplete}

@@ -1,4 +1,8 @@
 export interface Task {
+  dealId: any;
+  contactId: any;
+  companyAddress: any;
+  companyId: any;
   subject: string;
   id: string;
   contactName: string;
