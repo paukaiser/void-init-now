@@ -1,5 +1,7 @@
+
 // src/components/LoginButton.tsx
 import React from 'react';
+import { Button } from "./ui/button";
 
 const LoginButton = () => {
   const handleLogin = () => {
@@ -7,13 +9,12 @@ const LoginButton = () => {
   };
 
   return (
-    // deno-lint-ignore jsx-button-has-type
-    <button
+    <Button
       onClick={handleLogin}
-      className="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
+      className="bg-black hover:bg-gray-800 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300"
     >
       Log in with HubSpot
-    </button>
+    </Button>
   );
 };
 

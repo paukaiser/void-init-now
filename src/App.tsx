@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import {
   BrowserRouter as Router,
@@ -13,10 +14,9 @@ import MeetingActions from './pages/MeetingActions.tsx';
 import MeetingCanceled from './pages/MeetingCanceled.tsx';
 import AddMeeting from './pages/AddMeeting.tsx';
 import MeetingOutcome from './pages/MeetingOutcome.tsx';
-import PositiveOutcome from './pages/PositiveOutcome.tsx';      // <--- Import
-import NegativeOutcome from './pages/NegativeOutcome.tsx';      // <--- Import
-import FollowUpOutcome from './pages/FollowUpOutcome.tsx';      // <--- Import
-// import FollowUpComponent from './pages/FollowUpComponent.tsx'; // <-- if you have this
+import PositiveOutcome from './pages/PositiveOutcome.tsx';
+import NegativeOutcome from './pages/NegativeOutcome.tsx';
+import FollowUpOutcome from './pages/FollowUpOutcome.tsx';
 
 import { MeetingProvider } from './context/MeetingContext.tsx';
 import './App.css';
@@ -45,7 +45,27 @@ function App() {
           <Route
             path="/"
             element={
-              isAuthenticated ? <Navigate to="/dashboard" /> : <LoginButton />
+              isAuthenticated ? <Navigate to="/dashboard" /> : (
+                <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white flex flex-col items-center justify-center p-6">
+                  <div className="max-w-md w-full flex flex-col items-center">
+                    <div className="mb-8 bg-black w-32 h-32 p-5 rounded-full flex items-center justify-center">
+                      <img 
+                        src="/lovable-uploads/4727eaab-6d75-4f3f-a76f-437eff7cb71d.png" 
+                        alt="allo logo" 
+                        className="w-full h-auto"
+                      />
+                    </div>
+                    <h1 className="text-4xl font-bold mb-2 text-gray-900">allo</h1>
+                    <h2 className="text-xl text-gray-600 mb-8">Field Sales App</h2>
+                    <div className="w-full max-w-xs">
+                      <LoginButton />
+                    </div>
+                    <p className="mt-8 text-sm text-gray-500">
+                      Connect your HubSpot account to continue
+                    </p>
+                  </div>
+                </div>
+              )
             }
           />
           <Route
