@@ -48,14 +48,14 @@ function App() {
               isAuthenticated ? <Navigate to="/dashboard" /> : (
                 <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white flex flex-col items-center justify-center p-6">
                   <div className="max-w-md w-full flex flex-col items-center">
-                    <div className="mb-8 bg-black w-32 h-32 p-5 rounded-full flex items-center justify-center">
+                    <div className="mb-8 bg-[#E9A68A] w-32 h-32 rounded-3xl flex items-center justify-center">
                       <img 
-                        src="/lovable-uploads/4727eaab-6d75-4f3f-a76f-437eff7cb71d.png" 
-                        alt="allo logo" 
+                        src="/lovable-uploads/ffa9c1a8-986c-43a5-a4d3-85f80bc51bf9.png" 
+                        alt="ali logo" 
                         className="w-full h-auto"
                       />
                     </div>
-                    <h1 className="text-4xl font-bold mb-2 text-gray-900">allo</h1>
+                    <h1 className="text-4xl font-bold mb-2 text-gray-900">ali</h1>
                     <h2 className="text-xl text-gray-600 mb-8">Field Sales App</h2>
                     <div className="w-full max-w-xs">
                       <LoginButton />
