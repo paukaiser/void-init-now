@@ -17,6 +17,7 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ dealId, onCom
   const [posCompetitor, setPosCompetitor] = useState<string>("");
   const [paymentCompetitor, setPaymentCompetitor] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +40,7 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ dealId, onCom
     setLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-won`, {
+      const res = await fetch(`${BASE_URL}/api/deal/${dealId}/close-won`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

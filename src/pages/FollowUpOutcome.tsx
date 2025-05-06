@@ -25,6 +25,7 @@ const FollowUpOutcome: React.FC = () => {
   const location = useLocation();
   const isHotDeal = location.state?.isHotDeal || false;
   const dealId = location.state?.dealId || null;
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 
   const { meetings } = useMeetingContext();
@@ -55,7 +56,7 @@ const FollowUpOutcome: React.FC = () => {
     formData.append('audio', blob, 'voice-note.webm');
 
     try {
-      const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
+      const response = await fetch(`${BASE_URL}/api/meeting/send-voice`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -132,7 +133,7 @@ const FollowUpOutcome: React.FC = () => {
     console.log("✅ contactId from meetingDetails:", meetingDetails.contactId);
 
     try {
-      const res = await fetch("http://localhost:3000/api/hubspot/tasks/create", {
+      const res = await fetch(`${BASE_URL}/api/hubspot/tasks/create`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +156,7 @@ const FollowUpOutcome: React.FC = () => {
 
   const handleComplete = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+      const response = await fetch(`${BASE_URL}/api/meeting/${id}/mark-completed`, {
         method: "POST",
         credentials: "include",
       });

@@ -24,13 +24,14 @@ export function useMeetings(
 ) {
     const [meetings, setMeetings] = useState<Meeting[]>([]);
     const [loading, setLoading] = useState(true);
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     useEffect(() => {
         if (!ownerId) return;
 
         setLoading(true);
 
-        fetch("http://localhost:3000/api/meetings", {
+        fetch(`${BASE_URL}/api/meetings`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             credentials: "include",

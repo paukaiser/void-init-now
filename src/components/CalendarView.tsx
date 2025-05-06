@@ -42,6 +42,8 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
   const calendarRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   const START_HOUR = 8;
   const END_HOUR = 22;
@@ -95,7 +97,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:3000/api/meetings', {
+        const res = await fetch(`${BASE_URL}/api/meetings`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
@@ -151,7 +153,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
 
   const generateTimeSlots = () =>
     Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i).map(hour => (
-      <div key={`time-${hour}`} className="time-slot flex items-start justify-end pr-2 text-xs text-muted-foreground">
+      <div key={`time - ${hour}`} className="time-slot flex items-start justify-end pr-2 text-xs text-muted-foreground">
         <span className="mt-[-10px] mr-1">{`${hour.toString().padStart(2, '0')}:00`}</span>
       </div>
     ));
@@ -163,18 +165,18 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
     for (let hour = START_HOUR; hour <= END_HOUR; hour++) {
       grid.push(
         <div
-          key={`hour-line-${hour}`}
+          key={`hour - line - ${hour}`}
           className="hour-grid-line"
-          style={{ top: `${((hour - START_HOUR) * 60) / ((END_HOUR - START_HOUR) * 60) * 100}%` }}
+          style={{ top: `${((hour - START_HOUR) * 60) / ((END_HOUR - START_HOUR) * 60) * 100}% ` }}
         />
       );
 
       if (hour < END_HOUR) {
         grid.push(
           <div
-            key={`half-hour-line-${hour}`}
+            key={`half - hour - line - ${hour} `}
             className="minute-grid-line"
-            style={{ top: `${((hour - START_HOUR) * 60 + 30) / ((END_HOUR - START_HOUR) * 60) * 100}%` }}
+            style={{ top: `${((hour - START_HOUR) * 60 + 30) / ((END_HOUR - START_HOUR) * 60) * 100}% ` }}
           />
         );
       }
@@ -185,7 +187,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({ userId, selectedDate, onSel
         <div
           key="current-time-indicator"
           className="current-time-indicator"
-          style={{ top: `${currentTimePosition}%` }}
+          style={{ top: `${currentTimePosition}% ` }}
         />
       );
     }

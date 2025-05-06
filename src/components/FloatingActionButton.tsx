@@ -40,6 +40,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   const { meetings } = useMeetingContext();
   const meetingDetails = meetings.find(m => m.id === id);
   const user = useUser();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const toggleOptions = () => setIsOpen(!isOpen);
 
@@ -77,7 +78,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     };
 
     try {
-      const res = await fetch("http://localhost:3000/api/hubspot/tasks/create", {
+      const res = await fetch(`${BASE_URL}/api/hubspot/tasks/create`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -118,7 +119,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     };
 
     try {
-      const res = await fetch('http://localhost:3000/api/meetings/create', {
+      const res = await fetch(`${BASE_URL}/api/meetings/create`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

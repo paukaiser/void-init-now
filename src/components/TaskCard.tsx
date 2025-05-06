@@ -27,6 +27,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
   const [disqualifyReason, setDisqualifyReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
   const [showDisqualifyDialog, setShowDisqualifyDialog] = useState(false);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const isPastDue = task.dueDate && isPast(new Date(task.dueDate)) && !isSameDay(new Date(task.dueDate), new Date());
 
@@ -65,7 +66,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
 
   const markDealAsClosedLost = async (dealId: string, reason: string) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-lost`, {
+      const res = await fetch(`${BASE_URL}/api/deal/${dealId}/close-lost`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

@@ -31,6 +31,7 @@ const MeetingActions: React.FC = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const { meetings } = useMeetingContext(); // ✅ use context
   const [meetingDetails, setMeetingDetails] = useState<any | null>(null);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     const foundMeeting = meetings.find(m => m.id === id);
@@ -49,7 +50,7 @@ const MeetingActions: React.FC = () => {
   const handleCancelConfirm = async () => {
     setCancelDialogOpen(false);
     try {
-      const res = await fetch(`http://localhost:3000/api/meeting/${meetingDetails.id}/cancel`, {
+      const res = await fetch(`${BASE_URL}/api/meeting/${meetingDetails.id}/cancel`, {
         method: 'POST',
         credentials: 'include'
       });

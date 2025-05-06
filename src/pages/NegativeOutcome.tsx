@@ -11,6 +11,7 @@ const NegativeOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // 1. Try navigation state
   const navDealId = location.state?.dealId;
@@ -28,7 +29,7 @@ const NegativeOutcome: React.FC = () => {
       const fetchDealId = async () => {
         setLoadingDealId(true);
         try {
-          const res = await fetch(`http://localhost:3000/api/meeting/${id}/deal`, {
+          const res = await fetch(`${BASE_URL}/api/meeting/${id}/deal`, {
             credentials: "include",
           });
           if (!res.ok) throw new Error("Failed to fetch dealId");
@@ -58,7 +59,7 @@ const NegativeOutcome: React.FC = () => {
     console.log('Audio blob:', blob); // Log the blob instead of undefined req.file
     console.log('Forwarding audio to Zapier...');
     try {
-      const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
+      const response = await fetch(`${BASE_URL}/api/meeting/send-voice`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -76,7 +77,7 @@ const NegativeOutcome: React.FC = () => {
   const handleComplete = async () => {
     // Step 1: Mark meeting as completed in backend (and HubSpot)
     try {
-      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+      const response = await fetch(`${BASE_URL}/api/meeting/${id}/mark-completed`, {
         method: "POST",
         credentials: "include",
       });

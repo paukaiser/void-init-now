@@ -17,6 +17,7 @@ console.log("AddMeeting mounted");
 const AddMeeting: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Detect reschedule/followup
   const isRescheduling = location.pathname.includes('reschedule') ||
@@ -115,7 +116,7 @@ const AddMeeting: React.FC = () => {
 
 
       try {
-        const res = await fetch(`http://localhost:3000/api/meetings/${meetingId}/reschedule`, {
+        const res = await fetch(`${BASE_URL}/api/meetings/${meetingId}/reschedule`, {
           method: "PATCH",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -148,7 +149,7 @@ const AddMeeting: React.FC = () => {
     console.log("Submitting meeting", payload);
 
     try {
-      const res = await fetch('http://localhost:3000/api/meetings/create', {
+      const res = await fetch(`${BASE_URL}/api/meetings/create`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -161,7 +162,7 @@ const AddMeeting: React.FC = () => {
       // ✅ Mark previous meeting as completed if this is a follow-up
       if (isFollowUp && prefilledData.meetingId) {
         try {
-          const completeRes = await fetch(`http://localhost:3000/api/meeting/${prefilledData.meetingId}/mark-completed`, {
+          const completeRes = await fetch(`${BASE_URL}/api/meeting/${prefilledData.meetingId}/mark-completed`, {
             method: 'POST',
             credentials: 'include',
           });

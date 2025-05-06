@@ -12,6 +12,7 @@ const PositiveOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const navDealId = location.state?.dealId;
   const { meetings } = useMeetingContext?.() || { meetings: [] };
@@ -30,7 +31,7 @@ const PositiveOutcome: React.FC = () => {
       const fetchDealId = async () => {
         setLoadingDealId(true);
         try {
-          const res = await fetch(`http://localhost:3000/api/meeting/${id}/deal`, {
+          const res = await fetch(`${BASE_URL}/api/meeting/${id}/deal`, {
             credentials: "include",
           });
           if (!res.ok) throw new Error("Failed to fetch dealId");
@@ -60,7 +61,7 @@ const PositiveOutcome: React.FC = () => {
     if (notes) formData.append('note', notes);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/meeting/${id}/upload-contract`, {
+      const res = await fetch(`${BASE_URL}/api/meeting/${id}/upload-contract`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -86,7 +87,7 @@ const PositiveOutcome: React.FC = () => {
     formData.append('dealId', dealId);
 
     try {
-      const response = await fetch('http://localhost:3000/api/meeting/send-voice', {
+      const response = await fetch(`${BASE_URL}/api/meeting/send-voice`, {
         method: 'POST',
         body: formData,
         credentials: 'include',
@@ -116,7 +117,7 @@ const PositiveOutcome: React.FC = () => {
 
   const handleComplete = async () => {
     try {
-      const response = await fetch(`http://localhost:3000/api/meeting/${id}/mark-completed`, {
+      const response = await fetch(`${BASE_URL}/api/meeting/${id}/mark-completed`, {
         method: "POST",
         credentials: "include",
       });

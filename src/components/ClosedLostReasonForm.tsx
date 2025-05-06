@@ -14,6 +14,8 @@ const ClosedLostReasonForm: React.FC<ClosedLostReasonFormProps> = ({ dealId, onC
   const [reason, setReason] = useState<string>("");
   const [otherReason, setOtherReason] = useState<string>("");
   const [loading, setLoading] = useState(false);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
   console.log("dealId being passed to form:", dealId);
 
@@ -38,7 +40,7 @@ const ClosedLostReasonForm: React.FC<ClosedLostReasonFormProps> = ({ dealId, onC
     setLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/deal/${dealId}/close-lost`, {
+      const res = await fetch(`${BASE_URL}/api/deal/${dealId}/close-lost`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },

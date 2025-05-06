@@ -15,6 +15,7 @@ export const useTasks = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
     const user = useUser();
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const unreadCount = tasks.filter((task) => !task.isRead).length;
 
@@ -23,7 +24,7 @@ export const useTasks = () => {
             if (!user || !user.user_id) return;
 
             try {
-                const res = await fetch("http://localhost:3000/api/tasks", {
+                const res = await fetch(`${BASE_URL}/api/tasks`, {
                     method: "POST",
                     credentials: "include",
                     headers: { "Content-Type": "application/json" },
@@ -98,7 +99,7 @@ export const useTasks = () => {
     const markAsCompleted = async (taskId: string) => {
         try {
             const res = await fetch(
-                "http://localhost:3000/api/hubspot/tasks/complete",
+                `${BASE_URL}/api/hubspot/tasks/complete`,
                 {
                     method: "POST",
                     credentials: "include",

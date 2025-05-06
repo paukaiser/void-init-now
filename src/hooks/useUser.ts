@@ -8,9 +8,10 @@ export interface HubspotUser {
 
 export function useUser() {
     const [user, setUser] = useState<HubspotUser | null>(null);
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     useEffect(() => {
-        fetch("http://localhost:3000/api/me", { credentials: "include" })
+        fetch(`${BASE_URL}/api/me`, { credentials: "include" })
             .then((res) => res.ok ? res.json() : null)
             .then((data) => {
                 if (data) {

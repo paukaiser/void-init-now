@@ -37,6 +37,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [showResults, setShowResults] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [showNoDealDialog, setShowNoDealDialog] = useState(false);
   const [showNoContactDialog, setShowNoContactDialog] = useState(false);
   const [selectedCompanyForDialog, setSelectedCompanyForDialog] = useState<Company | null>(null);
@@ -138,7 +139,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     setError(null);
 
     try {
-      const res = await fetch(`http://localhost:3000/api/companies/search?q=${encodeURIComponent(term)}`, {
+      const res = await fetch(`${BASE_URL}/api/companies/search?q=${encodeURIComponent(term)}`, {
         credentials: 'include'
       });
 
@@ -168,7 +169,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
   const checkForContact = async (company: Company) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/hubspot/company/${company.id}/contacts`, {
+      const res = await fetch(`${BASE_URL}/api/hubspot/company/${company.id}/contacts`, {
         credentials: 'include'
       });
 
@@ -210,7 +211,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
     try {
       // First check for deals
-      const dealRes = await fetch(`http://localhost:3000/api/hubspot/company/${company.id}/deals`, {
+      const dealRes = await fetch(`${BASE_URL}/api/hubspot/company/${company.id}/deals`, {
         credentials: 'include'
       });
 
@@ -248,7 +249,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         companyId: selectedCompanyForDialog.id,
       };
 
-      const res = await fetch('http://localhost:3000/api/hubspot/deals/create', {
+      const res = await fetch(`${BASE_URL}/api/hubspot/deals/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -289,7 +290,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         companyId: selectedCompanyForDialog.id,
       };
 
-      const res = await fetch('http://localhost:3000/api/hubspot/contact/create', {
+      const res = await fetch(`${BASE_URL}/api/hubspot/contact/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -372,7 +373,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         cuisine: newCompany.cuisine,
       };
 
-      const companyRes = await fetch('http://localhost:3000/api/companies/create', {
+      const companyRes = await fetch(`${BASE_URL}/api/companies/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -393,7 +394,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         companyId: company.id
       };
 
-      const dealRes = await fetch('http://localhost:3000/api/hubspot/deals/create', {
+      const dealRes = await fetch(`${BASE_URL}/api/hubspot/deals/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
