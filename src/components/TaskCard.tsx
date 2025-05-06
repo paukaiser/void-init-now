@@ -141,7 +141,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               {isPastDue && (
                 <div className="flex items-center gap-1 text-xs text-red-600">
                   <Clock className="h-3 w-3 text-red-600" />
-                  <span>Overdue</span>
+                  <span></span>
                 </div>
               )}
             </div>
