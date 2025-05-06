@@ -1,7 +1,6 @@
-
 // MeetingContext.tsx
 import React, { createContext, useContext, useState } from 'react';
-import { Meeting } from '../components/MeetingCard';
+import { Meeting } from '../components/MeetingCard.tsx';
 
 interface MeetingContextType {
   meetings: Meeting[];

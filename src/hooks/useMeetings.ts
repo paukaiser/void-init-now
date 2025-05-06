@@ -1,6 +1,21 @@
-
 import { useEffect, useState } from "react";
-import { Meeting } from "../components/MeetingCard";
+
+// 🟢 Flat shape matches your backend response
+export interface Meeting {
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    address?: string;
+    companyName?: string;
+    status?: string;
+    type?: string;
+    date?: string;
+    dealId?: string | number; // (number in backend, but sometimes string in FE)
+    companyId?: string | number;
+    contactId?: string | number;
+    // add other fields as needed
+}
 
 export function useMeetings(
     ownerId: string,
