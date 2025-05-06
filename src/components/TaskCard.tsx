@@ -164,6 +164,10 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
             <p><span className="font-medium">Contact:</span> {task.contactName || "N/A"}</p>
             <p><span className="font-medium">Phone:</span> {task.phoneNumber || "N/A"}</p>
             <p><span className="font-medium">Email:</span> {task.email || "N/A"}</p>
+            <p>
+              <span className="font-medium">Due Date:</span>{" "}
+              {task.dueDate ? format(new Date(task.dueDate), 'MMM dd, yyyy') : "N/A"}
+            </p>
             {isPastDue && (
               <p className="flex items-center gap-1 text-red-600">
                 <Clock size={16} className="text-red-600" />

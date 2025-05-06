@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TaskCard from '../components/TaskCard.tsx';
@@ -7,6 +6,7 @@ import { Badge } from "../components/ui/badge.tsx";
 import { useTasks } from '../hooks/useTasks.ts';
 import { Button } from "../components/ui/button.tsx";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 const Inbox: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +29,6 @@ const Inbox: React.FC = () => {
       toast.error("Failed to mark task as completed");
     }
   };
-
 
   const handleTaskDisqualify = (taskId: string, reason: string, otherReason?: string) => {
     disqualifyTask(taskId, reason, otherReason);

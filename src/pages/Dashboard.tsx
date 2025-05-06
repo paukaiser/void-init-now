@@ -34,8 +34,7 @@ const Dashboard: React.FC = () => {
   const isMobile = useIsMobile();
   const user = useUser();
   const { tasks, markAsRead, markAsCompleted, disqualifyTask, createTask } = useTasks();
-  const { setMeetings } = useMeetingContext();
-
+  const { meetings, setMeetings } = useMeetingContext();
 
   const handleDateSelect = (date: Date) => setCurrentDate(date);
 
@@ -126,7 +125,7 @@ const Dashboard: React.FC = () => {
       <div className="flex-none">
         <WeeklyOverview
           currentDate={currentDate}
-          meetings={[]} // or fetch real ones later
+          meetings={meetings}
           tasks={tasks}
           onDateSelect={handleDateSelect}
         />
