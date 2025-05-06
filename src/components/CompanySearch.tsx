@@ -594,17 +594,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
             </form>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowNoContactDialog(false);
-                if (selectedCompanyForDialog) {
-                  onSelectRef.current({ ...selectedCompanyForDialog, contactId: null });
-                }
-              }}
-            >
-              Skip
-            </Button>
             <Button onClick={handleCreateContact}>
               Create Contact
             </Button>
