@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TaskCard from '../components/TaskCard.tsx';
@@ -13,8 +14,13 @@ const Inbox: React.FC = () => {
   const { tasks, markAsRead, markAsCompleted, disqualifyTask } = useTasks();
   const [activeTab, setActiveTab] = useState("incomplete");
 
-  const incompleteTasks = tasks.filter((task) => !task.completed && !task.disqualified);
-  const completedTasks = tasks.filter((task) => task.completed || task.disqualified);
+  // Sort tasks by due date (earliest first)
+  const sortedTasks = [...tasks].sort((a, b) => {
+    return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+  });
+
+  const incompleteTasks = sortedTasks.filter((task) => !task.completed && !task.disqualified);
+  const completedTasks = sortedTasks.filter((task) => task.completed || task.disqualified);
 
   const handleTaskClick = (taskId: string) => {
     markAsRead(taskId);
