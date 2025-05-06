@@ -19,7 +19,11 @@ interface CompanyWithDeal extends Company {
   dealId?: string | null | undefined;
 }
 
-const FloatingActionButton: React.FC = () => {
+interface FloatingActionButtonProps {
+  onCreateTask?: () => void;
+}
+
+const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTask }) => {
   const { id } = useParams<{ id: string }>();
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateMeetingDialogOpen, setIsCreateMeetingDialogOpen] = useState(false);
@@ -38,13 +42,19 @@ const FloatingActionButton: React.FC = () => {
   const user = useUser();
 
   const toggleOptions = () => setIsOpen(!isOpen);
+  
   const handleCreateMeeting = () => {
     setIsOpen(false);
     setIsCreateMeetingDialogOpen(true);
   };
+  
   const handleCreateTask = () => {
     setIsOpen(false);
-    setIsCreateTaskDialogOpen(true);
+    if (onCreateTask) {
+      onCreateTask();
+    } else {
+      setIsCreateTaskDialogOpen(true);
+    }
   };
 
   const handleSubmitTask = async () => {

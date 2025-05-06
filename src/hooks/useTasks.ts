@@ -1,20 +1,21 @@
+
 import { useEffect, useState } from "react";
 import { Task } from "../types/index.ts";
 import { v4 as uuidv4 } from "uuid";
 import { isPast, isSameDay } from "date-fns";
-import { useUser } from "./useUser.ts"; // ✅ Correct import!
+import { useUser } from "./useUser.ts";
 
 interface CreateTaskInput {
     restaurantName: string;
     moreInfo?: string;
     dueDate: string;
-    subject: string;
+    subject?: string;
 }
 
 export const useTasks = () => {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [loading, setLoading] = useState(true);
-    const user = useUser(); // ✅ Fetch user info
+    const user = useUser();
 
     const unreadCount = tasks.filter((task) => !task.isRead).length;
 
@@ -39,7 +40,7 @@ export const useTasks = () => {
                                 task.id,
                                 ":",
                                 task.dealId,
-                            ); // ✅ ADD THIS
+                            );
 
                             return {
                                 id: task.id,
@@ -59,7 +60,10 @@ export const useTasks = () => {
                                 isRead: false,
                                 completed: task.status === "COMPLETED",
                                 disqualified: false,
-                                dealId: task.dealId, // <- ensure you are actually including this
+                                dealId: task.dealId,
+                                contactId: task.contactId || "",
+                                companyId: task.companyId || "",
+                                companyAddress: task.companyAddress || "",
                             };
                         },
                     ),
@@ -131,7 +135,7 @@ export const useTasks = () => {
     const createTask = (taskInput: Partial<CreateTaskInput>) => {
         const newTask: Task = {
             id: uuidv4(),
-            subject: taskInput.subject || "Untitled Task", // ✅ Set subject properly
+            subject: taskInput.subject || "Untitled Task",
             contactName: "New Contact",
             phoneNumber: "",
             email: "",
@@ -143,6 +147,10 @@ export const useTasks = () => {
             completed: false,
             disqualified: false,
             moreInfo: taskInput.moreInfo,
+            dealId: "",
+            contactId: "",
+            companyId: "",
+            companyAddress: "",
         };
         setTasks((prev) => [newTask, ...prev]);
         return newTask;
