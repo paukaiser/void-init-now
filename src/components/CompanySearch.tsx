@@ -81,7 +81,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   }, []);
 
   const initAutocomplete = () => {
-    if (!addressInputRef.current || !window.google?.maps?.places) return;
+    if (!addressInputRef.current || !globalThis.google?.maps?.places) return;
 
     const autocomplete = new google.maps.places.Autocomplete(addressInputRef.current);
     autocomplete.addListener('place_changed', () => {
@@ -518,17 +518,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowNoDealDialog(false);
-                if (selectedCompanyForDialog) {
-                  checkForContact({ ...selectedCompanyForDialog, dealId: null });
-                }
-              }}
-            >
-              Skip
-            </Button>
             <Button onClick={handleCreateDeal}>
               Create Deal
             </Button>
@@ -601,7 +590,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         </DialogContent>
       </Dialog>
 
-      {/* Add New Company Dialog */}
+      {/* Add New Company Dialog (adding this for test reasons) */}
       <Dialog open={showAddCompanyDialog} onOpenChange={setShowAddCompanyDialog}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>

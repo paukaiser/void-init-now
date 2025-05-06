@@ -268,7 +268,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
               onClick={handleDisqualify}
               className="w-full"
             >
-              Submit
             </Button>
           </div>
         </DialogContent>

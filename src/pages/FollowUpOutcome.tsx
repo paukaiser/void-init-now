@@ -93,6 +93,7 @@ const FollowUpOutcome: React.FC = () => {
 
   const handleTaskSchedule = (timeframe: string) => {
     const today = new Date();
+    // deno-lint-ignore prefer-const
     let taskDate = new Date(today);
 
     const daysMap: { [key: string]: number } = {
