@@ -751,6 +751,8 @@ app.post('/api/tasks', async (req, res) => {
       let phoneNumber = '';
       let cuisine = '';
       let dealId = '';
+      console.log("📦 HubSpot Task Properties:", task.properties);
+
 
       // === 🔗 Fetch associated company ===
       try {
@@ -816,7 +818,7 @@ app.post('/api/tasks', async (req, res) => {
         email,
         body: task.properties.hs_task_body || "",
         status: task.properties.hs_task_status,
-        dueDate: task.properties.hs_task_due_date,
+        dueDate: task.properties.hs_task_due_date || task.properties.hs_timestamp,
         createdAt: task.properties.hs_timestamp,
         ownerId: task.properties.hubspot_owner_id,
       };

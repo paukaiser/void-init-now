@@ -40,6 +40,11 @@ export const useTasks = () => {
                                 ":",
                                 task.dealId,
                             ); // ✅ ADD THIS
+                            console.log("🕒 Raw dueDate:", task.dueDate);
+                            console.log(
+                                "📅 Parsed dueDate:",
+                                new Date(Number(task.dueDate)),
+                            );
 
                             return {
                                 id: task.id,
@@ -52,10 +57,12 @@ export const useTasks = () => {
                                 restaurantName: task.restaurantName ||
                                     "Unknown Restaurant",
                                 cuisine: task.cuisine,
-                                createdAt: task.createdAt ||
-                                    new Date().toISOString(),
-                                dueDate: task.dueDate ||
-                                    new Date().toISOString(),
+                                createdAt: task.createdAt
+                                    ? new Date(task.createdAt)
+                                    : new Date(),
+                                dueDate: task.dueDate
+                                    ? new Date(task.dueDate)
+                                    : new Date(),
                                 isRead: false,
                                 completed: task.status === "COMPLETED",
                                 disqualified: false,
