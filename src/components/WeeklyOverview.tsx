@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useMeetingContext } from '../context/MeetingContext';
 import { Task } from '@/types';
+import { Meeting } from '@/components/MeetingCard';
 import UserProfile from './UserProfile';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -19,15 +20,17 @@ import { Button } from '@/components/ui/button';
 interface WeeklyOverviewProps {
   currentDate: Date;
   tasks: Task[];
+  meetings: Meeting[];
   onDateSelect: (date: Date) => void;
 }
 
 const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
   currentDate,
   tasks,
+  meetings,
   onDateSelect
 }) => {
-  const { meetings } = useMeetingContext(); // 👈 Get meetings from context
+  const { meetings: contextMeetings } = useMeetingContext(); // 👈 Get meetings from context
   const [weekOffset, setWeekOffset] = useState(0);
   const touchStartX = useRef<number | null>(null);
 
