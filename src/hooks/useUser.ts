@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 export interface HubspotUser {
@@ -23,7 +24,7 @@ export function useUser() {
                 }
             })
             .catch(() => setUser(null));
-    }, []);
+    }, [BASE_URL]);
 
     return user;
 }

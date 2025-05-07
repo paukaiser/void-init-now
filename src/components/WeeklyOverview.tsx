@@ -129,7 +129,6 @@ const WeeklyOverview: React.FC<WeeklyOverviewProps> = ({
             </button>
           )}
         </div>
-        <UserProfile small={true} />
       </div>
 
       <div className="grid grid-cols-9 gap-1 text-center items-center">

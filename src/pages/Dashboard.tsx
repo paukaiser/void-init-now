@@ -14,6 +14,7 @@ import MeetingSection from '../components/MeetingSection.tsx';
 import CreateTaskDialog from '../components/CreateTaskDialog.tsx';
 import FloatingActionButton from '../components/FloatingActionButton.tsx';
 import { Meeting } from '../components/MeetingCard.tsx';
+import UserProfile from '../components/UserProfile.tsx';
 
 const Dashboard: React.FC = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -55,8 +56,13 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
-      <div className="flex-none">
+    <div className="h-screen overflow-hidden flex flex-col relative">
+      {/* User Profile positioned at the top right corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <UserProfile small={true} />
+      </div>
+      
+      <div className="flex-none mt-12">
         <WeeklyOverview
           currentDate={currentDate}
           meetings={meetings}
