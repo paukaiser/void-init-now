@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Task } from '../types/index.ts';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +24,7 @@ const TaskSection: React.FC<TaskSectionProps> = ({
   const [showAllTasks, setShowAllTasks] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   const navigateToTasks = () => navigate('/inbox');
 
   // Filter tasks for the selected date
@@ -56,6 +55,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
     : tasksForSelectedDate;
 
   const hasMoreTasks = isMobile && tasksForSelectedDate.length > 4;
+
+  // Calculate the total number of tasks in the inbox
+  const totalTasksInInbox = tasks.filter(task => !task.completed && !task.disqualified).length;
 
   return (
     <div className="flex-none mb-2">
@@ -100,7 +102,9 @@ const TaskSection: React.FC<TaskSectionProps> = ({
       ) : (
         <div className="flex items-center justify-center">
           <p className="text-sm text-muted-foreground">No tasks for this day. Check all your tasks in the </p>
-          <Button variant="link" onClick={navigateToTasks} className="ml-1">Inbox</Button>
+          <Button variant="link" onClick={navigateToTasks} className="ml-1">
+            Inbox ({totalTasksInInbox})
+          </Button>
         </div>
       )}
     </div>
