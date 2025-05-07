@@ -21,7 +21,6 @@ const Inbox: React.FC = () => {
 
   const incompleteTasks = sortedTasks.filter((task) => !task.completed && !task.disqualified);
   const completedTasks = sortedTasks.filter((task) => task.completed || task.disqualified);
-  const totalTasks = tasks.length;
 
   const handleTaskClick = (taskId: string) => {
     markAsRead(taskId);
@@ -54,7 +53,6 @@ const Inbox: React.FC = () => {
           Back
         </Button>
         <h2 className="text-xl font-semibold">My Inbox</h2>
-        <Badge className="ml-2 bg-primary">{totalTasks}</Badge>
       </div>
 
       <Tabs defaultValue="incomplete" value={activeTab} onValueChange={setActiveTab}>
