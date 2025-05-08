@@ -102,9 +102,23 @@ const FollowUpOutcome: React.FC = () => {
     });
   };
 
+  const calculateBusinessDays = (startDate: Date, days: number): Date => {
+    let currentDate = new Date(startDate);
+    let addedDays = 0;
+
+    while (addedDays < days) {
+      currentDate.setDate(currentDate.getDate() + 1);
+      // Check if the current day is a weekday (Monday to Friday)
+      if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+        addedDays++;
+      }
+    }
+
+    return currentDate;
+  };
+
   const handleTaskSchedule = (timeframe: string) => {
     const today = new Date();
-    // deno-lint-ignore prefer-const
     let taskDate = new Date(today);
 
     const daysMap: { [key: string]: number } = {
@@ -119,7 +133,8 @@ const FollowUpOutcome: React.FC = () => {
       return;
     }
 
-    taskDate.setDate(today.getDate() + (daysMap[timeframe] || 7));
+    const daysToAdd = daysMap[timeframe] || 7;
+    taskDate = calculateBusinessDays(today, daysToAdd);
     scheduleTask(taskDate);
   };
 
