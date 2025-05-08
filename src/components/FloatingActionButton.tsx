@@ -12,13 +12,11 @@ import { Calendar as CalendarComponent } from "../components/ui/calendar.tsx";
 import { Textarea } from "../components/ui/textarea.tsx";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group.tsx";
 import CompanySearch, { Company } from '../components/CompanySearch.tsx';
-import ContactSearch, { Contact } from '../components/ContactSearch.tsx';
 import { useMeetingContext } from '../context/MeetingContext.tsx';
 import { useUser } from '../hooks/useUser.ts';
 
 interface CompanyWithDeal extends Company {
-  dealId?: string | null;
-  contactId?: string | null;
+  dealId?: string | null | undefined;
 }
 
 interface FloatingActionButtonProps {
@@ -30,8 +28,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   const [isOpen, setIsOpen] = useState(false);
   const [isCreateMeetingDialogOpen, setIsCreateMeetingDialogOpen] = useState(false);
   const [isCreateTaskDialogOpen, setIsCreateTaskDialogOpen] = useState(false);
-  const [isContactSearchStep, setIsContactSearchStep] = useState(false);
-  const [isCreateContactStep, setIsCreateContactStep] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyWithDeal | null>(null);
   const [taskNotes, setTaskNotes] = useState("");
   const [taskDate, setTaskDate] = useState<Date | undefined>(undefined);
@@ -39,12 +35,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState("");
   const [notes, setNotes] = useState("");
-  const [newContact, setNewContact] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-  });
   const fabRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { meetings } = useMeetingContext();
@@ -169,90 +159,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     }
   };
 
-  const handleSelectCompany = (company: Company) => {
-    setSelectedCompany(company as CompanyWithDeal);
-    
-    // Check if company has a contact
-    if (!company.contactId) {
-      // Show the contact search step instead of directly showing add contact form
-      setIsContactSearchStep(true);
-    }
-  };
-
-  const handleContactSelect = (contact: Contact) => {
-    setSelectedContact(contact);
-    
-    // Update the selected company with the contact ID
-    if (selectedCompany) {
-      setSelectedCompany({
-        ...selectedCompany,
-        contactId: contact.id
-      });
-    }
-    
-    // Close the contact search step
-    setIsContactSearchStep(false);
-  };
-  
-  const handleCreateNewContact = () => {
-    setIsContactSearchStep(false);
-    setIsCreateContactStep(true);
-  };
-  
-  const handleNewContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewContact(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleSubmitNewContact = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedCompany) return;
-    if (!newContact.firstName || !newContact.lastName || !newContact.email) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-    
-    try {
-      const payload = {
-        firstName: newContact.firstName,
-        lastName: newContact.lastName,
-        email: newContact.email,
-        phone: newContact.phone,
-        companyId: selectedCompany.id,
-      };
-
-      const res = await fetch(`${BASE_URL}/api/hubspot/contact/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData?.error || "Failed to create contact");
-      }
-
-      const createdContact = await res.json();
-      toast.success("New contact created successfully");
-      
-      // Update selected company with the new contact ID
-      setSelectedCompany({
-        ...selectedCompany,
-        contactId: createdContact.id
-      });
-      
-      // Close the create contact step
-      setIsCreateContactStep(false);
-    } catch (err) {
-      console.error("❌ Failed to create contact:", err);
-      toast.error("Could not create new contact");
-    }
-  };
 
   const generateTimeOptions = () => {
     const options = [];
@@ -309,7 +215,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <CompanySearch onSelect={handleSelectCompany} value={selectedCompany} required />
+              <CompanySearch onSelect={setSelectedCompany} value={selectedCompany} required />
             </div>
 
             <div className="space-y-2">
@@ -396,88 +302,6 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
               Create Task
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Contact Search Dialog */}
-      <Dialog open={isContactSearchStep} onOpenChange={setIsContactSearchStep}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Find Contact for {selectedCompany?.name}</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-500 mb-4">
-              No contact associated with {selectedCompany?.name}. 
-              Search for an existing contact or create a new one.
-            </p>
-            <ContactSearch 
-              onSelect={handleContactSelect} 
-              selectedCompany={selectedCompany}
-              onCreateNewContact={handleCreateNewContact}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Create Contact Dialog */}
-      <Dialog open={isCreateContactStep} onOpenChange={setIsCreateContactStep}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Contact for {selectedCompany?.name}</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitNewContact} className="space-y-4 py-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  value={newContact.firstName}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={newContact.lastName}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={newContact.email}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={newContact.phone}
-                  onChange={handleNewContactChange}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsCreateContactStep(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Create Contact</Button>
-            </DialogFooter>
-          </form>
         </DialogContent>
       </Dialog>
     </>
