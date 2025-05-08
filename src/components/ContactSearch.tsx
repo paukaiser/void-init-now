@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Input } from "../components/ui/input.tsx";
 import { Label } from "../components/ui/label.tsx";
@@ -5,6 +6,7 @@ import { Button } from "../components/ui/button.tsx";
 import { Search, Plus, User } from 'lucide-react';
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
+import { Company } from "./CompanySearch.tsx";
 
 export interface Contact {
   id: string;
@@ -20,15 +22,17 @@ export interface Contact {
 interface ContactSearchProps {
   onSelect: (contact: Contact) => void;
   value?: Contact | null;
-  selectedCompany?: { id: string; name: string } | null;
+  selectedCompany?: Company | null;
   disabled?: boolean;
+  onCreateNewContact?: () => void;
 }
 
 const ContactSearch: React.FC<ContactSearchProps> = ({
   onSelect,
   value,
   selectedCompany,
-  disabled
+  disabled,
+  onCreateNewContact
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Contact[]>([]);
@@ -80,7 +84,11 @@ const ContactSearch: React.FC<ContactSearchProps> = ({
   };
 
   const handleAddContact = () => {
-    setShowAddDialog(true);
+    if (onCreateNewContact) {
+      onCreateNewContact();
+    } else {
+      setShowAddDialog(true);
+    }
   };
 
   const handleNewContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
