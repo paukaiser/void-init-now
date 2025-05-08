@@ -1142,3 +1142,67 @@ app.patch('/api/deal/:dealId/in-negotiation', async (req, res) => {
   }
 });
 
+
+
+
+// contact search
+app.get('/api/contacts/search', async (req, res) => {
+  const token = req.session.accessToken;
+  const query = req.query.q;
+
+  if (!token) return res.status(401).send('Not authenticated');
+  if (!query) return res.status(400).send('Missing query parameter');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    const searchPayload = {
+      filterGroups: [
+        {
+          filters: [
+            {
+              propertyName: 'firstname',
+              operator: 'CONTAINS_TOKEN',
+              value: query
+            },
+            {
+              propertyName: 'lastname',
+              operator: 'CONTAINS_TOKEN',
+              value: query
+            },
+            {
+              propertyName: 'email',
+              operator: 'CONTAINS_TOKEN',
+              value: query
+            },
+            {
+              propertyName: 'phone',
+              operator: 'CONTAINS_TOKEN',
+              value: query
+            }
+          ]
+        }
+      ],
+      properties: ['firstname', 'lastname', 'email', 'phone', 'mobilephone', 'company'],
+      limit: 20,
+    };
+
+    const result = await hubspotClient.crm.contacts.searchApi.doSearch(searchPayload);
+
+    const contacts = result.results.map((c) => ({
+      id: c.id,
+      fullName: `${c.properties.firstname || ''} ${c.properties.lastname || ''}`.trim(),
+      firstName: c.properties.firstname,
+      lastName: c.properties.lastname,
+      email: c.properties.email,
+      phone: c.properties.phone,
+      mobilePhone: c.properties.mobilephone,
+      companyId: c.associations?.companies?.results?.[0]?.id || null,
+    }));
+
+    res.json({ results: contacts });
+  } catch (err) {
+    console.error("❌ Failed to search contacts:", err.message);
+    res.status(500).json({ error: "Search failed" });
+  }
+});
