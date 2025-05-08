@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Input } from "../components/ui/input.tsx";
 import { Label } from "../components/ui/label.tsx";
@@ -6,6 +5,7 @@ import { Search, Plus, User } from 'lucide-react';
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
 import { Button } from "../components/ui/button.tsx";
+import ContactSearch, { Contact } from './ContactSearch.tsx';
 
 export interface Company {
   id: string;
@@ -39,7 +39,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const [error, setError] = useState<string | null>(null);
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [showNoDealDialog, setShowNoDealDialog] = useState(false);
-  const [showNoContactDialog, setShowNoContactDialog] = useState(false);
+  const [showContactSearch, setShowContactSearch] = useState(false);
   const [selectedCompanyForDialog, setSelectedCompanyForDialog] = useState<Company | null>(null);
   const [showAddCompanyDialog, setShowAddCompanyDialog] = useState(false);
   const [newCompany, setNewCompany] = useState({
@@ -51,12 +51,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     cuisine: '',
     fullAddress: ''
   });
-  const [newContact, setNewContact] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-  });
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const onSelectRef = useRef(onSelect);
 
   useEffect(() => {
@@ -97,7 +92,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       let postalCode = '';
       let state = '';
 
-      addressComponents.forEach(component => {
+      addressComponents.forEach((component: google.maps.GeocoderAddressComponent) => {
         const types = component.types;
 
         if (types.includes('street_number') || types.includes('route')) {
@@ -162,7 +157,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   const debouncedSearch = useCallback(debounce(searchCompanies, 300), []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
+    const term = (e.target as HTMLInputElement).value;
     setSearchTerm(term);
     debouncedSearch(term);
   };
@@ -181,17 +176,9 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       const firstContact = contacts[0];
 
       if (!firstContact) {
-        // No contacts found, show dialog to create one
-        // Prepare prefilled contact information
-        const companyNameForEmail = company.name.toLowerCase().replace(/\s+/g, '');
-        setNewContact({
-          firstName: "Test",
-          lastName: company.name,
-          email: `test.${companyNameForEmail}@allo.com`,
-          phone: '',
-        });
-        setSelectedCompanyForDialog({ ...company });
-        setShowNoContactDialog(true);
+        // No contacts found, show contact search
+        setSelectedCompanyForDialog(company);
+        setShowContactSearch(true);
       } else {
         // Pass company with contactId
         onSelectRef.current({ ...company, contactId: firstContact.id || null });
@@ -201,6 +188,12 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       toast.error("Could not fetch contacts for selected company.");
       onSelectRef.current({ ...company, contactId: null });
     }
+  };
+
+  const handleContactSearchSelect = (contact: Contact) => {
+    setSelectedContact(contact);
+    setShowContactSearch(false);
+    onSelectRef.current({ ...selectedCompanyForDialog, contactId: contact.id || '' });
   };
 
   const handleSelectCompany = async (company: Company) => {
@@ -278,49 +271,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
     }
   };
 
-  const handleCreateContact = async () => {
-    if (!selectedCompanyForDialog) return;
-
-    try {
-      const payload = {
-        firstName: newContact.firstName,
-        lastName: newContact.lastName,
-        email: newContact.email,
-        phone: newContact.phone,
-        companyId: selectedCompanyForDialog.id,
-      };
-
-      const res = await fetch(`${BASE_URL}/api/hubspot/contact/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(payload)
-      });
-
-      const resBody = await res.json();
-      if (!res.ok) {
-        console.error("❌ Backend error:", resBody);
-        throw new Error(resBody?.error || "Failed to create contact");
-      }
-
-
-      const createdContact = await res.json();
-      toast.success("New contact created successfully");
-
-      setShowNoContactDialog(false);
-      onSelectRef.current({
-        ...selectedCompanyForDialog,
-        contactId: createdContact.id
-      });
-    } catch (err) {
-      console.error("❌ Failed to create contact:", err);
-      toast.error("Could not create new contact");
-      setShowNoContactDialog(false);
-      onSelectRef.current({ ...selectedCompanyForDialog, contactId: null });
-    }
-  };
-
-
   const handleAddNewCompanyClick = () => {
     setNewCompany({
       name: searchTerm,
@@ -336,16 +286,8 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   };
 
   const handleNewCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target as HTMLInputElement;
     setNewCompany(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleNewContactChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewContact(prev => ({
       ...prev,
       [name]: value
     }));
@@ -412,7 +354,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
 
       // Prepare prefilled contact information for the new company
       const companyNameForEmail = company.name.toLowerCase().replace(/\s+/g, '');
-      setNewContact({
+      setSelectedContact({
         firstName: "Test",
         lastName: company.name,
         email: `test.${companyNameForEmail}@allo.com`,
@@ -429,7 +371,7 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       toast.success("Company created with new deal");
 
       // Show the contact creation dialog
-      setShowNoContactDialog(true);
+      setShowContactSearch(true);
     } catch (err) {
       console.error("❌ Failed to create company:", err);
       toast.error("Could not create company");
@@ -500,6 +442,14 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
         </div>
       )}
 
+      {showContactSearch && (
+        <ContactSearch
+          onSelect={handleContactSearchSelect}
+          selectedCompany={selectedCompanyForDialog}
+          disabled={false}
+        />
+      )}
+
       {/* No Deal Dialog */}
       <Dialog open={showNoDealDialog} onOpenChange={setShowNoDealDialog}>
         <DialogContent className="sm:max-w-md">
@@ -521,71 +471,6 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
           <DialogFooter>
             <Button onClick={handleCreateDeal}>
               Create Deal
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* No Contact Dialog */}
-      <Dialog open={showNoContactDialog} onOpenChange={setShowNoContactDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Contact</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-sm text-gray-500 mb-4">
-              No contact was found for {selectedCompanyForDialog?.name}.
-              Would you like to create a new contact with the following details?
-            </p>
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="firstName"
-                  name="firstName"
-                  value={newContact.firstName}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="lastName"
-                  name="lastName"
-                  value={newContact.lastName}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={newContact.email}
-                  onChange={handleNewContactChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  name="phone"
-                  value={newContact.phone}
-                  onChange={handleNewContactChange}
-                />
-              </div>
-            </form>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateContact}>
-              Create Contact
             </Button>
           </DialogFooter>
         </DialogContent>
