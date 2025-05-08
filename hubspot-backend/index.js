@@ -582,8 +582,9 @@ app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('cont
     );
     const fileId = fileRes.data.id;
 
-    // Compose note body with additional notes (if any)
-    let noteBody = additionalNote ? additionalNote : 'Signed contract uploaded.';
+    // Compose note body with "Paper Quote:" followed by a line break and additional notes (if any)
+    let noteBody = "Paper Quote:\n";
+    if (additionalNote) noteBody += additionalNote;
 
     // Create a note and associate with the deal
     const noteRes = await axios.post(
@@ -617,8 +618,6 @@ app.post('/api/meeting/:meetingId/upload-contract', upload_contract.single('cont
     res.status(500).json({ error: 'Failed to upload contract', details: err.response?.data || err.message });
   }
 });
-
-
 
 
 // Closed Lost Reason Form
@@ -660,7 +659,6 @@ app.patch('/api/deal/:dealId/close-won', async (req, res) => {
   try {
     // Build properties object for HubSpot
     const properties = {
-      dealstage: "closedwon", // Use HubSpot internal name (often "closedwon")
       closed_won_reason: closed_won_reason,
     };
     // Optional competitor fields if present
@@ -683,6 +681,7 @@ app.patch('/api/deal/:dealId/close-won', async (req, res) => {
     });
   }
 });
+
 
 // Set Completed Meeting
 app.post('/api/meeting/:id/mark-completed', async (req, res) => {
@@ -1126,3 +1125,33 @@ app.post('/api/hubspot/tasks/complete', async (req, res) => {
     res.status(500).json({ error: "Failed to complete task" });
   }
 });
+
+
+// Move Deal to Qualified to Buy
+app.patch('/api/deal/:dealId/in-negotiation', async (req, res) => {
+  const token = req.session.accessToken;
+  if (!token) return res.status(401).send('Not authenticated');
+
+  const { dealId } = req.params;
+
+  try {
+    // Update deal stage to "qualifiedtobuy"
+    const properties = { dealstage: "qualifiedtobuy" };
+
+    // HubSpot PATCH update
+    const updateRes = await axios.patch(
+      `https://api.hubapi.com/crm/v3/objects/deals/${dealId}`,
+      { properties },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    res.json({ success: true, updated: updateRes.data });
+  } catch (err) {
+    console.error("Failed to update deal stage to 'Qualified to Buy':", err.response?.data || err.message);
+    res.status(500).json({
+      error: 'Failed to update deal stage',
+      details: err.response?.data || err.message,
+    });
+  }
+});
+

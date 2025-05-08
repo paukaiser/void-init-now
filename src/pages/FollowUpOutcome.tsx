@@ -71,8 +71,18 @@ const FollowUpOutcome: React.FC = () => {
     }
   };
 
-  const handleScheduleFollowUp = () => {
+  const handleScheduleFollowUp = async () => {
     if (!meetingDetails) return;
+
+    // Update deal stage to 'in-negotiation'
+    try {
+      await fetch(`${BASE_URL}/api/deal/${meetingDetails.dealId}/in-negotiation`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error("Failed to update deal stage to 'in-negotiation':", err);
+    }
 
     navigate('/add-meeting', {
       state: {
@@ -141,6 +151,12 @@ const FollowUpOutcome: React.FC = () => {
       });
 
       if (!res.ok) throw new Error("Failed to create task");
+
+      // Update deal stage to 'in-negotiation'
+      await fetch(`${BASE_URL}/api/deal/${meetingDetails.dealId}/in-negotiation`, {
+        method: 'PATCH',
+        credentials: 'include',
+      });
 
       toast.success(`Follow-up task scheduled for ${format(taskDate, 'dd.MM.yyyy')}`);
       setShowTaskOptions(false);
@@ -216,14 +232,6 @@ const FollowUpOutcome: React.FC = () => {
                 >
                   <Clock size={18} className="mr-2" />
                   Schedule Follow-up Task
-                </Button>
-
-                <Button
-                  className="flex items-center justify-center"
-                  onClick={handleComplete}
-                >
-                  <Home size={18} className="mr-2" />
-                  Return to Homepage
                 </Button>
               </div>
             </>
