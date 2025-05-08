@@ -17,6 +17,7 @@ import MeetingOutcome from './pages/MeetingOutcome.tsx';
 import PositiveOutcome from './pages/PositiveOutcome.tsx';
 import NegativeOutcome from './pages/NegativeOutcome.tsx';
 import FollowUpOutcome from './pages/FollowUpOutcome.tsx';
+import ContractSuccess from './pages/ContractSuccess.tsx';
 
 import { MeetingProvider } from './context/MeetingContext.tsx';
 import './App.css';
@@ -112,11 +113,11 @@ function App() {
             path="/meeting/:id/negative"
             element={isAuthenticated ? <NegativeOutcome /> : <Navigate to="/" />}
           />
-          {/* Optional: Follow-up route if needed */}
-          {/* <Route
-            path="/meeting/:id/follow-up"
-            element={isAuthenticated ? <FollowUpComponent /> : <Navigate to="/" />}
-          /> */}
+          {/* Contract success page */}
+          <Route
+            path="/contract-success"
+            element={isAuthenticated ? <ContractSuccess /> : <Navigate to="/" />}
+          />
           <Route path="*" element={<div>404 Not Found</div>} />
         </Routes>
       </Router>

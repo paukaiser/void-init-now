@@ -122,12 +122,14 @@ const PositiveOutcome: React.FC = () => {
         credentials: "include",
       });
       if (!response.ok) throw new Error("Failed to mark meeting as completed");
-      toast.success("Meeting marked as negative outcome and completed!");
+      toast.success("Meeting marked as positive outcome and completed!");
+      // Navigate to success page instead of dashboard
+      navigate('/contract-success');
     } catch (err) {
       toast.error("Failed to mark meeting as completed");
       console.error("Error marking meeting as completed:", err);
+      navigate('/dashboard');
     }
-    navigate('/dashboard');
   };
 
   return (
