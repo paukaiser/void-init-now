@@ -134,7 +134,13 @@ const FollowUpOutcome: React.FC = () => {
     }
 
     const daysToAdd = daysMap[timeframe] || 7;
-    taskDate = calculateBusinessDays(today, daysToAdd);
+
+    if (timeframe === '3days') {
+      taskDate = calculateBusinessDays(today, daysToAdd);
+    } else {
+      taskDate.setDate(today.getDate() + daysToAdd);
+    }
+
     scheduleTask(taskDate);
   };
 
