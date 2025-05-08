@@ -190,22 +190,6 @@ const FollowUpOutcome: React.FC = () => {
   };
 
 
-
-  const handleComplete = async () => {
-    try {
-      const response = await fetch(`${BASE_URL}/api/meeting/${id}/mark-completed`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to mark meeting as completed");
-      toast.success("Meeting marked as completed!");
-    } catch (err) {
-      toast.error("Failed to mark meeting as completed");
-      console.error("Error marking meeting as completed:", err);
-    }
-    navigate('/dashboard');
-  };
-
   const handleCalendarSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       setDate(selectedDate);

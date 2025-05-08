@@ -68,11 +68,7 @@ const MeetingCanceled: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <Button className="allo-button" onClick={handleScheduleNewMeeting}>
-              <Calendar size={16} className="mr-2" />
-              Schedule New Meeting
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/')}>
+            <Button className="allo-button" onClick={() => navigate('/')}>
               <Home size={16} className="mr-2" />
               Go to Homepage
             </Button>
