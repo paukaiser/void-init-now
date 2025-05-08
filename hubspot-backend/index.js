@@ -355,7 +355,6 @@ app.post('/api/hubspot/contacts/create', async (req, res) => {
 });
 
 
-// Add Meeting
 app.post('/api/meetings/create', async (req, res) => {
   const token = req.session.accessToken;
   if (!token) return res.status(401).send('Not authenticated');
@@ -363,8 +362,6 @@ app.post('/api/meetings/create', async (req, res) => {
   const hubspotClient = new Client({ accessToken: token });
 
   let ownerId = req.session.ownerId;
-
-  // 🔄 Fallback: fetch from access token if missing
   if (!ownerId) {
     try {
       const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
@@ -379,8 +376,8 @@ app.post('/api/meetings/create', async (req, res) => {
   let {
     title,
     companyId,
-    contactId,  // optional
-    dealId,     // optional
+    contactId,
+    dealId,
     meetingType,
     startTime,
     endTime,
@@ -391,7 +388,6 @@ app.post('/api/meetings/create', async (req, res) => {
     title, companyId, contactId, dealId, meetingType, startTime, endTime, notes, ownerId
   });
 
-  // ✅ If contactId is not provided, auto-fetch the newest one from company
   if (!contactId && companyId) {
     try {
       const contactAssocRes = await axios.get(
@@ -411,33 +407,23 @@ app.post('/api/meetings/create', async (req, res) => {
     }
   }
 
-  // Prepare associations
   const associations = [];
-
   if (companyId) {
-    associations.push({
-      to: { id: companyId },
-      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 188 }]
-    });
+    associations.push({ to: { id: companyId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 188 }] });
   }
-
   if (contactId) {
-    associations.push({
-      to: { id: contactId },
-      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 200 }]
-    });
+    associations.push({ to: { id: contactId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 200 }] });
   }
-
   if (dealId) {
-    associations.push({
-      to: { id: dealId },
-      types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 212 }]
-    });
+    associations.push({ to: { id: dealId }, types: [{ associationCategory: "HUBSPOT_DEFINED", associationTypeId: 212 }] });
   }
 
   console.log("🔗 Associations for meeting:", JSON.stringify(associations, null, 2));
 
   try {
+    const isPastMeeting = startTime < Date.now(); // Check if the meeting is in the past
+    const meetingOutcome = isPastMeeting ? "COMPLETED" : "SCHEDULED";
+
     const meetingRes = await hubspotClient.crm.objects.meetings.basicApi.create({
       properties: {
         hs_meeting_title: title,
@@ -447,19 +433,19 @@ app.post('/api/meetings/create', async (req, res) => {
         hs_activity_type: meetingType,
         hs_internal_meeting_notes: notes || '',
         hubspot_owner_id: ownerId,
-        hs_meeting_outcome: "SCHEDULED"
+        hs_meeting_outcome: meetingOutcome
       },
       associations
     });
 
     console.log("✅ Meeting created successfully:", meetingRes.id);
-    res.json({ success: true, meetingId: meetingRes.id });
+    res.json({ success: true, meetingId: meetingRes.id, isPastMeeting });
+
   } catch (err) {
     console.error("❌ Failed to create meeting:", err.response?.data || err.message);
     res.status(500).json({ error: 'Failed to create meeting', details: err.response?.data || err.message });
   }
 });
-
 
 
 

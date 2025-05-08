@@ -102,6 +102,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
       toast.error("Please fill in all required fields");
       return;
     }
+
     const meetingDate = new Date(date);
     const [hour, minute] = startTime.split(":").map(Number);
     meetingDate.setHours(hour, minute, 0, 0);
@@ -128,7 +129,24 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
 
       if (!res.ok) throw new Error('Failed to create meeting');
 
+      const newMeeting = await res.json();
+      console.log("✅ API Response:", newMeeting);
+
+      if (!newMeeting?.meetingId) {
+        console.error("❌ Invalid Meeting Response:", newMeeting);
+        throw new Error('Failed to retrieve new meeting ID');
+      }
+
       toast.success(`Meeting scheduled successfully`);
+
+      // ✅ Use the isPastMeeting flag here
+      if (newMeeting.isPastMeeting) {
+        toast.success("Past meeting logged. Redirecting to outcome.");
+        navigate(`/meeting/${newMeeting.meetingId}/outcome`);
+        return;
+      }
+
+      // Reset form state only after successful creation
       setIsCreateMeetingDialogOpen(false);
       setSelectedCompany(null);
       setMeetingType("Sales Meeting");
@@ -140,6 +158,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
       toast.error("Failed to schedule meeting");
     }
   };
+
 
   const generateTimeOptions = () => {
     const options = [];
