@@ -60,7 +60,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
     navigate(`/meeting/${meeting.id}`); // ✅ Navigate to the meeting page
   };
 
-
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering the card click
     if (onCancel) {
@@ -152,7 +151,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
 
     const cardCursor = isCompleted ? 'cursor-default' : 'cursor-pointer';
 
-    // Bestimme die Hintergrundfarbe basierend auf dem Status
+    // Determine background color based on status
     let meetingBgColor = 'bg-[#FF8769]/90';
     let meetingHoverBgColor = 'hover:bg-[#FF8769]/100';
 
@@ -167,7 +166,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
       meetingHoverBgColor = 'hover:bg-yellow-300';
     }
 
-    // Berechne die minimale Höhe basierend auf der Dauer (aber mindestens 50px für Lesbarkeit)
+    // Calculate the minimum height based on duration (but at least 50px for readability)
     const calculatedHeight = `${durationPercentage}%`;
     const minHeight = '50px';
 
@@ -190,19 +189,16 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
               {renderStatusBadge()}
             </div>
           </div>
-          <div className="mt-auto text-xs flex flex-wrap gap-2">
-            <div className="flex items-center gap-1 truncate">
+          
+          <div className="mt-auto text-xs flex justify-between w-full">
+            <div className="flex items-center gap-1 truncate max-w-[48%]">
               <Building2 size={10} />
-              <span className="truncate max-w-[80px]">{meeting.companyName}</span>
+              <span className="truncate">{meeting.companyName}</span>
             </div>
-            <div className="flex items-center gap-1 truncate">
+            <div className="flex items-center gap-1 truncate max-w-[48%]">
               <User size={10} />
-              <span className="truncate max-w-[80px]">{meeting.contactName}</span>
+              <span className="truncate">{meeting.contactName}</span>
             </div>
-          </div>
-          <div className="text-xs opacity-75 mt-1">
-            {new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} -
-            {new Date(meeting.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </div>
         </div>
       </div>
@@ -249,19 +245,6 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
             <span className="underline">{meeting.address}</span>
           </div>
         )}
-        <div className="flex justify-between text-xs text-allo-muted mt-2 pt-2 border-t border-gray-100">
-          <div className="flex items-center gap-1.5">
-            <Calendar size={14} />
-            <div className="flex flex-col items-center">
-              <span className="text-xs">{meeting.date}</span>
-              <span className="text-[10px]">{dayOfWeek}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock size={14} />
-            <span>{new Date(meeting.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-        </div>
       </div>
     </div>
   );
