@@ -446,7 +446,8 @@ app.post('/api/meetings/create', async (req, res) => {
         hs_timestamp: startTime,
         hs_activity_type: meetingType,
         hs_internal_meeting_notes: notes || '',
-        hubspot_owner_id: ownerId
+        hubspot_owner_id: ownerId,
+        hs_meeting_outcome: "SCHEDULED"
       },
       associations
     });

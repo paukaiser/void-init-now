@@ -37,7 +37,7 @@ const MeetingCanceled: React.FC = () => {
         companyAddress: meetingDetails.companyAddress,
         contactId: meetingDetails.contactId,
         contactName: meetingDetails.contactName,
-        forceCompany: true
+        forceCompany: true,
       }
     });
   };

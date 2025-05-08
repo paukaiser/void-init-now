@@ -45,7 +45,6 @@ const ClosedWonReasonForm: React.FC<ClosedWonReasonFormProps> = ({ dealId, onCom
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          deal_stage: "closedwon",
           closed_won_reason: reason === "Other" ? otherReason : reason,
           pos_competitor: posCompetitor,
           payment_competitor: paymentCompetitor,
