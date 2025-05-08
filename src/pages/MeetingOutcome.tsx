@@ -5,6 +5,8 @@ import { Button } from "../components/ui/button.tsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
 import { useIsMobile } from "../hooks/use-mobile.tsx";
 import { useMeetingContext } from "../context/MeetingContext.tsx";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 
 const MeetingOutcome: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,12 +31,32 @@ const MeetingOutcome: React.FC = () => {
   };
 
   // Handler for hot deal dialog
-  const handleHotDealResponse = (isHotDeal: boolean) => {
+  const handleHotDealResponse = async (isHotDeal: boolean) => {
     setShowHotDealDialog(false);
+
+    if (dealId) {
+      try {
+        await fetch(`${BASE_URL}/api/deals/${dealId}/hot-deal`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ hot_deal: isHotDeal }),
+        });
+
+        console.log(`✅ Deal ${dealId} set as ${isHotDeal ? 'true' : 'false'}`);
+      } catch (err) {
+        console.error("❌ Failed to set hot deal status:", err);
+      }
+    } else {
+      console.error("❌ No deal ID found.");
+    }
+
+    // Continue with navigation to follow-up
     navigate(`/meeting/${id}/follow-up`, {
       state: { isHotDeal, dealId }
     });
   };
+
 
   return (
     <div className="allo-page">

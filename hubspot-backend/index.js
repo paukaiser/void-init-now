@@ -1206,3 +1206,30 @@ app.get('/api/contacts/search', async (req, res) => {
     res.status(500).json({ error: "Search failed" });
   }
 });
+
+
+// Set Deal as Hot Deal
+app.patch('/api/deals/:dealId/hot-deal', async (req, res) => {
+  const token = req.session.accessToken;
+  const { dealId } = req.params;
+  const { hot_deal } = req.body;
+
+  if (!token) return res.status(401).send('Not authenticated');
+  if (!dealId) return res.status(400).send('Missing deal ID');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    await hubspotClient.crm.deals.basicApi.update(dealId, {
+      properties: {
+        hot_deal: hot_deal ? 'true' : 'false'
+      }
+    });
+
+    console.log(`✅ Deal ${dealId} set as Hot Deal: ${hot_deal}`);
+    res.status(200).json({ success: true, hot_deal });
+  } catch (err) {
+    console.error("❌ Failed to set hot deal status:", err.message);
+    res.status(500).json({ error: "Failed to set hot deal status" });
+  }
+});
