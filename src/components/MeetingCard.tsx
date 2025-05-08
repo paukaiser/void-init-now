@@ -23,6 +23,7 @@ export interface Meeting {
   companyId?: string | number | null;
   contactId?: string | number | null;
   completed?: boolean;
+  internalNotes?: string;
 }
 
 interface MeetingCardProps {
@@ -189,7 +190,7 @@ const MeetingCard: React.FC<MeetingCardProps> = ({
               {renderStatusBadge()}
             </div>
           </div>
-          
+
           <div className="mt-auto text-xs flex justify-between w-full">
             <div className="flex items-center gap-1 truncate max-w-[48%]">
               <Building2 size={10} />

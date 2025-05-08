@@ -114,28 +114,25 @@ const MeetingActions: React.FC = () => {
 
         <div className="allo-card w-full max-w-md mx-auto">
           <h2 className="text-xl font-semibold mb-2">{meetingDetails.title}</h2>
-
-          <div className="py-2">
-            <p className="text-sm text-gray-500">Contact</p>
-            <p className="font-medium">{meetingDetails.contactName}</p>
-          </div>
-
           <div className="py-2">
             <p className="text-sm text-gray-500">Company</p>
             <p className="font-medium">{meetingDetails.companyName}</p>
           </div>
-
-          <div className="py-2">
-            <p className="text-sm text-gray-500">Address</p>
+          <div className="py-2 flex flex-col items-center"> {/* Centered Text and Button */}
+            <p className="text-sm text-gray-500 text-center">Address</p>
             <button
-              className="font-medium flex items-center text-allo-primary hover:underline"
+              className="font-medium flex items-center justify-center text-allo-primary hover:underline mt-1"
               onClick={handleAddressClick}
+              style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", textAlign: "center" }}
             >
               <MapPin className="h-4 w-4 mr-1" />
-              {meetingDetails.address}
+              <span>{meetingDetails.address}</span>
             </button>
           </div>
-
+          <div className="py-2">
+            <p className="text-sm text-gray-500">Contact</p>
+            <p className="font-medium">{meetingDetails.contactName}</p>
+          </div>
           <div className="py-2">
             <p className="text-sm text-gray-500">Date &amp; Time</p>
             <p className="font-medium">
@@ -145,10 +142,21 @@ const MeetingActions: React.FC = () => {
             </p>
           </div>
 
+
+          {/* 🔥 Internal Notes Section */}
+          <div className="py-2">
+            <p className="text-sm text-gray-500">Internal Notes</p>
+            {meetingDetails.internalNotes ? (
+              <p className="font-medium">{meetingDetails.internalNotes}</p>
+            ) : (
+              <p className="font-medium text-gray-400">No internal notes available</p>
+            )}
+          </div>
           <div className="py-2">
             <p className="text-sm text-gray-500">Status</p>
             <p className="font-medium capitalize">{meetingDetails.status}</p>
           </div>
+
 
           <div className={`mt-6 ${isMobile ? 'flex flex-col space-y-3' : 'grid grid-cols-3 gap-3'}`}>
             <Button

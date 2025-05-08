@@ -230,7 +230,8 @@ app.post('/api/meetings', async (req, res) => {
           contactName,
           contactPhone,
           contactId,
-          dealId
+          dealId,
+          internalNotes: properties.hs_internal_meeting_notes || ''
         };
       })
     );
