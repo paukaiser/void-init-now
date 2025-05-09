@@ -1267,3 +1267,66 @@ app.patch('/api/tasks/:taskId/postpone', async (req, res) => {
     res.status(500).json({ error: "Failed to postpone task" });
   }
 });
+
+
+app.post('/api/companies/create', async (req, res) => {
+  const token = req.session.accessToken;
+  let ownerId = req.session.ownerId;
+
+  const {
+    name,
+    street,
+    city,
+    postalCode,
+    state,
+    cuisine
+  } = req.body;
+
+  // ✅ Check for authentication
+  if (!token) return res.status(401).json({ error: "Not authenticated" });
+
+  // ✅ Validate required fields
+  if (!name || !street || !city || !postalCode) {
+    return res.status(400).json({ error: "Please fill in all required fields" });
+  }
+
+  // ✅ Resolve ownerId (from session or via API)
+  if (!ownerId) {
+    try {
+      const whoami = await axios.get(`https://api.hubapi.com/oauth/v1/access-tokens/${token}`);
+      ownerId = whoami.data.user_id;
+      req.session.ownerId = ownerId; // ✅ Store ownerId in session for future use
+      console.log("🔁 Fetched ownerId from token:", ownerId);
+    } catch (err) {
+      console.error("❌ Could not resolve ownerId:", err.response?.data || err.message);
+      return res.status(400).json({ error: 'Could not resolve owner ID' });
+    }
+  }
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    // ✅ Create the company in HubSpot
+    const response = await hubspotClient.crm.companies.basicApi.create({
+      properties: {
+        name: name,
+        address: street,
+        city: city,
+        zip: postalCode,
+        state_dropdown: state,
+        cuisine: cuisine || "",
+        hubspot_owner_id: ownerId,       // ✅ Set the owner to the resolved user
+      }
+    });
+
+    console.log(`✅ New Company Created: ${response.id}`);
+    res.status(201).json({
+      success: true,
+      companyId: response.id,
+      message: "Company created successfully",
+    });
+  } catch (err) {
+    console.error("❌ Error creating company:", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to create company" });
+  }
+});
