@@ -1234,3 +1234,32 @@ app.patch('/api/deals/:dealId/hot-deal', async (req, res) => {
     res.status(500).json({ error: "Failed to set hot deal status" });
   }
 });
+
+
+// Task postpone endpoint
+app.patch('/api/tasks/:taskId/postpone', async (req, res) => {
+  const token = req.session.accessToken;
+  const { taskId } = req.params;
+  const { newDueDate } = req.body;
+
+  if (!token) return res.status(401).send('Not authenticated');
+  if (!taskId) return res.status(400).send('Missing task ID');
+  if (!newDueDate) return res.status(400).send('Missing new due date');
+
+  const hubspotClient = new Client({ accessToken: token });
+
+  try {
+    // Update the task's due date in HubSpot
+    await hubspotClient.crm.objects.tasks.basicApi.update(taskId, {
+      properties: {
+        hs_timestamp: newDueDate,
+      },
+    });
+
+    console.log(`✅ Task ${taskId} postponed to ${newDueDate}`);
+    res.status(200).json({ success: true, message: "Task postponed successfully" });
+  } catch (err) {
+    console.error("❌ Error postponing task:", err.response?.data || err.message);
+    res.status(500).json({ error: "Failed to postpone task" });
+  }
+});
