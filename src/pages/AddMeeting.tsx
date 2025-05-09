@@ -207,6 +207,18 @@ const AddMeeting: React.FC = () => {
     return options;
   };
 
+  // Fixing linter errors
+
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = (e.target as HTMLSelectElement).value;
+    setStartTime(value);
+  };
+
+  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = (e.target as HTMLTextAreaElement).value;
+    setNotes(value);
+  };
+
   // UI logic
   const showCompanySelection = !forceCompany && !isFollowUp && !isRescheduling;
   const showMeetingTypeSelection = !isFollowUp && !forceCompany && !isRescheduling;

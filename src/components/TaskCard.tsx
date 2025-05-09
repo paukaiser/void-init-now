@@ -41,16 +41,20 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
 
   const handleScheduleMeeting = () => {
     setIsDialogOpen(false);
-    // If this task is scheduled, we also mark it as completed
-    if (onComplete) onComplete(task.id);
+    // Directly navigate to schedule meeting with prefilled values
     navigate('/add-meeting', {
       state: {
         companyName: task.restaurantName,
-        companyId: `task-${task.id}`,
-        contactName: task.contactName
+        companyId: task.companyId || `task-${task.id}`, // Preselect the company
+        contactName: task.contactName,
+        contactId: task.contactId,
+        dealId: task.dealId,
+        meetingType: "Sales Followup", // Preselect meeting type
+        forceCompany: true // This will lock the company selection
       }
     });
   };
+
 
   const handleCall = () => {
     window.location.href = `tel:${task.phoneNumber}`;

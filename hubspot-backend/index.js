@@ -738,6 +738,8 @@ app.post('/api/tasks', async (req, res) => {
       let phoneNumber = '';
       let cuisine = '';
       let dealId = '';
+      let companyId = '';
+      let contactId = '';
       console.log("📦 HubSpot Task Properties:", task.properties);
 
 
@@ -747,7 +749,7 @@ app.post('/api/tasks', async (req, res) => {
           `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/companies`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const companyId = assocCompany.data.results?.[0]?.id;
+        companyId = assocCompany.data.results?.[0]?.id;
 
         if (companyId) {
           const companyDetails = await axios.get(
@@ -779,7 +781,7 @@ app.post('/api/tasks', async (req, res) => {
           `https://api.hubapi.com/crm/v3/objects/tasks/${taskId}/associations/contacts`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        const contactId = assocContact.data.results?.[0]?.id;
+        contactId = assocContact.data.results?.[0]?.id;
 
         if (contactId) {
           const contactDetails = await axios.get(
@@ -808,6 +810,8 @@ app.post('/api/tasks', async (req, res) => {
         dueDate: task.properties.hs_task_due_date || task.properties.hs_timestamp,
         createdAt: task.properties.hs_timestamp,
         ownerId: task.properties.hubspot_owner_id,
+        companyId,
+        contactId,
       };
     }));
 
