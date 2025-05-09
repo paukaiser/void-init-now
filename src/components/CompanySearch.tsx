@@ -19,6 +19,7 @@ interface CompanySearchProps {
   onSelect: (company: Company) => void;
   value?: Company | null;
   required?: boolean;
+  onAddNewCompany?: () => void; // Add this new prop
 }
 
 function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
@@ -31,7 +32,7 @@ function debounce<F extends (...args: any[]) => any>(func: F, waitFor: number) {
   };
 }
 
-const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required = false }) => {
+const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required = false, onAddNewCompany }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Company[]>([]);
   const [showResults, setShowResults] = useState(false);
@@ -272,16 +273,22 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
   };
 
   const handleAddNewCompanyClick = () => {
-    setNewCompany({
-      name: searchTerm,
-      street: '',
-      city: '',
-      postalCode: '',
-      state: '',
-      cuisine: '',
-      fullAddress: ''
-    });
-    setShowAddCompanyDialog(true);
+    if (onAddNewCompany) {
+      // Use the new prop if provided
+      onAddNewCompany();
+    } else {
+      // Default behavior
+      setNewCompany({
+        name: searchTerm,
+        street: '',
+        city: '',
+        postalCode: '',
+        state: '',
+        cuisine: '',
+        fullAddress: ''
+      });
+      setShowAddCompanyDialog(true);
+    }
     setShowResults(false);
   };
 
@@ -477,103 +484,106 @@ const CompanySearch: React.FC<CompanySearchProps> = ({ onSelect, value, required
       </Dialog>
 
       {/* Add New Company Dialog (adding this for test reasons) */}
-      <Dialog open={showAddCompanyDialog} onOpenChange={setShowAddCompanyDialog}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Add New Restaurant</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleCreateCompany} className="py-4 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="company-name">Restaurant Name <span className="text-red-500">*</span></Label>
-              <Input
-                id="company-name"
-                name="name"
-                value={newCompany.name}
-                onChange={handleNewCompanyChange}
-                required
-              />
-            </div>
+      {/* Only render the dialog if we're using the internal add company flow */}
+      {!onAddNewCompany && (
+        <Dialog open={showAddCompanyDialog} onOpenChange={setShowAddCompanyDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Add New Restaurant</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleCreateCompany} className="py-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-name">Restaurant Name <span className="text-red-500">*</span></Label>
+                <Input
+                  id="company-name"
+                  name="name"
+                  value={newCompany.name}
+                  onChange={handleNewCompanyChange}
+                  required
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company-address">Address <span className="text-red-500">*</span></Label>
-              <Input
-                id="company-address"
-                placeholder="Search address..."
-                ref={addressInputRef}
-                className="mb-2"
-              />
+              <div className="space-y-2">
+                <Label htmlFor="company-address">Address <span className="text-red-500">*</span></Label>
+                <Input
+                  id="company-address"
+                  placeholder="Search address..."
+                  ref={addressInputRef}
+                  className="mb-2"
+                />
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label htmlFor="company-street">Street Address <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="company-street"
-                    name="street"
-                    value={newCompany.street}
-                    onChange={handleNewCompanyChange}
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-street">Street Address <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="company-street"
+                      name="street"
+                      value={newCompany.street}
+                      onChange={handleNewCompanyChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-city">City <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="company-city"
+                      name="city"
+                      value={newCompany.city}
+                      onChange={handleNewCompanyChange}
+                      required
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company-city">City <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="company-city"
-                    name="city"
-                    value={newCompany.city}
-                    onChange={handleNewCompanyChange}
-                    required
-                  />
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-postal">Postal Code <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="company-postal"
+                      name="postalCode"
+                      value={newCompany.postalCode}
+                      onChange={handleNewCompanyChange}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company-state">State</Label>
+                    <Input
+                      id="company-state"
+                      name="state"
+                      value={newCompany.state}
+                      onChange={handleNewCompanyChange}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-2">
-                  <Label htmlFor="company-postal">Postal Code <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="company-postal"
-                    name="postalCode"
-                    value={newCompany.postalCode}
-                    onChange={handleNewCompanyChange}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="company-state">State</Label>
-                  <Input
-                    id="company-state"
-                    name="state"
-                    value={newCompany.state}
-                    onChange={handleNewCompanyChange}
-                  />
-                </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="company-cuisine">Cuisine</Label>
+                <Input
+                  id="company-cuisine"
+                  name="cuisine"
+                  value={newCompany.cuisine}
+                  onChange={handleNewCompanyChange}
+                  placeholder="e.g. Italian, Mediterranean, American..."
+                />
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="company-cuisine">Cuisine</Label>
-              <Input
-                id="company-cuisine"
-                name="cuisine"
-                value={newCompany.cuisine}
-                onChange={handleNewCompanyChange}
-                placeholder="e.g. Italian, Mediterranean, American..."
-              />
-            </div>
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAddCompanyDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Creating..." : "Create Restaurant"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddCompanyDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Creating..." : "Create Restaurant"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

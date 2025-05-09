@@ -1,10 +1,13 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, FileText, CalendarIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { cn } from '../lib/utils.ts';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog.tsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog.tsx";
 import { Button } from "../components/ui/button.tsx";
 import { Label } from "../components/ui/label.tsx";
+import { Input } from "../components/ui/input.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select.tsx";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.tsx";
@@ -34,12 +37,116 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [showAddCompanyDialog, setShowAddCompanyDialog] = useState(false);
+  const [newCompany, setNewCompany] = useState({
+    name: '',
+    street: '',
+    city: '',
+    postalCode: '',
+    state: '',
+    cuisine: '',
+    fullAddress: ''
+  });
+  const [cuisineOptions, setCuisineOptions] = useState([
+    "American", "Italian", "Mexican", "Asian", "Mediterranean", 
+    "Indian", "French", "Greek", "Spanish", "Japanese", 
+    "Chinese", "Thai", "Vietnamese", "Korean", "Middle Eastern",
+    "Brazilian", "Caribbean", "African", "Fusion", "Other"
+  ]);
   const fabRef = useRef<HTMLDivElement>(null);
+  const googleSearchInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { meetings } = useMeetingContext();
   const meetingDetails = meetings.find(m => m.id === id);
   const user = useUser();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+  // Initialize Google Places Autocomplete
+  useEffect(() => {
+    const initializeGooglePlaces = () => {
+      // Check if the script already exists to avoid duplicates
+      if (document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
+        return initializeAutocomplete();
+      }
+      
+      // Create and append the Google Places API script
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      script.onload = initializeAutocomplete;
+      document.body.appendChild(script);
+    };
+
+    // If the dialog is open, initialize Google Places
+    if (showAddCompanyDialog) {
+      initializeGooglePlaces();
+    }
+
+    // Clean up
+    return () => {
+      // No cleanup needed for the script since we're checking for its existence
+    };
+  }, [showAddCompanyDialog]);
+
+  const initializeAutocomplete = () => {
+    if (!googleSearchInputRef.current || !window.google?.maps?.places) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(googleSearchInputRef.current, {
+      types: ['establishment'],
+      fields: ['name', 'formatted_address', 'address_components', 'geometry']
+    });
+    
+    autocomplete.addListener('place_changed', () => {
+      const place = autocomplete.getPlace();
+      if (!place.geometry) {
+        console.log("No details available for this place");
+        return;
+      }
+
+      let restaurantName = place.name || '';
+      let street = '';
+      let city = '';
+      let postalCode = '';
+      let state = '';
+
+      // Extract address components
+      if (place.address_components) {
+        place.address_components.forEach((component) => {
+          const types = component.types;
+
+          if (types.includes('street_number')) {
+            street += component.long_name + ' ';
+          }
+          if (types.includes('route')) {
+            street += component.long_name;
+          }
+          if (types.includes('locality')) {
+            city = component.long_name;
+          }
+          if (types.includes('postal_code')) {
+            postalCode = component.long_name;
+          }
+          if (types.includes('administrative_area_level_1')) {
+            state = component.long_name;
+          }
+        });
+      }
+
+      // Update the form fields
+      setNewCompany(prev => ({
+        ...prev,
+        name: restaurantName,
+        street: street.trim(),
+        city,
+        postalCode,
+        state,
+        fullAddress: place.formatted_address || ''
+      }));
+      
+      console.log("Place selected:", place);
+    });
+  };
 
   const handleCreateMeeting = () => {
     setIsCreateMeetingDialogOpen(true);
@@ -129,6 +236,71 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
     setNotes(value);
   };
 
+  // New company form handlers
+  const handleNewCompanyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target as HTMLInputElement;
+    setNewCompany(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCuisineChange = (value: string) => {
+    setNewCompany(prev => ({
+      ...prev,
+      cuisine: value
+    }));
+  };
+
+  const handleCreateCompany = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validate form
+    if (!newCompany.name || !newCompany.street || !newCompany.city || !newCompany.postalCode) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      // Create company
+      const companyPayload = {
+        name: newCompany.name,
+        street: newCompany.street,
+        city: newCompany.city,
+        postalCode: newCompany.postalCode,
+        state: newCompany.state || 'N/A',
+        cuisine: newCompany.cuisine,
+      };
+
+      const companyRes = await fetch(`${BASE_URL}/api/companies/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(companyPayload)
+      });
+
+      if (!companyRes.ok) {
+        throw new Error("Failed to create company");
+      }
+
+      const company = await companyRes.json();
+      
+      // Close dialog and update selected company
+      setShowAddCompanyDialog(false);
+      setSelectedCompany({
+        id: company.id,
+        name: company.name,
+        address: `${company.street}, ${company.city}, ${company.postalCode}`
+      });
+      
+      toast.success("Company created successfully");
+      
+    } catch (err) {
+      console.error("❌ Failed to create company:", err);
+      toast.error("Could not create company");
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (fabRef.current && !fabRef.current.contains(e.target as Node)) {
@@ -164,7 +336,12 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <CompanySearch onSelect={setSelectedCompany} value={selectedCompany} required />
+              <CompanySearch 
+                onSelect={setSelectedCompany} 
+                value={selectedCompany} 
+                required 
+                onAddNewCompany={() => setShowAddCompanyDialog(true)}
+              />
             </div>
 
             <div className="space-y-2">
@@ -221,6 +398,113 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add New Company Dialog */}
+      <Dialog open={showAddCompanyDialog} onOpenChange={setShowAddCompanyDialog}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Add New Restaurant</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreateCompany} className="py-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="google-places-search">Search for Restaurant</Label>
+              <div className="relative">
+                <Input
+                  id="google-places-search"
+                  ref={googleSearchInputRef}
+                  placeholder="Search for restaurant on Google..."
+                  className="pl-9"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              </div>
+              <p className="text-xs text-gray-500">Search for an existing restaurant or fill in the details below</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Restaurant Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="company-name"
+                name="name"
+                value={newCompany.name}
+                onChange={handleNewCompanyChange}
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="company-street">Street Address <span className="text-red-500">*</span></Label>
+                <Input
+                  id="company-street"
+                  name="street"
+                  value={newCompany.street}
+                  onChange={handleNewCompanyChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-city">City <span className="text-red-500">*</span></Label>
+                <Input
+                  id="company-city"
+                  name="city"
+                  value={newCompany.city}
+                  onChange={handleNewCompanyChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="company-postal">Postal Code <span className="text-red-500">*</span></Label>
+                <Input
+                  id="company-postal"
+                  name="postalCode"
+                  value={newCompany.postalCode}
+                  onChange={handleNewCompanyChange}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="company-state">State</Label>
+                <Input
+                  id="company-state"
+                  name="state"
+                  value={newCompany.state}
+                  onChange={handleNewCompanyChange}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-cuisine">Cuisine</Label>
+              <Select value={newCompany.cuisine} onValueChange={handleCuisineChange}>
+                <SelectTrigger id="company-cuisine">
+                  <SelectValue placeholder="Select cuisine type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cuisineOptions.map(cuisine => (
+                    <SelectItem key={cuisine} value={cuisine}>{cuisine}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowAddCompanyDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                Create Restaurant
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
