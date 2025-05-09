@@ -41,10 +41,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
   const user = useUser();
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const toggleOptions = () => setIsOpen(!isOpen);
-
   const handleCreateMeeting = () => {
-    setIsOpen(false);
     setIsCreateMeetingDialogOpen(true);
   };
 
@@ -152,7 +149,7 @@ const FloatingActionButton: React.FC<FloatingActionButtonProps> = ({ onCreateTas
             {isOpen && (
               <span className="mr-2 bg-white/80 backdrop-blur-sm px-2 py-1 rounded text-[#2E1813] text-sm shadow-sm">Meeting</span>
             )}
-            <button className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center" onClick={isOpen ? handleCreateMeeting : toggleOptions}>
+            <button className="bg-black hover:bg-black/90 text-[#FF8769] rounded-full shadow-lg w-14 h-14 flex items-center justify-center" onClick={handleCreateMeeting}>
               {isOpen ? <Calendar size={24} /> : <Plus size={24} />}
             </button>
           </div>
