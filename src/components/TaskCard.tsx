@@ -128,7 +128,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
 
   const handleDisqualify = async () => {
     if (!disqualifyReason) {
-      toast.error("Please select a disqualification reason");
+      toast.error("Please select a closed lost reason");
       return;
     }
 
@@ -297,7 +297,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="disqualify-reason">Disqualification Reason</Label>
+              <Label htmlFor="disqualify-reason">Closed Lost Reason</Label>
               <Select
                 onValueChange={(value) => setDisqualifyReason(value)}
                 value={disqualifyReason}
@@ -321,7 +321,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onClick, onComplete, onDisqua
 
             {disqualifyReason === "Other" && (
               <div className="space-y-2">
-                <Label htmlFor="other-reason">Disqualification Reason - Other</Label>
+                <Label htmlFor="other-reason">Closed Lost Reason - Other</Label>
                 <Input
                   id="other-reason"
                   value={otherReason}
