@@ -67,3 +67,104 @@ export const getHubspotOAuthToken = async () => {
   
   return data;
 };
+
+// Helper function to check if a user has a HubSpot token linked
+export const hasUserHubspotToken = async (userId) => {
+  if (!userId) return false;
+  
+  const { data, error } = await supabase
+    .from('user_hubspot_tokens')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+    
+  if (error) {
+    if (error.code !== 'PGRST116') { // No rows returned
+      console.error("Error checking user HubSpot token:", error);
+    }
+    return false;
+  }
+  
+  return !!data;
+};
+
+// Helper function to get a user's HubSpot OAuth token
+export const getUserHubspotToken = async (userId) => {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from('user_hubspot_tokens')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+    
+  if (error) {
+    console.error("Error fetching user HubSpot token:", error);
+    return null;
+  }
+  
+  // Check if token is expired
+  if (new Date(data.expires_at) <= new Date()) {
+    console.warn("User HubSpot token is expired, should be refreshed");
+    
+    // Call the Edge Function to refresh the token
+    const session = await getCurrentSession();
+    if (session) {
+      try {
+        const response = await fetch('https://rzuupvxigzdvnwlrcevo.supabase.co/functions/v1/refresh-user-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({ userId })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to refresh token: ${response.status}`);
+        }
+        
+        // Fetch the updated token after refreshing
+        const { data: refreshedData, error: refreshError } = await supabase
+          .from('user_hubspot_tokens')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (refreshError) {
+          console.error("Error fetching refreshed HubSpot token:", refreshError);
+          return null;
+        }
+        
+        return refreshedData;
+      } catch (refreshError) {
+        console.error("Error refreshing user token:", refreshError);
+      }
+    }
+  }
+  
+  return data;
+};
+
+// Helper function to store a user's HubSpot OAuth token
+export const storeUserHubspotToken = async (userId, hubspotUserId, accessToken, refreshToken, expiresAt) => {
+  if (!userId) return null;
+  
+  const { data, error } = await supabase
+    .from('user_hubspot_tokens')
+    .upsert({
+      user_id: userId,
+      hubspot_user_id: hubspotUserId,
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      expires_at: expiresAt
+    })
+    .select();
+    
+  if (error) {
+    console.error("Error storing user HubSpot token:", error);
+    return null;
+  }
+  
+  return data[0];
+};

@@ -45,6 +45,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_hubspot_tokens: {
+        Row: {
+          access_token: string
+          expires_at: string
+          hubspot_user_id: string
+          id: string
+          refresh_token: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          expires_at: string
+          hubspot_user_id: string
+          id?: string
+          refresh_token: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          expires_at?: string
+          hubspot_user_id?: string
+          id?: string
+          refresh_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

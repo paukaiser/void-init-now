@@ -3,3 +3,7 @@ project_id = "rzuupvxigzdvnwlrcevo"
 
 [functions.refresh-token]
 verify_jwt = true
+
+[functions.refresh-user-token]
+verify_jwt = true
+
