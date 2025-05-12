@@ -1,1 +1,5 @@
+
 project_id = "rzuupvxigzdvnwlrcevo"
+
+[functions.refresh-token]
+verify_jwt = true
