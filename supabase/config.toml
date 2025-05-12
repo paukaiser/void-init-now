@@ -7,3 +7,8 @@ verify_jwt = true
 [functions.refresh-user-token]
 verify_jwt = true
 
+[functions.hubspot-auth]
+verify_jwt = true
+
+[functions.hubspot-callback]
+verify_jwt = false
